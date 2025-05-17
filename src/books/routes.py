@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends
 from fastapi.exceptions import HTTPException
-from src.books.schemas import BookSchema, BookUpdateSchema
+from src.books.schemas import BookSchema, BookUpdateSchema, BookCreateSchema
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session         # Our Dependancy
@@ -12,7 +12,7 @@ book_router = APIRouter()
 book_service = BookService()
 
 """Get all books"""
-@book_router.get('/', response_model=List[BookSchema])
+@book_router.get('/all', response_model=List[BookSchema])
 async def get_all_books(
         session: AsyncSession = Depends(get_session)
 ):
@@ -24,7 +24,7 @@ async def get_all_books(
 """Create new book and add it to table"""
 @book_router.post('/', status_code=status.HTTP_201_CREATED, response_model=BookSchema)
 async def create_book(
-        book_data: BookSchema,
+        book_data: BookCreateSchema,
         session: AsyncSession = Depends(get_session)
 ) -> dict:
 
@@ -33,7 +33,7 @@ async def create_book(
     return new_book
 
 """Get a book by by id"""
-@book_router.get('/{book_uid}')
+@book_router.get('/{book_uid}', response_model=BookSchema)
 async def get_book(
         book_uid: str,
         session: AsyncSession = Depends(get_session)
@@ -41,14 +41,15 @@ async def get_book(
 
     book = await book_service.get_book(book_uid, session)
 
-    if not book:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail='Book not found')
-    else:
+    if book:
         return book
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Book not found')
+
 
 
 """Update data in a certain book(by id)"""
-@book_router.patch('/{book_uid}')
+@book_router.patch('/{book_uid}', response_model=BookSchema)
 async def update_book(
         book_uid: str,
         book_update_data: BookUpdateSchema,
@@ -72,7 +73,8 @@ async def delete_book(
 
     book_to_delete = await book_service.delete_book(book_uid, session)
 
-    if not book_to_delete:
-        return None
+    if book_to_delete:
+        return {}
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Cannot delete not existing book')
+
