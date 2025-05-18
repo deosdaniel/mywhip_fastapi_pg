@@ -3,6 +3,8 @@ import sqlalchemy.dialects.postgresql as pg
 from datetime import datetime, date
 import uuid
 
+from ..expenses.schemas import ExpensesSchema
+
 class CarCreateSchema(SQLModel):
     status: str | None = "Fresh"
     make: str
@@ -28,5 +30,6 @@ class CarSchema(CarCreateSchema, CarUpdateSchema):
     uid: uuid.UUID
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+
 
 
