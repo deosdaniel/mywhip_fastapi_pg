@@ -4,7 +4,7 @@ from src.cars.schemas import CarSchema, CarUpdateSchema, CarCreateSchema
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session         # Our Dependency
-from src.cars.service import CarService   # our CRUD-methods
+from src.cars.service import CarService     # our CRUD-methods
 
 
 car_router = APIRouter()
@@ -22,7 +22,7 @@ async def get_all_cars(
     return books
 
 """Create new car and add it to table"""
-@car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarCreateSchema)
+@car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarSchema)
 async def create_car(
         car_data: CarCreateSchema,
         session: AsyncSession = Depends(get_session)
