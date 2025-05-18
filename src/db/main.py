@@ -11,9 +11,6 @@ engine = AsyncEngine(create_engine(url=db_config.DATABASE_URL, echo=True))
 
 async def init_db():
     async with engine.begin() as conn:
-        from src.cars.models import Cars
-        from src.expenses.models import Expenses
-
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
