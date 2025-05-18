@@ -22,7 +22,7 @@ async def get_all_cars(
     return books
 
 """Create new car and add it to table"""
-@car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarSchema)
+@car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarCreateSchema)
 async def create_car(
         car_data: CarCreateSchema,
         session: AsyncSession = Depends(get_session)
