@@ -56,7 +56,7 @@ import sqlmodel
 ${imports if imports else ""}
    ```
 
-3. **Initialize DB structure (To this point it is necessary to have an existing DB called "bookly_db")**
+3. **Initialize DB structure (To this point it is necessary to have an existing DB called "my_whip")**
 
 ```bash
    % alembic revision --autogenerate -m "init"
