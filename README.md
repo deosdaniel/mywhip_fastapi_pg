@@ -24,3 +24,44 @@
 ## Database Migrations
 
 This project uses Alembic for database migrations.
+
+```bash
+   % alembic init -t async migrations
+   ```
+
+1. **Add imports and connection configurations to migrations/env.py:**
+```python
+from src.cars.models import Cars
+from src.expenses.models import Expenses
+from src.auth.models import Users
+from sqlmodel import SQLModel
+from src.config import db_config
+
+database_url = db_config.DATABASE_URL
+
+config.set_main_option('sqlalchemy.url', database_url)
+
+***
+
+target_metadata = SQLModel.metadata
+   ```
+2. **Import SQLModel to migrations/script.py.mako at the top:**
+```python
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+import sqlmodel
+${imports if imports else ""}
+   ```
+
+3. **Initialize DB structure (To this point it is necessary to have an existing DB called "bookly_db")**
+
+```bash
+   % alembic revision --autogenerate -m "init"
+   ```
+4. **Create tables**
+```bash
+   % alembic upgrade head
+   ```

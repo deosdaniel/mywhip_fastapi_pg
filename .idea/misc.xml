@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.13 (fasqlm)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (fasqlm)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (mywhip_fastapi_pg)" project-jdk-type="Python SDK" />
 </project>
