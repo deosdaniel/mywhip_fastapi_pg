@@ -5,12 +5,13 @@ from datetime import datetime
 
 
 
-class ExpensesSchema(SQLModel):
-    created_at: datetime = Field(
-        sa_column=Column(pg.TIMESTAMP, default=datetime.now())
-    )
+class ExpensesCreateSchema(SQLModel):
     name: str
     exp_summ: int
 
+class ExpensesSchema(ExpensesCreateSchema):
+    created_at: datetime = Field(
+        sa_column=Column(pg.TIMESTAMP, default=datetime.now())
+    )
     car_uid: uuid.UUID = Field(foreign_key="cars.uid")
 

@@ -5,7 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from src.expenses.service import ExpensesService
 
-from src.expenses.schemas import ExpensesSchema
+from src.expenses.schemas import ExpensesSchema, ExpensesCreateSchema
 
 expense_router = APIRouter()
 
@@ -15,13 +15,13 @@ expense_service = ExpensesService()
 @expense_router.post('/{car_uid}',status_code=status.HTTP_201_CREATED, response_model=ExpensesSchema)
 async def create_expense(
         car_uid: str,
-        exp_data: ExpensesSchema,
+        exp_data: ExpensesCreateSchema,
         session: AsyncSession = Depends(get_session)
 ) -> dict:
 
-    new_expense = await expense_service.create_expense(car_uid, exp_data, session)
+    new_exp = await expense_service.create_expense(car_uid, exp_data, session)
 
-    return new_expense
+    return new_exp
 
 
 
