@@ -10,8 +10,10 @@ class ExpensesCreateSchema(SQLModel):
     exp_summ: int
 
 class ExpensesSchema(ExpensesCreateSchema):
-    created_at: datetime = Field(
-        sa_column=Column(pg.TIMESTAMP, default=datetime.now())
-    )
+    uid: uuid.UUID
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now()))
+
+
+
     car_uid: uuid.UUID = Field(foreign_key="cars.uid")
 

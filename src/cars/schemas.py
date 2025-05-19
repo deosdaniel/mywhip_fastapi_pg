@@ -3,7 +3,6 @@ import sqlalchemy.dialects.postgresql as pg
 from datetime import datetime, date
 import uuid
 
-from ..expenses.schemas import ExpensesSchema
 
 class CarCreateSchema(SQLModel):
     status: str | None = "Fresh"
