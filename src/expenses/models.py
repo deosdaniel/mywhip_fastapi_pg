@@ -14,6 +14,9 @@ class Expenses(ExpensesSchema, table=True):
         sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
     )
 
+
+
+
     car: "Cars" = Relationship(back_populates="expenses")
 
     def __repr__(self):
