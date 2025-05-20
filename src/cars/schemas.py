@@ -1,3 +1,4 @@
+from sqlalchemy.sql.functions import current_timestamp
 from sqlmodel import SQLModel, Field, Column
 import sqlalchemy.dialects.postgresql as pg
 from datetime import datetime, date
@@ -43,7 +44,7 @@ class CarSchema(SQLModel):
     avito_link: str | None = None
     autoru_link: str | None = None
     drom_link: str | None = None
-    created_at: datetime
+    created_at: datetime  | None = None
     updated_at: datetime | None = None
 
 

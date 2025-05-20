@@ -29,6 +29,9 @@ class CarService:
 
         new_car.date_purchased = datetime.strptime(str(car_data_dict['date_purchased']), '%Y-%m-%d')
 
+
+
+
         session.add(new_car)
         await session.commit()
         return new_car
@@ -40,10 +43,9 @@ class CarService:
             for k,v in update_data_dict.items():
                 setattr(car_to_update, k, v)
 
-            updated_car = Cars(**update_data_dict)
-            updated_car.updated_at = datetime.now()
 
             await session.commit()
+            await session.refresh(car_to_update)
             return car_to_update
         else:
             return None

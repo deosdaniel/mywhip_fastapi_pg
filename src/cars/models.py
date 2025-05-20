@@ -2,7 +2,7 @@ from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 from datetime import datetime, date
-
+from sqlalchemy.sql.functions import now
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -33,8 +33,8 @@ class Cars(SQLModel, table=True):
     avito_link: str = Field(default=None, nullable=True)
     autoru_link: str = Field(default=None, nullable=True)
     drom_link: str = Field(default=None, nullable=True)
-    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now()))
-    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=None, nullable=True))
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False))
+    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True))
 
     expenses: list["Expenses"] = Relationship(back_populates="car")
 
