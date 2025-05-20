@@ -1,6 +1,4 @@
-from sqlalchemy.sql.functions import current_timestamp
 from sqlmodel import SQLModel, Field, Column
-import sqlalchemy.dialects.postgresql as pg
 from datetime import datetime, date
 import uuid
 

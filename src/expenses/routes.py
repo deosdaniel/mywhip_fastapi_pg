@@ -26,7 +26,7 @@ async def create_expense(
 
 
 @expense_router.get('/{car_uid}', response_model=List[ExpensesSchema])
-async def get_expenses_single_car(
+async def get_expenses_by_car_uid(
         car_uid: str,
         session: AsyncSession = Depends(get_session)
 ):
