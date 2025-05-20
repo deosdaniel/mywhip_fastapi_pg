@@ -30,18 +30,19 @@ This project uses Alembic for database migrations.
    ```
 
 1. **Add imports and connection configurations to migrations/env.py:**
+
 ```python
 from src.cars.models import Cars
 from src.expenses.models import Expenses
 from src.auth.models import Users
 from sqlmodel import SQLModel
-from src.config import db_config
+from src.config import Config
 
-database_url = db_config.DATABASE_URL
+database_url = Config.DATABASE_URL
 
 config.set_main_option('sqlalchemy.url', database_url)
 
-***
+** *
 
 target_metadata = SQLModel.metadata
    ```

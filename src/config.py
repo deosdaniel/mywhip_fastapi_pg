@@ -6,6 +6,8 @@ class Settings(BaseSettings):
         extra='ignore'
     )
     DATABASE_URL: str
+    JWT_SECRET : str
+    JWT_ALGORITHM : str
 
 
-db_config = Settings()
+Config = Settings()
