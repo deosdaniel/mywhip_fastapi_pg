@@ -18,8 +18,8 @@ car_service = CarService()
 async def get_all_cars(
         session: AsyncSession = Depends(get_session)
 ):
-    books = await car_service.get_all_cars(session)
-    return books
+    cars = await car_service.get_all_cars(session)
+    return cars
 
 
 """Get a car by by id"""
