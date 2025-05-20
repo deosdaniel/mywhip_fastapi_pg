@@ -23,6 +23,7 @@ class CarUpdateSchema(SQLModel):
     avito_link: str | None = None
     autoru_link: str | None = None
     drom_link: str | None = None
+    status: str | None = None
 
 class CarSchema(SQLModel):
     uid: uuid.UUID
