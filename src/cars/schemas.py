@@ -16,7 +16,7 @@ class CarCreateSchema(SQLModel):
     sts_num: str
     date_purchased: date
     price_purchased: int
-    expenses: List["ExpensesCreateSchema"]
+    expenses: List["ExpensesCreateSchema"] | None = None
 
 class CarUpdateSchema(SQLModel):
     date_listed: date | None = None
@@ -73,7 +73,7 @@ class CarDTO(SQLModel):
     created_at: datetime  | None = None
     updated_at: datetime | None = None
     status: str | None = None
-    expenses: List["ExpensesDTO"]
+    expenses: List["ExpensesDTO"] | None = None
 
 
 

@@ -31,7 +31,7 @@ class Cars(SQLModel, table=True):
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False))
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True))
 
-    expenses: list["Expenses"] = Relationship(back_populates="car", cascade_delete=True)
+    expenses: list["Expenses"] = Relationship(back_populates="car", sa_relationship_kwargs={'lazy':'selectin'}, cascade_delete=True)
 
     def __repr__(self):
         return f'<Car {self.vin}>'

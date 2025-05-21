@@ -1,3 +1,4 @@
+from sqlalchemy import delete
 from sqlalchemy.orm import joinedload, selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -29,28 +30,15 @@ class CarService:
 
 
     async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
-
-        car_data_dict = car_data.model_dump()                                                                   # превращаем валидированные данные в словарь
-        new_car = Cars(                                                                                         # создаем новую машину, присваиваем объект модели Cars
-            **car_data_dict)                                                                                    # и распаковываем в этот объект наши данные из словаря
-
-        new_car.date_purchased = datetime.strptime(str(car_data_dict['date_purchased']), '%Y-%m-%d')
+        new_expenses = []
+        if car_data.expenses:
+            new_expenses = [Expenses(**exp.model_dump()) for exp in car_data.expenses]
+        new_car = Cars(**car_data.model_dump(exclude={"expenses"}), expenses=new_expenses)
         session.add(new_car)
         await session.commit()
+        await session.refresh(new_car)
         return new_car
-        #expenses = car_data.expenses
-        #car_data.expenses = []
-        #
-        #new_car = Expenses(**car_data.model_dump())
-        #session.add(new_car)
-        #await session.commit()
-        #await session.refresh(new_car)
-        #new_car.date_purchased = datetime.strptime(str(car_data.model_dump()['date_purchased']), '%Y-%m-%d')
-        #for exp in expenses:
-        #    new_exp = Expenses(**exp.model_dump())
-        #    new_car.car_uid = new_car.uid
-        #    session.add(new_exp)
-        #    await session.commit()
+
 
 
 
@@ -82,37 +70,38 @@ class CarService:
 class ExpensesService:
 
     async def create_expense(self, car_uid: str, exp_data: ExpensesCreateSchema, session: AsyncSession):
-        exp_data_dict = exp_data.model_dump()
-        new_exp = Expenses(**exp_data_dict)
-        new_exp.car_uid = car_uid
+        car_update_service = CarService()
+        car_to_update = await car_update_service.get_car(car_uid, session)
+        if car_to_update:
+            exp_data_dict = exp_data.model_dump()
+            new_exp = Expenses(**exp_data_dict)
+            new_exp.car_uid = car_uid
 
-        session.add(new_exp)
-        await session.commit()
-        return new_exp
-
-    async def get_single_expense(self, exp_uid, session: AsyncSession):
-        statement = select(Expenses).where(Expenses.uid == exp_uid)
-        result = await session.exec(statement)
-        exp = result.first()
-        if exp is not None:
-            return exp
+            session.add(new_exp)
+            await session.commit()
+            return new_exp
         else:
             return None
+
 
     async def get_expenses(self, car_uid: str, session: AsyncSession):
-        statement = select(Expenses).where(Expenses.car_uid == car_uid)
-        result = await session.exec(statement)
-        exps = result.all()
-        if exps is not None:
+        car_update_service = CarService()
+        car_exists = await car_update_service.get_car(car_uid, session)
+        if car_exists:
+            statement = select(Expenses).where(Expenses.car_uid == car_uid)
+            result = await session.exec(statement)
+            exps = result.all()
             return exps
         else:
-            return None
+            return False
 
-    async def delete_all_expenses_by_car_uid(self, exp_uid: int, session: AsyncSession):
-    #    exp_to_delete = await self.get_single_expense(exp_uid, session)
-    #    if exp_to_delete is not None:
-    #        await session.delete(exp_to_delete)
-    #        await session.commit()
-    #        return True
-    #    else:
-            return None
+    async def delete_all_expenses_by_car_uid(self, car_uid: int, session: AsyncSession):
+        car_update_service = CarService()
+        car_exists = await car_update_service.get_car(car_uid, session)
+
+        if not car_exists:
+            return False
+        statement = delete(Expenses).where(Expenses.car_uid == car_uid)
+        await session.exec(statement)
+        await session.commit()
+        return True
