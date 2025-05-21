@@ -102,14 +102,14 @@ async def get_expenses_by_car_uid(
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No expenses yet')
 
-#@car_router.delete('#/{exp_uid}', status_code=status.HTTP_204_NO_CONTENT)
-#async def delete_expense(
-#        exp_uid: str,
-#        session: AsyncSession = Depends(get_session)
-#):
-#    exp_to_delete = await expenses_service.delete_expense(exp_uid,session)
-#
-#    if exp_to_delete:
-#        return {}
-#    else:
-#        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Exp not found')
+@car_router.delete('/{car_uid}/expenses/', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_all_expenses_by_car_uid(
+        car_uid: str,
+        session: AsyncSession = Depends(get_session)
+):
+    exp_to_delete = await expenses_service.delete_all_expenses_by_car_uid(car_uid,session)
+
+    if exp_to_delete:
+        return {}
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Car not found')

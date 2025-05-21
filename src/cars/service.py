@@ -108,11 +108,11 @@ class ExpensesService:
         else:
             return None
 
-    async def delete_expense(self, exp_uid: int, session: AsyncSession):
-        exp_to_delete = await self.get_single_expense(exp_uid, session)
-        if exp_to_delete is not None:
-            await session.delete(exp_to_delete)
-            await session.commit()
-            return True
-        else:
+    async def delete_all_expenses_by_car_uid(self, exp_uid: int, session: AsyncSession):
+    #    exp_to_delete = await self.get_single_expense(exp_uid, session)
+    #    if exp_to_delete is not None:
+    #        await session.delete(exp_to_delete)
+    #        await session.commit()
+    #        return True
+    #    else:
             return None
