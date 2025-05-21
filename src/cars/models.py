@@ -4,9 +4,6 @@ import uuid
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from ..expenses.models import Expenses
 
 
 class Cars(SQLModel, table=True):
@@ -14,7 +11,6 @@ class Cars(SQLModel, table=True):
     uid: uuid.UUID = Field(
         sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
     )
-
     status: str = Field(default='Fresh', nullable=False)
     make: str
     model: str
@@ -24,7 +20,6 @@ class Cars(SQLModel, table=True):
     sts_num: str
     date_purchased: date
     price_purchased: int
-
     date_listed: date = Field(default=None, nullable=True)
     date_sold: date = Field(default=None, nullable=True)
     price_sold: int = Field(default=None, nullable=True)
@@ -36,8 +31,23 @@ class Cars(SQLModel, table=True):
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False))
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True))
 
-    expenses: list["Expenses"] = Relationship(back_populates="car")
+    expenses: list["Expenses"] = Relationship(back_populates="car", cascade_delete=True)
 
     def __repr__(self):
         return f'<Car {self.vin}>'
 
+
+class Expenses(SQLModel, table=True):
+    __tablename__ = "expenses"
+    uid: uuid.UUID = Field(
+        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
+    )
+    name: str
+    exp_summ: int
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False))
+
+    car_uid: uuid.UUID = Field(foreign_key="cars.uid")
+    car: "Cars" = Relationship(back_populates="expenses")
+
+    def __repr__(self):
+        return f'<Expense {self.name}>'
