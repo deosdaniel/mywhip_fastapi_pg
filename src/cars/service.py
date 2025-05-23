@@ -15,7 +15,6 @@ class CarService:
         statement = select(Cars).options(selectinload(Cars.expenses)).where(Cars.uid == car_uid)
         res = await session.exec(statement)
         car = res.first()
-        print(f'This is your car :{car}')
         if car is not None:
             return car
         else:

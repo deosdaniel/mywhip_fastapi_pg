@@ -4,8 +4,8 @@ from src.cars.schemas import CarSchema, CarUpdateSchema, CarCreateSchema, Expens
     CarDTO
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.db.main import get_session         # Our Dependency
-from src.cars.service import CarService, ExpensesService    # our CRUD-methods
+from src.db.main import get_session
+from src.cars.service import CarService, ExpensesService
 
 
 car_router = APIRouter()
@@ -30,9 +30,7 @@ async def get_car(
         car_uid: str,
         session: AsyncSession = Depends(get_session)
 ) -> dict:
-
     car = await car_service.get_car(car_uid, session)
-
     if car:
         return car
     else:
