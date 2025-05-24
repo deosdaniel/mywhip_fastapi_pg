@@ -3,7 +3,15 @@ from typing import List
 from sqlmodel import SQLModel, Field, Column
 from datetime import datetime, date
 import uuid
+from enum import Enum
 
+
+class CarStatusChoices(Enum):
+    FRESH = 'fresh'
+    REPAIRING = 'repairing'
+    DETAILING = 'detailing'
+    LISTED = 'listed'
+    SOLD = 'sold'
 
 
 """Cars"""
@@ -17,9 +25,10 @@ class CarCreateSchema(SQLModel):
     date_purchased: date
     price_purchased: int
     expenses: List["ExpensesCreateSchema"] | None = None
-
+    status: CarStatusChoices | None = None
 class CarUpdateSchema(SQLModel):
     date_listed: date | None = None
+    price_listed: int | None = None
     date_sold: date | None  = None
     price_sold: int | None = None
     autoteka_link: str | None = None
@@ -27,7 +36,7 @@ class CarUpdateSchema(SQLModel):
     avito_link: str | None = None
     autoru_link: str | None = None
     drom_link: str | None = None
-    status: str | None = None
+    status: CarStatusChoices | None = None
 
 class CarSchema(SQLModel):
     uid: uuid.UUID
@@ -40,6 +49,7 @@ class CarSchema(SQLModel):
     date_purchased: date
     price_purchased: int
     date_listed: date | None = None
+    price_listed: int | None = None
     date_sold: date | None = None
     price_sold: int | None = None
     autoteka_link: str | None = None
@@ -49,7 +59,7 @@ class CarSchema(SQLModel):
     drom_link: str | None = None
     created_at: datetime  | None = None
     updated_at: datetime | None = None
-    status: str | None = None
+    status: CarStatusChoices | None = None
 
 
 class CarDTO(SQLModel):
@@ -63,6 +73,7 @@ class CarDTO(SQLModel):
     date_purchased: date
     price_purchased: int
     date_listed: date | None = None
+    price_listed: int | None = None
     date_sold: date | None = None
     price_sold: int | None = None
     autoteka_link: str | None = None
@@ -72,7 +83,7 @@ class CarDTO(SQLModel):
     drom_link: str | None = None
     created_at: datetime  | None = None
     updated_at: datetime | None = None
-    status: str | None = None
+    status: CarStatusChoices | None = None
     expenses: List["ExpensesDTO"] | None = None
 
 

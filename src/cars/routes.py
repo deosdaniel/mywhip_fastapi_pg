@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends
 from fastapi.exceptions import HTTPException
 from src.cars.schemas import CarSchema, CarUpdateSchema, CarCreateSchema, ExpensesSchema, ExpensesCreateSchema, \
-    CarDTO
+    CarDTO, CarStatusChoices
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -12,17 +12,6 @@ car_router = APIRouter()
 
 car_service = CarService()
 expenses_service = ExpensesService()
-
-
-
-"""Get all cars"""
-@car_router.get('/', response_model=List[CarDTO])
-async def get_all_cars(
-        session: AsyncSession = Depends(get_session)
-):
-    cars = await car_service.get_all_cars(session)
-    return cars
-
 
 """Get a car by by id"""
 @car_router.get('/{car_uid}', response_model=CarDTO)
@@ -36,7 +25,19 @@ async def get_car(
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Car not found')
 
-
+"""Get all cars"""
+@car_router.get('/', response_model=List[CarDTO])
+async def get_all_cars(
+        session: AsyncSession = Depends(get_session),
+        status: CarStatusChoices | None = None,
+        filter_oldest_created: bool | None = False,
+        filter_cheapest_listed: bool | None = None,
+        make: str | None = None,
+        model: str | None = None,
+        has_expenses: bool | None = None
+):
+    cars = await car_service.get_all_cars(session, status, filter_oldest_created,filter_cheapest_listed, make, model, has_expenses)
+    return cars
 
 @car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarDTO)
 async def create_car(
@@ -47,7 +48,7 @@ async def create_car(
     return new_car
 
 
-@car_router.patch('/{car_uid}', response_model=CarSchema)
+@car_router.patch('/{car_uid}', response_model=CarDTO)
 async def update_car(
         car_uid: str,
         car_update_data: CarUpdateSchema,

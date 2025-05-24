@@ -1,9 +1,10 @@
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
-
+from .schemas import CarStatusChoices
 
 
 class Cars(SQLModel, table=True):
@@ -11,7 +12,8 @@ class Cars(SQLModel, table=True):
     uid: uuid.UUID = Field(
         sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
     )
-    status: str = Field(default='Fresh', nullable=False)
+    status: str = Field(sa_column=Column(ENUM(CarStatusChoices), default='FRESH', nullable=False))
+
     make: str
     model: str
     year: str
@@ -21,6 +23,7 @@ class Cars(SQLModel, table=True):
     date_purchased: date
     price_purchased: int
     date_listed: date = Field(default=None, nullable=True)
+    price_listed: int = Field(default=None, nullable=True)
     date_sold: date = Field(default=None, nullable=True)
     price_sold: int = Field(default=None, nullable=True)
     autoteka_link: str = Field(default=None, nullable=True)

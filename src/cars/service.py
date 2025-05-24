@@ -1,15 +1,16 @@
 from sqlalchemy import delete
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.sql.operators import is_
 from sqlmodel.ext.asyncio.session import AsyncSession
+from typer.cli import state
 
-from .schemas import CarCreateSchema, CarUpdateSchema, ExpensesSchema, ExpensesCreateSchema
-from sqlmodel import select, desc
+from .schemas import CarCreateSchema, CarUpdateSchema, ExpensesSchema, ExpensesCreateSchema, CarStatusChoices
+from sqlmodel import select, desc, asc
 from .models import Cars, Expenses
 from datetime import datetime
 
 
 """Cars"""
-
 class CarService:
     async def get_car(self, car_uid: str, session: AsyncSession):
         statement = select(Cars).options(selectinload(Cars.expenses)).where(Cars.uid == car_uid)
@@ -20,8 +21,35 @@ class CarService:
         else:
             return None
 
-    async def get_all_cars(self, session: AsyncSession):
-        statement  = select(Cars).options(selectinload(Cars.expenses))      # selectinload нужен для корректной подгрузки вложенных сущностей
+    async def get_all_cars(
+            self,
+            session: AsyncSession, status: CarStatusChoices | None = None,
+            filter_oldest_created: bool | None = False,
+            filter_cheapest_listed: bool | None = None,
+            make: str | None = None,
+            model: str | None = None,
+            has_expenses: bool | None = None
+    ):
+        """By defalut Cars list is sorted by created_at as newest -> oldest"""
+        statement = select(Cars).options(selectinload(Cars.expenses))
+        if status:
+            statement = statement.where(Cars.status == status.value.capitalize())
+        if filter_oldest_created:
+            statement = statement.order_by(asc(Cars.created_at))
+        else:
+            statement = statement.order_by(desc(Cars.created_at))
+        if filter_cheapest_listed is not None:
+            if filter_cheapest_listed:
+                statement = statement.order_by(asc(Cars.price_listed))
+            else: statement = statement.order_by(desc(Cars.price_listed))
+        if make:
+            statement = statement.where(Cars.make == make.capitalize())
+        if model:
+            statement = statement.where(Cars.model == model.capitalize())
+        if has_expenses is not None:
+            if has_expenses:
+                statement = statement.where(Cars.expenses.any())
+            else: statement = statement.where(~Cars.expenses.any())
         res = await session.exec(statement)
         result = res.unique().all()                                         # unique избавляет от повторяющихся строчек при джойне
         return result
