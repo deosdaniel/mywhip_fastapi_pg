@@ -55,11 +55,16 @@ class CarService:
                 criteria_list.append(_attr.like(search))
 
             statement = statement.filter(or_(*criteria_list))
+
+
+
         """sort in fastapi query looks like make-model-vin..."""
         if sort is not None and sort != 'null':
             split_sort = sort.split('-')
             new_sort = ','.join(split_sort)
             statement = statement.order_by(desc(text(new_sort)))
+
+
         """pagination"""
         offset_page = page - 1
         statement = statement.offset(offset_page * limit).limit(limit)
@@ -71,7 +76,7 @@ class CarService:
         total_page = math.ceil(total_record / limit)
 
         res = await session.exec(statement)
-        result = res.unique().all()                                         # unique избавляет от повторяющихся строчек при джойне
+        result = res.unique().all()
         return PageResponse(
             page_number=page,
             page_size=limit,

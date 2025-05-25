@@ -1,10 +1,9 @@
 from fastapi import APIRouter, status, Depends, Query
 from fastapi.exceptions import HTTPException
-from sqlalchemy import column
-
-from src.cars.schemas import CarSchema, CarUpdateSchema, CarCreateSchema, ExpensesSchema, ExpensesCreateSchema, \
-    CarDTO, CarStatusChoices, ResponseSchema, PageResponse
 from typing import List
+
+from src.cars.schemas import CarUpdateSchema, CarCreateSchema, ExpensesSchema, ExpensesCreateSchema, \
+    CarSchema, ResponseSchema, PageResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from src.cars.service import CarService, ExpensesService
@@ -16,7 +15,7 @@ car_service = CarService()
 expenses_service = ExpensesService()
 
 """Get a car by by id"""
-@car_router.get('/{car_uid}', response_model=CarDTO)
+@car_router.get('/{car_uid}', response_model=CarSchema, response_model_exclude_none=True)
 async def get_car(
         car_uid: str,
         session: AsyncSession = Depends(get_session)
@@ -28,7 +27,7 @@ async def get_car(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Car not found')
 
 """Get all cars"""
-@car_router.get('/', response_model=ResponseSchema[PageResponse[CarDTO]], response_model_exclude_none=True)
+@car_router.get('/', response_model=ResponseSchema[PageResponse[CarSchema]], response_model_exclude_none=True)
 async def get_all_cars(
         session: AsyncSession = Depends(get_session),
         page: int = 1,
@@ -40,7 +39,7 @@ async def get_all_cars(
     cars = await car_service.get_all_cars(session, page, limit, columns, sort, filter_by)
     return ResponseSchema(detail='Success', result=cars)
 
-@car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarDTO)
+@car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarSchema)
 async def create_car(
         car_data: CarCreateSchema,
         session: AsyncSession = Depends(get_session)
@@ -49,7 +48,7 @@ async def create_car(
     return new_car
 
 
-@car_router.patch('/{car_uid}', response_model=CarDTO)
+@car_router.patch('/{car_uid}', response_model=CarSchema)
 async def update_car(
         car_uid: str,
         car_update_data: CarUpdateSchema,
