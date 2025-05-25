@@ -1,17 +1,23 @@
-from typing import List
-
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Column
 from datetime import datetime, date
 import uuid
 from enum import Enum
 
+from typing import TypeVar, Generic
+from typing import List, Optional
 
+
+
+
+"""Status choice"""
 class CarStatusChoices(Enum):
     FRESH = 'fresh'
     REPAIRING = 'repairing'
     DETAILING = 'detailing'
     LISTED = 'listed'
     SOLD = 'sold'
+
 
 
 """Cars"""
@@ -107,3 +113,19 @@ class ExpensesDTO(SQLModel):
     name: str
     exp_summ: int
     created_at: datetime
+
+
+
+"""Pagination"""
+T = TypeVar('T')
+
+class ResponseSchema(BaseModel, Generic[T]):  # <- Добавлен Generic[T]
+    detail: str
+    result: Optional[T] = None
+
+class PageResponse(BaseModel, Generic[T]):
+    page_number: int
+    page_size: int
+    total_pages: int
+    total_records: int
+    content: List[T]

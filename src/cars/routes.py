@@ -1,7 +1,9 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Query
 from fastapi.exceptions import HTTPException
+from sqlalchemy import column
+
 from src.cars.schemas import CarSchema, CarUpdateSchema, CarCreateSchema, ExpensesSchema, ExpensesCreateSchema, \
-    CarDTO, CarStatusChoices
+    CarDTO, CarStatusChoices, ResponseSchema, PageResponse
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -26,18 +28,17 @@ async def get_car(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Car not found')
 
 """Get all cars"""
-@car_router.get('/', response_model=List[CarDTO])
+@car_router.get('/', response_model=ResponseSchema[PageResponse[CarDTO]], response_model_exclude_none=True)
 async def get_all_cars(
         session: AsyncSession = Depends(get_session),
-        status: CarStatusChoices | None = None,
-        filter_oldest_created: bool | None = False,
-        filter_cheapest_listed: bool | None = None,
-        make: str | None = None,
-        model: str | None = None,
-        has_expenses: bool | None = None
+        page: int = 1,
+        limit: int = 10,
+        columns: str = Query(None, alias='columns'),
+        sort: str = Query(None, alias='sort'),
+        filter_by: str = Query(None, alias='filter'),
 ):
-    cars = await car_service.get_all_cars(session, status, filter_oldest_created,filter_cheapest_listed, make, model, has_expenses)
-    return cars
+    cars = await car_service.get_all_cars(session, page, limit, columns, sort, filter_by)
+    return ResponseSchema(detail='Success', result=cars)
 
 @car_router.post('/', status_code=status.HTTP_201_CREATED, response_model=CarDTO)
 async def create_car(

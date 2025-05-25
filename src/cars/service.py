@@ -1,11 +1,13 @@
-from sqlalchemy import delete
-from sqlalchemy.orm import joinedload, selectinload
-from sqlalchemy.sql.operators import is_
+import math
+
+from sqlalchemy import delete, func
+from sqlalchemy.orm import joinedload, selectinload, load_only
+from sqlalchemy.sql.operators import is_, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from typer.cli import state
-
-from .schemas import CarCreateSchema, CarUpdateSchema, ExpensesSchema, ExpensesCreateSchema, CarStatusChoices
-from sqlmodel import select, desc, asc
+from .schemas import CarCreateSchema, CarUpdateSchema, ExpensesSchema, ExpensesCreateSchema, CarStatusChoices, \
+    PageResponse
+from sqlmodel import select, desc, asc, text
 from .models import Cars, Expenses
 from datetime import datetime
 
@@ -23,36 +25,60 @@ class CarService:
 
     async def get_all_cars(
             self,
-            session: AsyncSession, status: CarStatusChoices | None = None,
-            filter_oldest_created: bool | None = False,
-            filter_cheapest_listed: bool | None = None,
-            make: str | None = None,
-            model: str | None = None,
-            has_expenses: bool | None = None
+            session: AsyncSession,
+            page: int = 1,
+            limit: int = 0,
+            columns: str = None,
+            sort: str = None,
+            filter_by: str = None
     ):
         """By defalut Cars list is sorted by created_at as newest -> oldest"""
         statement = select(Cars).options(selectinload(Cars.expenses))
-        if status:
-            statement = statement.where(Cars.status == status.value.capitalize())
-        if filter_oldest_created:
-            statement = statement.order_by(asc(Cars.created_at))
-        else:
-            statement = statement.order_by(desc(Cars.created_at))
-        if filter_cheapest_listed is not None:
-            if filter_cheapest_listed:
-                statement = statement.order_by(asc(Cars.price_listed))
-            else: statement = statement.order_by(desc(Cars.price_listed))
-        if make:
-            statement = statement.where(Cars.make == make.capitalize())
-        if model:
-            statement = statement.where(Cars.model == model.capitalize())
-        if has_expenses is not None:
-            if has_expenses:
-                statement = statement.where(Cars.expenses.any())
-            else: statement = statement.where(~Cars.expenses.any())
+
+        """columns in fastapi query look like : make-model-vin..."""
+        if columns is not None and columns !='all':
+            new_columns = columns.split('-')
+
+            column_list = []
+            for data in new_columns:
+                column_list.append(data)
+
+            statement = statement.select(Cars).options(*[f'Cars.{x}' for x in column_list])
+        """filter in fastapi query looks like: key*value-key*value-..."""
+        if filter_by is not None and filter_by != 'null':
+            criteria = dict(x.split('*') for x in filter_by.split('-'))
+
+            criteria_list = []
+            for attr,value in criteria.items():
+                _attr = getattr(Cars, attr)
+                search = "%{}%".format(value)
+                criteria_list.append(_attr.like(search))
+
+            statement = statement.filter(or_(*criteria_list))
+        """sort in fastapi query looks like make-model-vin..."""
+        if sort is not None and sort != 'null':
+            split_sort = sort.split('-')
+            new_sort = ','.join(split_sort)
+            statement = statement.order_by(desc(text(new_sort)))
+        """pagination"""
+        offset_page = page - 1
+        statement = statement.offset(offset_page * limit).limit(limit)
+        """count query"""
+        count_query = select(func.count(1)).select_from(Cars)
+        """Total record"""
+        total_record = (await session.exec(count_query)).one() or 0
+        """total page"""
+        total_page = math.ceil(total_record / limit)
+
         res = await session.exec(statement)
         result = res.unique().all()                                         # unique избавляет от повторяющихся строчек при джойне
-        return result
+        return PageResponse(
+            page_number=page,
+            page_size=limit,
+            total_pages=total_page,
+            total_records=total_record,
+            content=result
+        )
 
 
 
@@ -75,8 +101,6 @@ class CarService:
             update_data_dict = update_data.model_dump()
             for k,v in update_data_dict.items():
                 setattr(car_to_update, k, v)
-
-
             await session.commit()
             await session.refresh(car_to_update)
             return car_to_update
