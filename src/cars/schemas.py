@@ -12,11 +12,11 @@ from typing import List, Optional
 
 """Status choice"""
 class CarStatusChoices(Enum):
-    FRESH = 'fresh'
-    REPAIRING = 'repairing'
-    DETAILING = 'detailing'
-    LISTED = 'listed'
-    SOLD = 'sold'
+    FRESH = 'FRESH'
+    REPAIRING = 'REPAIRING'
+    DETAILING = 'DETAILING'
+    LISTED = 'LISTED'
+    SOLD = 'SOLD'
 
 
 
@@ -30,8 +30,9 @@ class CarCreateSchema(BaseModel):
     sts_num: str
     date_purchased: date
     price_purchased: int
-    expenses: List["ExpensesCreateSchema"] | None = None
     status: CarStatusChoices | None = None
+    expenses: List["ExpensesCreateSchema"] | None = None
+
 
 class CarUpdateSchema(BaseModel):
     price_purchased: int | None = None
