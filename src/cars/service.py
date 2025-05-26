@@ -1,15 +1,12 @@
 import math
-
 from sqlalchemy import delete, func
 from sqlalchemy.orm import joinedload, selectinload, load_only
 from sqlalchemy.sql.operators import is_, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
-from typer.cli import state
 from .schemas import CarCreateSchema, CarUpdateSchema, ExpensesSchema, ExpensesCreateSchema, CarStatusChoices, \
     PageResponse
 from sqlmodel import select, desc, asc, text
 from .models import Cars, Expenses
-from datetime import datetime
 
 
 """Cars"""
