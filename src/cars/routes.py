@@ -50,10 +50,9 @@ async def get_all_cars(
     session: AsyncSession = Depends(get_session),
     page: int = 1,
     limit: int = 10,
-    sort: str = Query(None, alias="sort"),
-    filter: FilterChoices = Query(None, alias="filter"),
+    cars_filter: FilterChoices = Query(None, alias="Filter"),
 ):
-    cars = await car_service.get_all_cars(session, page, limit, sort, filter)
+    cars = await car_service.get_all_cars(session, page, limit, cars_filter)
     return ResponseSchema(detail="Success", result=cars)
 
 

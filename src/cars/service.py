@@ -1,7 +1,6 @@
 import math
 from sqlalchemy import delete, func
 from sqlalchemy.orm import joinedload, selectinload, load_only
-from sqlalchemy.sql.operators import is_, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .schemas import (
     CarCreateSchema,
@@ -34,8 +33,7 @@ class CarService:
         session: AsyncSession,
         page: int = 1,
         limit: int = 0,
-        sort: str = None,
-        filter: FilterChoices = None,
+        cars_filter: FilterChoices = None,
     ):
         """By defalut Cars list is sorted by created_at as newest -> oldest"""
         statement = (
@@ -44,15 +42,9 @@ class CarService:
             .order_by(desc(Cars.created_at))
         )
 
-        """filter in fastapi query looks like: key*value-key*value-..."""
-        if filter is not None and filter != "null":
-            pass
-
-        """sort in fastapi query looks like make-model-vin..."""
-        if sort is not None and sort != "null":
-            split_sort = sort.split("-")
-            new_sort = ",".join(split_sort)
-            statement = statement.order_by(desc(text(new_sort)))
+        if cars_filter is not None and cars_filter != "null":
+            print("Car filter is not null")
+            statement = statement.where(Cars.make == cars_filter.make)
 
         """pagination"""
         offset_page = page - 1

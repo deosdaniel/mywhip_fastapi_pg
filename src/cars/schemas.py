@@ -1,5 +1,3 @@
-from fastapi_filter.contrib.sqlalchemy import Filter
-from fastapi_filter import FilterDepends, with_prefix
 from pydantic import BaseModel
 from sqlmodel import SQLModel
 from datetime import datetime, date
@@ -9,9 +7,6 @@ from enum import Enum
 from typing import TypeVar, Generic, TYPE_CHECKING
 from typing import List, Optional
 
-if TYPE_CHECKING:
-
-    from src.cars.models import Cars
 
 """Status choice"""
 
@@ -27,12 +22,8 @@ class CarStatusChoices(Enum):
 """Filter choice"""
 
 
-class FilterChoices(Filter):
+class FilterChoices(BaseModel):
     make: str | None = None
-    model: str | None = None
-
-    class Constants(Filter.Constants):
-        model = "Cars"
 
 
 """Cars"""
