@@ -1,7 +1,11 @@
 import math
+from itertools import count
+
 from sqlalchemy import delete, func
 from sqlalchemy.orm import joinedload, selectinload, load_only
 from sqlmodel.ext.asyncio.session import AsyncSession
+from typer.cli import state
+
 from .schemas import (
     CarCreateSchema,
     CarUpdateSchema,
@@ -34,32 +38,45 @@ class CarService:
         session: AsyncSession,
     ):
         # Base query
-        statement = (
-            select(Cars)
-            .options(selectinload(Cars.expenses))
-            .order_by(desc(Cars.created_at))
-        )
+        statement = select(Cars).options(selectinload(Cars.expenses))
+        # Counting query
+        count_statement = select(func.count(1)).select_from(Cars)
         # Filtering
+
         if search.make:
             print("Make filter is not null")
             statement = statement.filter_by(make=search.make)
+            count_statement = count_statement.filter_by(make=search.make)
         if search.model:
             print("Model filter is not null")
             statement = statement.filter_by(model=search.model)
+            count_statement = count_statement.filter_by(model=search.model)
         if search.prod_year:
             print("Prod year filter is not null")
-            if search.prod_year.equal:
-                statement = statement.filter_by(year=search.prod_year.equal)
             if search.prod_year.year_from:
                 statement = statement.filter(Cars.year >= search.prod_year.year_from)
+                count_statement = count_statement.filter(
+                    Cars.year >= search.prod_year.year_from
+                )
             if search.prod_year.year_to:
                 statement = statement.filter(Cars.year <= search.prod_year.year_to)
+                count_statement = count_statement.filter(
+                    Cars.year <= search.prod_year.year_to
+                )
+        if search.status and search.status:
+            print("Status filter is not null")
+            statement = statement.filter_by(status=search.status)
+            count_statement = count_statement.filter_by(status=search.status)
+        # Sorting
+        direction = desc if search.order_desc else asc
+        if search.sort_by:
+            print(f"search order is {direction}")
+            statement = statement.order_by(direction(getattr(Cars, search.sort_by)))
         # Pagination
         offset_page = search.page - 1
         statement = statement.offset(offset_page * search.limit).limit(search.limit)
         # Counting records, pages
-        count_query = select(func.count(1)).select_from(Cars)
-        total_records = (await session.exec(count_query)).one() or 0
+        total_records = (await session.exec(count_statement)).one() or 0
         total_pages = math.ceil(total_records / search.limit)
 
         res = await session.exec(statement)
@@ -80,14 +97,12 @@ class CarService:
             .order_by(desc(Cars.created_at))
         )
 
-        """pagination"""
+        # Pagination
         offset_page = page - 1
         statement = statement.offset(offset_page * limit).limit(limit)
-        """count query"""
+        # Counting records, pages
         count_query = select(func.count(1)).select_from(Cars)
-        """Total record"""
         total_record = (await session.exec(count_query)).one() or 0
-        """total page"""
         total_page = math.ceil(total_record / limit)
 
         res = await session.exec(statement)

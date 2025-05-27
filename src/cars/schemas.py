@@ -117,7 +117,6 @@ class PageResponse(BaseModel, Generic[T]):
 
 
 class ProdYear(BaseModel):
-    equal: int | None = None
     year_from: int | None = None
     year_to: int | None = None
 
@@ -128,3 +127,6 @@ class GetAllSchema(BaseModel):
     make: str | None = None
     model: str | None = None
     prod_year: ProdYear | None = None
+    status: CarStatusChoices | None = None
+    sort_by: str = "created_at"
+    order_desc: bool = True
