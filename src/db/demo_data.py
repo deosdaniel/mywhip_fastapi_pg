@@ -1,9 +1,17 @@
-from datetime import date, datetime
+from datetime import datetime
+from time import time
+from typing import Dict, List
 from uuid import uuid4
 import random
 from faker import Faker
+from sqlalchemy import insert
+
 from src.cars.models import Cars, Expenses
 from src.cars.schemas import CarStatusChoices
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.db.main import engine
+import asyncio
 
 fake = Faker("ru_RU")  # Для русскоязычных данных
 
@@ -29,10 +37,19 @@ def generate_expenses(count: int):
     ]
 
 
-def generate_car(status: str):
+def generate_car():
     """Генерирует один автомобиль с заданным статусом"""
     base_price = random.randint(500000, 5000000)
-    date_purchased = fake.date_between(start_date="-2y", end_date="today")
+    date_purchased = fake.date_between(start_date="-20y", end_date="today")
+    status = random.choice(
+        [
+            CarStatusChoices.FRESH,
+            CarStatusChoices.REPAIRING,
+            CarStatusChoices.DETAILING,
+            CarStatusChoices.LISTED,
+            CarStatusChoices.SOLD,
+        ]
+    )
 
     car = Cars(
         uid=uuid4(),
@@ -53,58 +70,70 @@ def generate_car(status: str):
         status=status.value,
         created_at=datetime.now(),
     )
-
-    # Общие для SOLD и LISTED поля
-    if status in [CarStatusChoices.SOLD, CarStatusChoices.LISTED]:
-        car.date_listed = fake.date_between(start_date=date_purchased, end_date="today")
-        listed_price = base_price + random.randint(50000, 500000)
-        car.price_listed = listed_price
-
-        if status == CarStatusChoices.SOLD:
-            car.date_sold = fake.date_between(
-                start_date=car.date_listed, end_date="today"
-            )
-            car.price_sold = random.randint(
-                int(listed_price * 0.9), listed_price + random.randint(0, 100000)
-            )
-
-        elif status == CarStatusChoices.LISTED:
-            car.avito_link = f"https://avito.ru/{fake.uri_path()}"
-            car.autoru_link = f"https://auto.ru/{fake.uri_path()}"
-            car.drom_link = f"https://drom.ru/{fake.uri_path()}"
-
-    if random.choice([True, False]):
-        car.autoteka_link = f"https://autoteka.ru/{fake.uri_path()}"
-    if random.choice([True, False]):
-        car.notes = fake.sentence(nb_words=6)
+    car.date_listed = fake.date_between(start_date=date_purchased, end_date="today")
+    listed_price = base_price + random.randint(50000, 500000)
+    car.price_listed = listed_price
+    car.date_sold = fake.date_between(start_date=car.date_listed, end_date="today")
+    car.price_sold = random.randint(
+        int(listed_price * 0.9), listed_price + random.randint(0, 100000)
+    )
+    car.avito_link = f"https://avito.ru/{fake.uri_path()}"
+    car.autoru_link = f"https://auto.ru/{fake.uri_path()}"
+    car.drom_link = f"https://drom.ru/{fake.uri_path()}"
+    car.autoteka_link = f"https://autoteka.ru/{fake.uri_path()}"
+    car.notes = fake.sentence(nb_words=6)
 
     return car
 
 
-def generate_demo_cars():
+def generate_demo_cars(quantity: int):
     """Генерирует 50 тестовых автомобилей"""
     cars = []
 
-    for _ in range(21):  # SOLD
-        car = generate_car(CarStatusChoices.SOLD)
+    for _ in range(quantity):  # SOLD
+        car = generate_car()
         if random.random() > 0.3:
             car.expenses = generate_expenses(random.randint(1, 5))
         cars.append(car)
 
-    for _ in range(17):  # Без расходов
-        status = random.choice(
-            [
-                CarStatusChoices.FRESH,
-                CarStatusChoices.REPAIRING,
-                CarStatusChoices.DETAILING,
-            ]
-        )
-        cars.append(generate_car(status))
-
-    for _ in range(12):  # С расходами
-        status = random.choice(list(CarStatusChoices))
-        car = generate_car(status)
-        car.expenses = generate_expenses(random.randint(1, 5))
-        cars.append(car)
-
     return cars
+
+
+async def bulk_insert(session: AsyncSession, car_data: List[Dict]):
+    await session.execute(insert(Cars), car_data)
+    await session.commit()
+
+
+async def main():
+    total_records = 50_000
+    batch_size = 5_000
+    batches = total_records // batch_size
+
+    async with AsyncSession(engine) as session:
+
+        print(f"Начинаю генерацию и вставку {total_records:,} автомобилей")
+        start_time = time()
+        for i in range(batches):
+
+            start_gen_time = time()
+            batch = generate_demo_cars(batch_size)
+            total_gen_time = time() - start_gen_time
+
+            start_insert_time = time()
+            await bulk_insert(session, batch)
+            total_insert_time = time() - start_insert_time
+            print(
+                f"Вставлено {(i+1)*batch_size} записей."
+                f"Генерация текущего пакета заняла: {total_gen_time:.2f} сек,"
+                f"Вставка текущего пакета заняла: {total_insert_time:.2f} сек"
+            )
+        remaining = total_records % batch_size
+        if remaining > 0:
+            batch = generate_demo_cars(remaining)
+            await bulk_insert(session, batch)
+    total_time = time() - start_time
+    print(f"Записи вставлены! Время выполнения: {total_time:.2f}сек.")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
