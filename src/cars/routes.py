@@ -10,7 +10,7 @@ from src.cars.schemas import (
     CarSchema,
     ResponseSchema,
     PageResponse,
-    FilterChoices,
+    GetAllSchema,
 )
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -38,9 +38,30 @@ async def get_car(car_uid: str, session: AsyncSession = Depends(get_session)) ->
         )
 
 
-"""Get all cars"""
+# Get filtered cars
+@car_router.post(
+    "/filter",
+    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model_exclude_none=True,
+)
+async def filter_all_cars(
+    search: GetAllSchema,
+    session: AsyncSession = Depends(get_session),
+):
+    cars = await car_service.filter_all_cars(search, session)
+    return ResponseSchema(detail="Success", result=cars)
 
 
+# Get all cars w/ no filters
+@car_router.post("/", status_code=status.HTTP_201_CREATED, response_model=CarSchema)
+async def create_car(
+    car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
+) -> dict:
+    new_car = await car_service.create_car(car_data, session)
+    return new_car
+
+
+# Old get-request
 @car_router.get(
     "/",
     response_model=ResponseSchema[PageResponse[CarSchema]],
@@ -50,18 +71,9 @@ async def get_all_cars(
     session: AsyncSession = Depends(get_session),
     page: int = 1,
     limit: int = 10,
-    cars_filter: FilterChoices = Query(None, alias="Filter"),
 ):
-    cars = await car_service.get_all_cars(session, page, limit, cars_filter)
+    cars = await car_service.get_all_cars(session, page, limit)
     return ResponseSchema(detail="Success", result=cars)
-
-
-@car_router.post("/", status_code=status.HTTP_201_CREATED, response_model=CarSchema)
-async def create_car(
-    car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
-) -> dict:
-    new_car = await car_service.create_car(car_data, session)
-    return new_car
 
 
 @car_router.patch("/{car_uid}", response_model=CarSchema)

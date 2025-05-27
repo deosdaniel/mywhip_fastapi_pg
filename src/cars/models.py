@@ -12,11 +12,13 @@ class Cars(SQLModel, table=True):
     uid: uuid.UUID = Field(
         sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
     )
-    status: str = Field(sa_column=Column(ENUM(CarStatusChoices), default='FRESH', nullable=False))
+    status: str = Field(
+        sa_column=Column(ENUM(CarStatusChoices), default="FRESH", nullable=False)
+    )
 
     make: str
     model: str
-    year: str
+    year: int
     vin: str
     pts_num: str
     sts_num: str
@@ -31,13 +33,21 @@ class Cars(SQLModel, table=True):
     avito_link: str = Field(default=None, nullable=True)
     autoru_link: str = Field(default=None, nullable=True)
     drom_link: str = Field(default=None, nullable=True)
-    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False))
-    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True))
+    created_at: datetime = Field(
+        sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False)
+    )
+    updated_at: datetime = Field(
+        sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True)
+    )
 
-    expenses: list["Expenses"] = Relationship(back_populates="car", sa_relationship_kwargs={'lazy':'selectin'}, cascade_delete=True)
+    expenses: list["Expenses"] = Relationship(
+        back_populates="car",
+        sa_relationship_kwargs={"lazy": "selectin"},
+        cascade_delete=True,
+    )
 
     def __repr__(self):
-        return f'<Car {self.vin}>'
+        return f"<Car {self.vin}>"
 
 
 class Expenses(SQLModel, table=True):
@@ -47,10 +57,12 @@ class Expenses(SQLModel, table=True):
     )
     name: str
     exp_summ: int
-    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False))
+    created_at: datetime = Field(
+        sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False)
+    )
 
     car_uid: uuid.UUID = Field(foreign_key="cars.uid")
     car: "Cars" = Relationship(back_populates="expenses")
 
     def __repr__(self):
-        return f'<Expense {self.name}>'
+        return f"<Expense {self.name}>"

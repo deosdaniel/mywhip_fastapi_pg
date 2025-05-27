@@ -19,20 +19,13 @@ class CarStatusChoices(Enum):
     SOLD = "SOLD"
 
 
-"""Filter choice"""
-
-
-class FilterChoices(BaseModel):
-    make: str | None = None
-
-
 """Cars"""
 
 
 class CarCreateSchema(BaseModel):
     make: str
     model: str
-    year: str
+    year: int
     vin: str
     pts_num: str
     sts_num: str
@@ -60,7 +53,7 @@ class CarSchema(BaseModel):
     uid: uuid.UUID
     make: str
     model: str
-    year: str
+    year: int
     vin: str
     pts_num: str
     sts_num: str
@@ -118,3 +111,20 @@ class PageResponse(BaseModel, Generic[T]):
     total_pages: int
     total_records: int
     content: List[T]
+
+
+"""Filter schemas"""
+
+
+class ProdYear(BaseModel):
+    equal: int | None = None
+    year_from: int | None = None
+    year_to: int | None = None
+
+
+class GetAllSchema(BaseModel):
+    page: int = 1
+    limit: int = 10
+    make: str | None = None
+    model: str | None = None
+    prod_year: ProdYear | None = None

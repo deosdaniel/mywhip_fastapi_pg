@@ -7,7 +7,7 @@ from .schemas import (
     CarUpdateSchema,
     ExpensesCreateSchema,
     PageResponse,
-    FilterChoices,
+    GetAllSchema,
 )
 from sqlmodel import select, desc, asc, text
 from .models import Cars, Expenses
@@ -28,23 +28,57 @@ class CarService:
         else:
             return None
 
-    async def get_all_cars(
+    async def filter_all_cars(
         self,
+        search: GetAllSchema,
         session: AsyncSession,
-        page: int = 1,
-        limit: int = 0,
-        cars_filter: FilterChoices = None,
     ):
+        # Base query
+        statement = (
+            select(Cars)
+            .options(selectinload(Cars.expenses))
+            .order_by(desc(Cars.created_at))
+        )
+        # Filtering
+        if search.make:
+            print("Make filter is not null")
+            statement = statement.filter_by(make=search.make)
+        if search.model:
+            print("Model filter is not null")
+            statement = statement.filter_by(model=search.model)
+        if search.prod_year:
+            print("Prod year filter is not null")
+            if search.prod_year.equal:
+                statement = statement.filter_by(year=search.prod_year.equal)
+            if search.prod_year.year_from:
+                statement = statement.filter(Cars.year >= search.prod_year.year_from)
+            if search.prod_year.year_to:
+                statement = statement.filter(Cars.year <= search.prod_year.year_to)
+        # Pagination
+        offset_page = search.page - 1
+        statement = statement.offset(offset_page * search.limit).limit(search.limit)
+        # Counting records, pages
+        count_query = select(func.count(1)).select_from(Cars)
+        total_records = (await session.exec(count_query)).one() or 0
+        total_pages = math.ceil(total_records / search.limit)
+
+        res = await session.exec(statement)
+        result = res.unique().all()
+        return PageResponse(
+            page_number=search.page,
+            page_size=search.limit,
+            total_pages=total_pages,
+            total_records=total_records,
+            content=result,
+        )
+
+    async def get_all_cars(self, session: AsyncSession, page: int = 1, limit: int = 0):
         """By defalut Cars list is sorted by created_at as newest -> oldest"""
         statement = (
             select(Cars)
             .options(selectinload(Cars.expenses))
             .order_by(desc(Cars.created_at))
         )
-
-        if cars_filter is not None and cars_filter != "null":
-            print("Car filter is not null")
-            statement = statement.where(Cars.make == cars_filter.make)
 
         """pagination"""
         offset_page = page - 1
