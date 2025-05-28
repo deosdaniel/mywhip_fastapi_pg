@@ -32,9 +32,11 @@ async def lifespan(app: FastAPI):
     yield  # Здесь приложение работает
 
     # Код, выполняемый при остановке приложения
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
-    print("Tables dropped")
+
+
+#    async with engine.begin() as conn:
+#        await conn.run_sync(SQLModel.metadata.drop_all)
+#    print("Tables dropped")
 
 
 app = FastAPI(

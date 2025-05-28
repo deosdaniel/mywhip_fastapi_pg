@@ -18,7 +18,7 @@ class Cars(SQLModel, table=True):
 
     make: str
     model: str
-    year: int
+    year: int = Field(index=True)
     vin: str
     pts_num: str
     sts_num: str
