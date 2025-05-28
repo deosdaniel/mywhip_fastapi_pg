@@ -1,10 +1,7 @@
 import math
-from itertools import count
-
 from sqlalchemy import delete, func
-from sqlalchemy.orm import joinedload, selectinload, load_only
+from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
-from typer.cli import state
 
 from .schemas import (
     CarCreateSchema,
@@ -13,14 +10,15 @@ from .schemas import (
     PageResponse,
     GetAllSchema,
 )
-from sqlmodel import select, desc, asc, text
+from sqlmodel import select, desc, asc
 from .models import Cars, Expenses
 
 
-"""Cars"""
+# Cars
 
 
 class CarService:
+    # Get single car
     async def get_car(self, car_uid: str, session: AsyncSession):
         statement = (
             select(Cars).options(selectinload(Cars.expenses)).where(Cars.uid == car_uid)
@@ -32,6 +30,7 @@ class CarService:
         else:
             return None
 
+    # Get Cars filtered list
     async def filter_all_cars(
         self,
         search: GetAllSchema,
@@ -41,18 +40,16 @@ class CarService:
         statement = select(Cars).options(selectinload(Cars.expenses))
         # Counting query
         count_statement = select(func.count(1)).select_from(Cars)
+
         # Filtering
 
         if search.make:
-            print("Make filter is not null")
             statement = statement.filter_by(make=search.make)
             count_statement = count_statement.filter_by(make=search.make)
         if search.model:
-            print("Model filter is not null")
             statement = statement.filter_by(model=search.model)
             count_statement = count_statement.filter_by(model=search.model)
         if search.prod_year:
-            print("Prod year filter is not null")
             if search.prod_year.year_from:
                 statement = statement.filter(Cars.year >= search.prod_year.year_from)
                 count_statement = count_statement.filter(
@@ -64,20 +61,26 @@ class CarService:
                     Cars.year <= search.prod_year.year_to
                 )
         if search.status and search.status:
-            print("Status filter is not null")
             statement = statement.filter_by(status=search.status)
             count_statement = count_statement.filter_by(status=search.status)
+
         # Sorting
+
         direction = desc if search.order_desc else asc
         if search.sort_by:
-            print(f"search order is {direction}")
             statement = statement.order_by(direction(getattr(Cars, search.sort_by)))
+
         # Pagination
+
         offset_page = search.page - 1
         statement = statement.offset(offset_page * search.limit).limit(search.limit)
+
         # Counting records, pages
+
         total_records = (await session.exec(count_statement)).one() or 0
         total_pages = math.ceil(total_records / search.limit)
+
+        # Executing query
 
         res = await session.exec(statement)
         result = res.unique().all()
@@ -89,32 +92,7 @@ class CarService:
             content=result,
         )
 
-    async def get_all_cars(self, session: AsyncSession, page: int = 1, limit: int = 0):
-        """By defalut Cars list is sorted by created_at as newest -> oldest"""
-        statement = (
-            select(Cars)
-            .options(selectinload(Cars.expenses))
-            .order_by(desc(Cars.created_at))
-        )
-
-        # Pagination
-        offset_page = page - 1
-        statement = statement.offset(offset_page * limit).limit(limit)
-        # Counting records, pages
-        count_query = select(func.count(1)).select_from(Cars)
-        total_record = (await session.exec(count_query)).one() or 0
-        total_page = math.ceil(total_record / limit)
-
-        res = await session.exec(statement)
-        result = res.unique().all()
-        return PageResponse(
-            page_number=page,
-            page_size=limit,
-            total_pages=total_page,
-            total_records=total_record,
-            content=result,
-        )
-
+    # Create a Car
     async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
         new_expenses = []
         if car_data.expenses:
@@ -127,6 +105,7 @@ class CarService:
         await session.refresh(new_car)
         return new_car
 
+    # Update Car data
     async def update_car(
         self, car_uid: str, update_data: CarUpdateSchema, session: AsyncSession
     ):
@@ -141,6 +120,7 @@ class CarService:
         else:
             return None
 
+    # Delete a Car
     async def delete_car(self, car_uid, session: AsyncSession):
         car_to_delete = await self.get_car(car_uid, session)
         if car_to_delete is not None:
@@ -151,11 +131,9 @@ class CarService:
             return None
 
 
-"""Expenses"""
-
-
+# Expenses
 class ExpensesService:
-
+    # Create an expense
     async def create_expense(
         self, car_uid: str, exp_data: ExpensesCreateSchema, session: AsyncSession
     ):
@@ -172,6 +150,7 @@ class ExpensesService:
         else:
             return None
 
+    # Get all expenses for a single car
     async def get_expenses(self, car_uid: str, session: AsyncSession):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)
@@ -183,6 +162,7 @@ class ExpensesService:
         else:
             return False
 
+    # Delete all expenses for a single car
     async def delete_all_expenses_by_car_uid(self, car_uid: int, session: AsyncSession):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)

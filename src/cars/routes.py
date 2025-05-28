@@ -22,9 +22,8 @@ car_router = APIRouter()
 car_service = CarService()
 expenses_service = ExpensesService()
 
-"""Get a car by by id"""
 
-
+# Get a Car by id
 @car_router.get(
     "/{car_uid}", response_model=CarSchema, response_model_exclude_none=True
 )
@@ -38,7 +37,7 @@ async def get_car(car_uid: str, session: AsyncSession = Depends(get_session)) ->
         )
 
 
-# Get filtered cars
+# Get filtered Cars
 @car_router.post(
     "/filter",
     response_model=ResponseSchema[PageResponse[CarSchema]],
@@ -52,7 +51,7 @@ async def filter_all_cars(
     return ResponseSchema(detail="Success", result=cars)
 
 
-# Get all cars w/ no filters
+# Create a Car
 @car_router.post("/", status_code=status.HTTP_201_CREATED, response_model=CarSchema)
 async def create_car(
     car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
@@ -61,21 +60,7 @@ async def create_car(
     return new_car
 
 
-# Old get-request
-@car_router.get(
-    "/",
-    response_model=ResponseSchema[PageResponse[CarSchema]],
-    response_model_exclude_none=True,
-)
-async def get_all_cars(
-    session: AsyncSession = Depends(get_session),
-    page: int = 1,
-    limit: int = 10,
-):
-    cars = await car_service.get_all_cars(session, page, limit)
-    return ResponseSchema(detail="Success", result=cars)
-
-
+# Update a Car data
 @car_router.patch("/{car_uid}", response_model=CarSchema)
 async def update_car(
     car_uid: str,
@@ -93,6 +78,7 @@ async def update_car(
         return updated_car
 
 
+# Delete a Car
 @car_router.delete("/{car_uid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session)):
 
@@ -107,9 +93,8 @@ async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session))
         )
 
 
-"""EXPENSES"""
-
-
+# EXPENSES
+# Create an Expense
 @car_router.post(
     "/{car_uid}", status_code=status.HTTP_201_CREATED, response_model=ExpensesSchema
 )
@@ -128,6 +113,7 @@ async def create_expense(
         )
 
 
+# Get all expenses for a single Car
 @car_router.get("/{car_uid}/expenses", response_model=List[ExpensesSchema])
 async def get_expenses_by_car_uid(
     car_uid: str, session: AsyncSession = Depends(get_session)
@@ -145,6 +131,7 @@ async def get_expenses_by_car_uid(
         )
 
 
+# Delete all expenses for a single Car
 @car_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_expenses_by_car_uid(
     car_uid: str, session: AsyncSession = Depends(get_session)
