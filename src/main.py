@@ -16,9 +16,9 @@ version = "v1"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Код, выполняемый при запуске приложения
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    print("Tables created")
+    # async with engine.begin() as conn:
+    #    await conn.run_sync(SQLModel.metadata.create_all)
+    # print("Tables created")
 
     #    # Заполнение тестовыми данными (если таблица пуста)
     #    async with AsyncSession(engine) as session:

@@ -37,6 +37,27 @@ def generate_expenses(count: int):
     ]
 
 
+def generate_pts_num() -> str:
+    """Генерирует номер ПТС в формате 12АБ 123456 или 12аб123456"""
+    digits_part1 = f"{random.randint(10, 99)}"  # 2 цифры
+    letters = "".join(
+        random.choices(
+            "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя", k=2
+        )
+    )  # 2 русские буквы
+    digits_part2 = f"{random.randint(100000, 999999)}"  # 6 цифр
+    space = " " if random.choice([True, False]) else ""  # Случайный пробел
+
+    return f"{digits_part1}{letters}{space}{digits_part2}"
+
+
+def generate_sts_num() -> str:
+    """Генерирует номер СТС в формате 9999 999999 (4 цифры, пробел, 6 цифр)"""
+    part1 = f"{random.randint(1000, 9999)}"  # 4 цифры
+    part2 = f"{random.randint(100000, 999999)}"  # 6 цифр
+    return f"{part1} {part2}"  # Всегда с пробелом (можно сделать опциональным)
+
+
 def generate_car():
     """Генерирует один автомобиль с заданным статусом"""
     base_price = random.randint(500000, 5000000)
@@ -63,8 +84,8 @@ def generate_car():
             fake.date_between(start_date="-13y", end_date="today").year
         ),  # Исправлено здесь
         vin=fake.vin(),
-        pts_num=fake.bothify("##??######"),
-        sts_num=fake.bothify("##??######"),
+        pts_num=generate_pts_num(),
+        sts_num=generate_sts_num(),
         date_purchased=date_purchased,
         price_purchased=base_price,
         status=status.value,
@@ -105,8 +126,8 @@ async def bulk_insert(session: AsyncSession, car_data: List[Dict]):
 
 
 async def main():
-    total_records = 50_000
-    batch_size = 5_000
+    total_records = 500
+    batch_size = 500
     batches = total_records // batch_size
 
     async with AsyncSession(engine) as session:

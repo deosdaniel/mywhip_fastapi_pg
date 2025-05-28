@@ -60,8 +60,8 @@ class Expenses(SQLModel, table=True):
     created_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False)
     )
-
     car_uid: uuid.UUID = Field(foreign_key="cars.uid")
+
     car: "Cars" = Relationship(back_populates="expenses")
 
     def __repr__(self):
