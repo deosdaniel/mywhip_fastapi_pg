@@ -87,14 +87,14 @@ class ExpensesCreateSchema(BaseModel):
 class ExpensesSchema(BaseModel):
     uid: uuid.UUID
     created_at: datetime | None = None
-    name: str = Field(min_length=1, max_length=50)
-    exp_summ: int = Field(gt=0)
+    name: str
+    exp_summ: int
     car_uid: uuid.UUID
 
 
 class ExpensesDTO(BaseModel):
-    name: str = Field(min_length=1, max_length=50)
-    exp_summ: int = Field(gt=0)
+    name: str
+    exp_summ: int
     created_at: datetime
 
 
@@ -119,8 +119,8 @@ class PageResponse(BaseModel, Generic[T]):
 
 
 class ProdYear(BaseModel):
-    year_from: int | None = None
-    year_to: int | None = None
+    year_from: int | None = Field(ge=1970, le=int(datetime.now().year))
+    year_to: int | None = Field(ge=1970, le=int(datetime.now().year))
 
 
 class GetAllSchema(BaseModel):
