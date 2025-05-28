@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, status, Depends, Query, Path
 from fastapi.exceptions import HTTPException
 from typing import List
 
@@ -10,7 +10,7 @@ from src.cars.schemas import (
     CarSchema,
     ResponseSchema,
     PageResponse,
-    GetAllSchema,
+    GetAllFilter,
 )
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -27,7 +27,10 @@ expenses_service = ExpensesService()
 @car_router.get(
     "/{car_uid}", response_model=CarSchema, response_model_exclude_none=True
 )
-async def get_car(car_uid: str, session: AsyncSession = Depends(get_session)) -> dict:
+async def get_car(
+    car_uid: str = Path(min_length=32, max_length=36),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
     car = await car_service.get_car(car_uid, session)
     if car:
         return car
@@ -44,7 +47,7 @@ async def get_car(car_uid: str, session: AsyncSession = Depends(get_session)) ->
     response_model_exclude_none=True,
 )
 async def filter_all_cars(
-    search: GetAllSchema,
+    search: GetAllFilter,
     session: AsyncSession = Depends(get_session),
 ):
     cars = await car_service.filter_all_cars(search, session)

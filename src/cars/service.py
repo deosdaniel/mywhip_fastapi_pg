@@ -8,7 +8,7 @@ from .schemas import (
     CarUpdateSchema,
     ExpensesCreateSchema,
     PageResponse,
-    GetAllSchema,
+    GetAllFilter,
 )
 from sqlmodel import select, desc, asc
 from .models import Cars, Expenses
@@ -33,7 +33,7 @@ class CarService:
     # Get Cars filtered list
     async def filter_all_cars(
         self,
-        search: GetAllSchema,
+        search: GetAllFilter,
         session: AsyncSession,
     ):
         # Base query
