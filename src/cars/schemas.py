@@ -28,9 +28,9 @@ class CarCreateSchema(BaseModel):
     make: str
     model: str
     year: int = Field(ge=1970, le=int(datetime.now().year))
-    vin: str = Field(min_length=10, max_length=17)
-    pts_num: str = Field(pattern=r"^[0-9]{2}\s?[А-Яа-яЁё]{2}\s?[0-9]{6}$")
-    sts_num: str = Field(pattern=r"^[0-9]{4}\s?[0-9]{6}$")
+    vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{10,17}$")
+    pts_num: str = Field(pattern=r"^[0-9]{2}[А-Яа-яЁё]{2}[0-9]{6}$")
+    sts_num: str = Field(pattern=r"^[0-9]{4}[0-9]{6}$")
     date_purchased: date | None = Field(default=date.today)
     price_purchased: int = Field(gt=50000)
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
@@ -55,16 +55,16 @@ class CarSchema(BaseModel):
     uid: uuid.UUID
     make: str
     model: str
-    year: int = Field(ge=1970, le=int(datetime.now().year))
-    vin: str = Field(min_length=10, max_length=17)
-    pts_num: str = Field(pattern=r"^[0-9]{2}\s?[А-Яа-яЁё]{2}\s?[0-9]{6}$")
-    sts_num: str = Field(pattern=r"^[0-9]{4}\s?[0-9]{6}$")
-    date_purchased: date | None = Field(default=date.today)
-    price_purchased: int = Field(gt=50000)
+    year: int
+    vin: str
+    pts_num: str
+    sts_num: str
+    date_purchased: date | None = None
+    price_purchased: int = None
     date_listed: date | None = None
-    price_listed: int | None = Field(gt=50000)
+    price_listed: int | None = None
     date_sold: date | None = None
-    price_sold: int | None = Field(gt=50000)
+    price_sold: int | None = None
     autoteka_link: str | None = None
     notes: str | None = None
     avito_link: str | None = None
