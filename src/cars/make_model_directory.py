@@ -1,0 +1,46 @@
+import pandas as pd
+from sqlalchemy import select, text
+from sqlmodel import Session, create_engine
+from src.cars.models import MakesDirectory, ModelsDirectory
+
+engine = create_engine("postgresql://postgres:rootroot@localhost:5432/my_whip")
+
+
+def insert_makes():
+    df = pd.read_csv("make_model.csv")
+    df_makes = df.drop("model", axis=1)
+    df_makes = df_makes.drop_duplicates(subset="make")
+    df_makes = df_makes.reset_index(drop=True)
+    print(df_makes.head())
+    try:
+        df_makes.to_sql(
+            "makesdir", engine, if_exists="append", index=False, chunksize=1000
+        )
+        print("Successfully inserted makes")
+    except Exception as e:
+        print(e)
+
+
+def insert_models():
+    with Session(engine) as session:
+        makes = session.exec(select(MakesDirectory.uid, MakesDirectory.make)).all()
+        make_to_uid = {make: uid for uid, make in makes}
+        df = pd.read_csv("make_model.csv")
+        try:
+            df["make_uid"] = df["make"].map(make_to_uid)
+        except Exception as e:
+            print(e)
+        try:
+            for _, row in df.iterrows():
+                model = ModelsDirectory(
+                    model=row["model"],
+                    make_uid=row["make_uid"],
+                )
+                session.add(model)
+            session.commit()
+        except Exception as e:
+            print(e)
+
+
+if __name__ == "__main__":
+    insert_models()

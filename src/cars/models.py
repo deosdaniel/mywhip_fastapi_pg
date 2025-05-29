@@ -1,7 +1,8 @@
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
-import uuid
+from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
 from .schemas import CarStatusChoices
@@ -9,8 +10,8 @@ from .schemas import CarStatusChoices
 
 class Cars(SQLModel, table=True):
     __tablename__ = "cars"
-    uid: uuid.UUID = Field(
-        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
+    uid: UUID = Field(
+        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid4)
     )
     status: str = Field(
         sa_column=Column(ENUM(CarStatusChoices), default="FRESH", nullable=False)
@@ -52,17 +53,58 @@ class Cars(SQLModel, table=True):
 
 class Expenses(SQLModel, table=True):
     __tablename__ = "expenses"
-    uid: uuid.UUID = Field(
-        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
+    uid: UUID = Field(
+        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid4)
     )
     name: str
     exp_summ: int
     created_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False)
     )
-    car_uid: uuid.UUID = Field(foreign_key="cars.uid")
+    car_uid: UUID = Field(foreign_key="cars.uid")
 
     car: "Cars" = Relationship(back_populates="expenses")
 
     def __repr__(self):
         return f"<Expense {self.name}>"
+
+
+class MakesDirectory(SQLModel, table=True):
+    __tablename__ = "makesdir"
+    uid: UUID = Field(
+        sa_column=Column(
+            pg.UUID,
+            nullable=False,
+            primary_key=True,
+            server_default=text("gen_random_uuid()"),
+        )
+    )
+    make: str = Field(nullable=False)
+
+    models: list["ModelsDirectory"] = Relationship(
+        back_populates="make",
+        sa_relationship_kwargs={"lazy": "selectin"},
+        cascade_delete=True,
+    )
+
+    def __repr__(self):
+        return f"<Make {self.make}>"
+
+
+class ModelsDirectory(SQLModel, table=True):
+    __tablename__ = "modelsdir"
+    uid: UUID = Field(
+        sa_column=Column(
+            pg.UUID,
+            nullable=False,
+            primary_key=True,
+            server_default=text("gen_random_uuid()"),
+        )
+    )
+    model: str = Field(nullable=False)
+
+    make_uid: UUID = Field(foreign_key="makesdir.uid")
+    make: "MakesDirectory" = Relationship(back_populates="models")
+
+    def __repr__(self):
+        return f"<Model {self.model}>"
