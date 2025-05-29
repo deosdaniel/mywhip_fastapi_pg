@@ -31,7 +31,7 @@ async def test_client() -> TestClient:
     async with test_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-    app.dependency_overrides[get_session] = test_get_session
+        app.dependency_overrides[get_session] = test_get_session
 
     with TestClient(app) as client:
         yield client
