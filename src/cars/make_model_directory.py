@@ -1,5 +1,5 @@
 import pandas as pd
-from sqlalchemy import select, text
+from sqlalchemy import select, delete
 from sqlmodel import Session, create_engine
 from src.cars.models import MakesDirectory, ModelsDirectory
 
@@ -11,14 +11,14 @@ def insert_makes():
     df_makes = df.drop("model", axis=1)
     df_makes = df_makes.drop_duplicates(subset="make")
     df_makes = df_makes.reset_index(drop=True)
-    print(df_makes.head())
-    try:
-        df_makes.to_sql(
-            "makesdir", engine, if_exists="append", index=False, chunksize=1000
-        )
-        print("Successfully inserted makes")
-    except Exception as e:
-        print(e)
+    with Session(engine) as session:
+        try:
+            for _, row in df_makes.iterrows():
+                make = MakesDirectory(make=row["make"])
+                session.add(make)
+            session.commit()
+        except Exception as e:
+            print(e)
 
 
 def insert_models():
@@ -42,5 +42,14 @@ def insert_models():
             print(e)
 
 
+def clear_directories():
+    with Session(engine) as session:
+        session.exec(delete(ModelsDirectory))
+        session.exec(delete(MakesDirectory))
+        session.commit()
+
+
 if __name__ == "__main__":
+    clear_directories()
+    insert_makes()
     insert_models()
