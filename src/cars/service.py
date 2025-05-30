@@ -1,4 +1,7 @@
 import math
+from idlelib.iomenu import errors
+
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import delete, func
 from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -12,9 +15,6 @@ from .schemas import (
 )
 from sqlmodel import select, desc, asc
 from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
-
-
-# class MakeModelsService:
 
 
 # Cars
@@ -37,6 +37,32 @@ class CarService:
             return model
         else:
             return None
+
+    async def validate_make_model(
+        self, car_data: CarCreateSchema, session: AsyncSession
+    ):
+        check_make = await self.check_make(car_data.make, session)
+        check_model = await self.check_model(car_data.model, session)
+        if not check_make or not check_model:
+            errors = []
+            if not check_make:
+                errors.append(
+                    {
+                        "loc": ("make",),
+                        "msg": "No such Make found in directory",
+                        "type": "value_error",
+                    }
+                )
+            if not check_model:
+                errors.append(
+                    {
+                        "loc": ("model",),
+                        "msg": "No such Model found in directory",
+                        "type": "value_error",
+                    }
+                )
+            raise RequestValidationError(errors)
+        return car_data
 
     # Get single car
     async def get_car(self, car_uid: str, session: AsyncSession):
@@ -114,23 +140,17 @@ class CarService:
 
     # Create a Car
     async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
-        check_make = await self.check_make(car_data.make, session)
-        check_model = await self.check_model(car_data.model, session)
-        if not check_make or not check_model:
-            raise ValueError("Please, enter valid Make and Model")
-        else:
-            new_expenses = []
-            if car_data.expenses:
-                new_expenses = [
-                    Expenses(**exp.model_dump()) for exp in car_data.expenses
-                ]
-            new_car = Cars(
-                **car_data.model_dump(exclude={"expenses"}), expenses=new_expenses
-            )
-            session.add(new_car)
-            await session.commit()
-            await session.refresh(new_car)
-            return new_car
+        await self.validate_make_model(car_data, session)
+        new_expenses = []
+        if car_data.expenses:
+            new_expenses = [Expenses(**exp.model_dump()) for exp in car_data.expenses]
+        new_car = Cars(
+            **car_data.model_dump(exclude={"expenses"}), expenses=new_expenses
+        )
+        session.add(new_car)
+        await session.commit()
+        await session.refresh(new_car)
+        return new_car
 
     # Update Car data
     async def update_car(

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Depends, Query, Path
-from fastapi.exceptions import HTTPException
+from fastapi.exceptions import HTTPException, RequestValidationError
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
@@ -57,13 +57,8 @@ async def filter_all_cars(
 async def create_car(
     car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
 ) -> dict:
-    try:
-        new_car = await car_service.create_car(car_data, session)
-        return new_car
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
-        )
+    new_car = await car_service.create_car(car_data, session)
+    return new_car
 
 
 # Update a Car data
