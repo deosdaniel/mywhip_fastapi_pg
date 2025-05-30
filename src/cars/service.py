@@ -11,13 +11,33 @@ from .schemas import (
     GetAllFilter,
 )
 from sqlmodel import select, desc, asc
-from .models import Cars, Expenses
+from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
+
+
+# class MakeModelsService:
 
 
 # Cars
-
-
 class CarService:
+    async def check_make(self, input_make: str, session: AsyncSession):
+        statement = select(MakesDirectory).where(MakesDirectory.make == input_make)
+        res = await session.exec(statement)
+        make = res.first()
+        if make:
+            return make
+        else:
+            return None
+
+    async def check_model(self, input_model: str, session: AsyncSession):
+        statement = select(ModelsDirectory).where(ModelsDirectory.model == input_model)
+        res = await session.exec(statement)
+        model = res.first()
+        print(model)
+        if model:
+            return model
+        else:
+            return None
+
     # Get single car
     async def get_car(self, car_uid: str, session: AsyncSession):
         statement = (
@@ -94,16 +114,23 @@ class CarService:
 
     # Create a Car
     async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
-        new_expenses = []
-        if car_data.expenses:
-            new_expenses = [Expenses(**exp.model_dump()) for exp in car_data.expenses]
-        new_car = Cars(
-            **car_data.model_dump(exclude={"expenses"}), expenses=new_expenses
-        )
-        session.add(new_car)
-        await session.commit()
-        await session.refresh(new_car)
-        return new_car
+        check_make = await self.check_make(car_data.make, session)
+        check_model = await self.check_model(car_data.model, session)
+        if not check_make or not check_model:
+            raise ValueError("Please, enter valid Make and Model")
+        else:
+            new_expenses = []
+            if car_data.expenses:
+                new_expenses = [
+                    Expenses(**exp.model_dump()) for exp in car_data.expenses
+                ]
+            new_car = Cars(
+                **car_data.model_dump(exclude={"expenses"}), expenses=new_expenses
+            )
+            session.add(new_car)
+            await session.commit()
+            await session.refresh(new_car)
+            return new_car
 
     # Update Car data
     async def update_car(

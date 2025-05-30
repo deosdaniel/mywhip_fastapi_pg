@@ -57,8 +57,13 @@ async def filter_all_cars(
 async def create_car(
     car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
 ) -> dict:
-    new_car = await car_service.create_car(car_data, session)
-    return new_car
+    try:
+        new_car = await car_service.create_car(car_data, session)
+        return new_car
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        )
 
 
 # Update a Car data

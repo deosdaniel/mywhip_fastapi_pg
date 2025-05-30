@@ -1,14 +1,10 @@
-from tkinter.filedialog import FileDialog
-
 from pydantic import BaseModel, Field
-from sqlmodel import SQLModel
 from datetime import datetime, date
 import uuid
 from enum import Enum
 
-from typing import TypeVar, Generic, TYPE_CHECKING
+from typing import TypeVar, Generic
 from typing import List, Optional
-
 
 """Status choice"""
 
