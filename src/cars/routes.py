@@ -221,7 +221,7 @@ async def get_makes(
     limit: int = 10,
     requested_make: str | None = None,
 ):
-    result = await directory_service.get_models(session, page, limit, requested_make)
+    result = await directory_service.get_makes(session, page, limit, requested_make)
     return ResponseSchema(detail="Success", result=result)
 
 
