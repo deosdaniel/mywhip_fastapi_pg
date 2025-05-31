@@ -37,7 +37,7 @@ async def get_car(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await car_service.get_car(car_uid, session)
-    if car:
+    if result:
         return ResponseSchema(detail="Success", result=result)
     else:
         raise HTTPException(
@@ -79,7 +79,7 @@ async def update_car(
 ) -> dict:
     result = await car_service.update_car(car_uid, car_update_data, session)
 
-    if not updated_car:
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cannot update, car does not exist",
