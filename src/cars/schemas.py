@@ -24,9 +24,11 @@ class CarCreateSchema(BaseModel):
     make: str
     model: str
     year: int = Field(ge=1970, le=int(datetime.now().year))
-    vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{10,17}$")
-    pts_num: str = Field(pattern=r"^[0-9]{2}[А-Яа-яЁё]{2}[0-9]{6}$")
-    sts_num: str = Field(pattern=r"^[0-9]{4}[0-9]{6}$")
+    vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{10,17}$", default="JTDKB204093488265")
+    pts_num: str = Field(
+        pattern=r"^[0-9]{2}[А-Яа-яЁё]{2}\s?[0-9]{6}$", default="77ХВ 123456"
+    )
+    sts_num: str = Field(pattern=r"^[0-9]{4}\s?[0-9]{6}$", default="9955 123456")
     date_purchased: date = Field(default=date.today)
     price_purchased: int = Field(gt=50000)
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
