@@ -1,5 +1,5 @@
-from fastapi import APIRouter, status, Depends, Query, Path
-from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi import APIRouter, status, Depends, Path
+from fastapi.exceptions import HTTPException
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session

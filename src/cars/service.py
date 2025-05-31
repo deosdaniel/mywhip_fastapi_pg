@@ -1,5 +1,4 @@
 import math
-from idlelib.iomenu import errors
 
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy import delete, func
@@ -19,51 +18,6 @@ from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
 
 # Cars
 class CarService:
-    async def check_make(self, input_make: str, session: AsyncSession):
-        statement = select(MakesDirectory).where(MakesDirectory.make == input_make)
-        res = await session.exec(statement)
-        make = res.first()
-        if make:
-            return make
-        else:
-            return None
-
-    async def check_model(self, input_model: str, session: AsyncSession):
-        statement = select(ModelsDirectory).where(ModelsDirectory.model == input_model)
-        res = await session.exec(statement)
-        model = res.first()
-        print(model)
-        if model:
-            return model
-        else:
-            return None
-
-    async def validate_make_model(
-        self, car_data: CarCreateSchema, session: AsyncSession
-    ):
-        check_make = await self.check_make(car_data.make, session)
-        check_model = await self.check_model(car_data.model, session)
-        if not check_make or not check_model:
-            errors = []
-            if not check_make:
-                errors.append(
-                    {
-                        "loc": ("make",),
-                        "msg": "No such Make found in directory",
-                        "type": "value_error",
-                    }
-                )
-            if not check_model:
-                errors.append(
-                    {
-                        "loc": ("model",),
-                        "msg": "No such Model found in directory",
-                        "type": "value_error",
-                    }
-                )
-            raise RequestValidationError(errors)
-        return car_data
-
     # Get single car
     async def get_car(self, car_uid: str, session: AsyncSession):
         statement = (
@@ -140,12 +94,21 @@ class CarService:
 
     # Create a Car
     async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
-        await self.validate_make_model(car_data, session)
+        directory_service = DirectoryService()
+        validate_make = await directory_service.get_makes(
+            session, page=None, limit=None, requested_make=car_data.make
+        )
+        validate_model = await directory_service.get_models(
+            session, page=None, limit=None, requested_model=car_data.model
+        )
         new_expenses = []
         if car_data.expenses:
             new_expenses = [Expenses(**exp.model_dump()) for exp in car_data.expenses]
         new_car = Cars(
-            **car_data.model_dump(exclude={"expenses"}), expenses=new_expenses
+            **car_data.model_dump(exclude={"make", "model", "expenses"}),
+            make=validate_make.make,
+            model=validate_model.model,
+            expenses=new_expenses,
         )
         session.add(new_car)
         await session.commit()
@@ -296,14 +259,19 @@ class ExpensesService:
 
 class DirectoryService:
     async def get_makes(
-        self, session: AsyncSession, page, limit, requested_make: str = None
+        self,
+        session: AsyncSession,
+        page: int = None,
+        limit: int = None,
+        requested_make: str = None,
     ):
         if requested_make:
             statement = select(MakesDirectory).where(
                 func.lower(MakesDirectory.make) == func.lower(requested_make)
             )
             result = await session.exec(statement)
-            if not result.first() or result.first() == "null":
+            result = result.first()
+            if not result or result == "null":
                 raise RequestValidationError(
                     {
                         "loc": ("requested_make",),
@@ -311,7 +279,7 @@ class DirectoryService:
                         "type": "value_error",
                     }
                 )
-            return result.first()
+            return result
         else:
             statement = select(MakesDirectory)
 
@@ -346,7 +314,8 @@ class DirectoryService:
                 func.lower(ModelsDirectory.model) == func.lower(requested_model)
             )
             result = await session.exec(statement)
-            if not result.first() or result.first() == "null":
+            result = result.first()
+            if not result or result == "null":
                 raise RequestValidationError(
                     {
                         "loc": ("requested_model",),
@@ -354,7 +323,7 @@ class DirectoryService:
                         "type": "value_error",
                     }
                 )
-            return result.first()
+            return result
         else:
             statement = select(ModelsDirectory)
 
