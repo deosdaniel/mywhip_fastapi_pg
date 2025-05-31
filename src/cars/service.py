@@ -170,7 +170,7 @@ class ExpensesService:
             statement = (
                 select(Expenses)
                 .where(Expenses.car_uid == car_uid)
-                .where(Expenses.expense_id == exp_uid)
+                .where(Expenses.uid == exp_uid)
             )
             result = await session.exec(statement)
             exp = result.first()

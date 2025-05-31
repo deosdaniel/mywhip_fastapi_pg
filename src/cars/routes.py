@@ -28,15 +28,17 @@ directory_service = DirectoryService()
 
 # Get a Car by id
 @car_router.get(
-    "/{car_uid}", response_model=CarSchema, response_model_exclude_none=True
+    "/{car_uid}",
+    response_model=ResponseSchema[CarSchema],
+    response_model_exclude_none=True,
 )
 async def get_car(
     car_uid: str = Path(min_length=32, max_length=36),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    car = await car_service.get_car(car_uid, session)
+    result = await car_service.get_car(car_uid, session)
     if car:
-        return car
+        return ResponseSchema(detail="Success", result=result)
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
@@ -53,27 +55,29 @@ async def get_all_cars_by_filter(
     search: GetAllFilter,
     session: AsyncSession = Depends(get_session),
 ):
-    cars = await car_service.filter_all_cars(search, session)
-    return ResponseSchema(detail="Success", result=cars)
+    result = await car_service.filter_all_cars(search, session)
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Create a Car
-@car_router.post("/", status_code=status.HTTP_201_CREATED, response_model=CarSchema)
+@car_router.post(
+    "/", status_code=status.HTTP_201_CREATED, response_model=ResponseSchema[CarSchema]
+)
 async def create_car(
     car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
 ) -> dict:
-    new_car = await car_service.create_car(car_data, session)
-    return new_car
+    result = await car_service.create_car(car_data, session)
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Update a Car data
-@car_router.patch("/{car_uid}", response_model=CarSchema)
+@car_router.patch("/{car_uid}", response_model=ResponseSchema[CarSchema])
 async def update_car(
     car_uid: str,
     car_update_data: CarUpdateSchema,
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    updated_car = await car_service.update_car(car_uid, car_update_data, session)
+    result = await car_service.update_car(car_uid, car_update_data, session)
 
     if not updated_car:
         raise HTTPException(
@@ -81,7 +85,7 @@ async def update_car(
             detail="Cannot update, car does not exist",
         )
     else:
-        return updated_car
+        return ResponseSchema(detail="Success", result=result)
 
 
 # Delete a Car
@@ -102,7 +106,9 @@ async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session))
 # EXPENSES
 # Create an Expense
 @expenses_router.post(
-    "/{car_uid}", status_code=status.HTTP_201_CREATED, response_model=ExpensesSchema
+    "/{car_uid}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ResponseSchema[ExpensesSchema],
 )
 async def create_expense(
     car_uid: str,
@@ -112,7 +118,7 @@ async def create_expense(
 
     result = await expenses_service.create_expense(car_uid, exp_data, session)
     if result:
-        return result
+        return ResponseSchema(detail="Success", result=result)
     else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Car does not exist"
@@ -121,26 +127,28 @@ async def create_expense(
 
 # Get single expense
 @expenses_router.get(
-    "/{car_uid}/expenses/{exp_uid}", response_model=List[ExpensesSchema]
+    "/{car_uid}/expenses/{exp_uid}", response_model=ResponseSchema[ExpensesSchema]
 )
 async def get_single_expense(
     car_uid: str, exp_uid: str, session: AsyncSession = Depends(get_session)
 ):
     result = await expenses_service.get_single_expense(car_uid, exp_uid, session)
     if result:
-        return result
+        return ResponseSchema(detail="Success", result=result)
     elif result is False:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
         )
     else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No expenses yet"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
         )
 
 
 # Get all expenses for a single Car
-@expenses_router.get("/{car_uid}/expenses", response_model=List[ExpensesSchema])
+@expenses_router.get(
+    "/{car_uid}/expenses", response_model=ResponseSchema[PageResponse[ExpensesSchema]]
+)
 async def get_expenses_by_car_uid(
     car_uid: str, session: AsyncSession = Depends(get_session)
 ):
