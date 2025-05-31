@@ -303,6 +303,14 @@ class DirectoryService:
                 func.lower(MakesDirectory.make) == func.lower(requested_make)
             )
             result = await session.exec(statement)
+            if not result.first() or result.first() == "null":
+                raise RequestValidationError(
+                    {
+                        "loc": ("requested_make",),
+                        "msg": "No such Make found in directory",
+                        "type": "value_error",
+                    }
+                )
             return result.first()
         else:
             statement = select(MakesDirectory)
@@ -338,6 +346,14 @@ class DirectoryService:
                 func.lower(ModelsDirectory.model) == func.lower(requested_model)
             )
             result = await session.exec(statement)
+            if not result.first() or result.first() == "null":
+                raise RequestValidationError(
+                    {
+                        "loc": ("requested_model",),
+                        "msg": "No such Model found in directory",
+                        "type": "value_error",
+                    }
+                )
             return result.first()
         else:
             statement = select(ModelsDirectory)
@@ -353,6 +369,7 @@ class DirectoryService:
 
             result = await session.exec(statement)
             result = result.all()
+            print(f"Я отдаю список")
             return PageResponse(
                 page_number=page,
                 page_size=limit,
