@@ -182,14 +182,36 @@ class ExpensesService:
             return False  # Somehow raise 404 "Car not found"
 
     # Get all expenses for a single car
-    async def get_expenses(self, car_uid: str, session: AsyncSession):
+    async def get_expenses(
+        self, car_uid: str, session: AsyncSession, page: int = 1, limit: int = 10
+    ):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)
         if car_exists:
             statement = select(Expenses).where(Expenses.car_uid == car_uid)
+
+            # Pagination
+            offset_page = page - 1
+            statement = statement.offset(offset_page * limit).limit(limit)
+
+            # Counting records, pages
+            count_statement = (
+                select(func.count(1))
+                .select_from(Expenses)
+                .where(Expenses.car_uid == car_uid)
+            )
+            total_records = (await session.exec(count_statement)).one() or 0
+            total_pages = math.ceil(total_records / limit)
+
             result = await session.exec(statement)
-            exps = result.all()
-            return exps
+            result = result.all()
+            return PageResponse(
+                page_number=page,
+                page_size=limit,
+                total_pages=total_pages,
+                total_records=total_records,
+                content=result,
+            )
         else:
             return False
 
@@ -288,7 +310,7 @@ class DirectoryService:
             statement = statement.offset(offset_page * limit).limit(limit)
 
             # Counting records, pages
-            count_statement = select(func.count(1)).select_from(Cars)
+            count_statement = select(func.count(1)).select_from(MakesDirectory)
             total_records = (await session.exec(count_statement)).one() or 0
             total_pages = math.ceil(total_records / limit)
 
@@ -332,7 +354,7 @@ class DirectoryService:
             statement = statement.offset(offset_page * limit).limit(limit)
 
             # Counting records, pages
-            count_statement = select(func.count(1)).select_from(Cars)
+            count_statement = select(func.count(1)).select_from(ModelsDirectory)
             total_records = (await session.exec(count_statement)).one() or 0
             total_pages = math.ceil(total_records / limit)
 

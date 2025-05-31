@@ -150,11 +150,14 @@ async def get_single_expense(
     "/{car_uid}/expenses", response_model=ResponseSchema[PageResponse[ExpensesSchema]]
 )
 async def get_expenses_by_car_uid(
-    car_uid: str, session: AsyncSession = Depends(get_session)
+    car_uid: str,
+    session: AsyncSession = Depends(get_session),
+    page: int = 1,
+    limit: int = 10,
 ):
     result = await expenses_service.get_expenses(car_uid, session)
     if result:
-        return result
+        return ResponseSchema(detail="Success", result=result)
     elif result is False:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
