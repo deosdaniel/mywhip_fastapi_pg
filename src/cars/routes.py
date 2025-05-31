@@ -217,8 +217,8 @@ async def delete_single_expense(
 )
 async def get_makes(
     session: AsyncSession = Depends(get_session),
-    page: int = 0,
-    limit: int = 10,
+    page: int | None = 1,
+    limit: int | None = 10,
     requested_make: str | None = None,
 ):
     result = await directory_service.get_makes(session, page, limit, requested_make)
@@ -232,7 +232,7 @@ async def get_makes(
 )
 async def get_models(
     session: AsyncSession = Depends(get_session),
-    page: int = 0,
+    page: int = 1,
     limit: int = 10,
     requested_model: str | None = None,
 ):

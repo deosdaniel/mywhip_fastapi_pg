@@ -308,8 +308,8 @@ class DirectoryService:
             statement = select(MakesDirectory)
 
             # Pagination
-
-            statement = statement.offset(page * limit).limit(limit)
+            offset_page = page - 1
+            statement = statement.offset(offset_page * limit).limit(limit)
 
             # Counting records, pages
             count_statement = select(func.count(1)).select_from(Cars)
@@ -327,7 +327,11 @@ class DirectoryService:
             )
 
     async def get_models(
-        self, session: AsyncSession, page, limit, requested_model: str = None
+        self,
+        session: AsyncSession,
+        page: int | None,
+        limit: int | None,
+        requested_model: str = None,
     ):
         if requested_model:
             statement = select(ModelsDirectory).where(
@@ -339,8 +343,8 @@ class DirectoryService:
             statement = select(ModelsDirectory)
 
             # Pagination
-
-            statement = statement.offset(page * limit).limit(limit)
+            offset_page = page - 1
+            statement = statement.offset(offset_page * limit).limit(limit)
 
             # Counting records, pages
             count_statement = select(func.count(1)).select_from(Cars)
