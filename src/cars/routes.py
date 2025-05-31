@@ -170,7 +170,7 @@ async def get_expenses_by_car_uid(
 
 # Udpate single expense
 @expenses_router.patch(
-    "/{car_uid}/expenses/{exp_uid}", response_model=List[ExpensesSchema]
+    "/{car_uid}/expenses/{exp_uid}", response_model=ResponseSchema[ExpensesSchema]
 )
 async def update_single_expense(
     car_uid: str,
@@ -182,7 +182,7 @@ async def update_single_expense(
         car_uid, exp_uid, exp_update_data, session
     )
     if result:
-        return result
+        return ResponseSchema(detail="Success", result=result)
     else:  # ????? Where do I raise exceptions? here or in service layer? How to raise different details?
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="????????")
 

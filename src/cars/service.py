@@ -223,23 +223,17 @@ class ExpensesService:
         exp_update_data: ExpensesCreateSchema,
         session: AsyncSession,
     ):
-        pass
-        # car_update_service = CarService()
-        # car_exists = await car_update_service.get_car(car_uid, session)
-        # if car_exists:
-        #    statement = (
-        #        select(Expenses)
-        #        .where(Expenses.car_uid == car_uid)
-        #        .where(Expenses.expense_id == exp_uid)
-        #    )
-        #    result = await session.exec(statement)
-        #    exp = result.first()
-        #    if not exp:
-        #        return None  # Somehow raise 404 "Exp not found"
-        #    else:
-        #        return exp
-        # else:
-        #    return False  # Somehow raise 404 "Car not found"
+
+        expense_to_update = await self.get_single_expense(car_uid, exp_uid, session)
+        if expense_to_update:
+            update_data_dict = exp_update_data.model_dump()
+            for k, v in update_data_dict.items():
+                setattr(expense_to_update, k, v)
+            await session.commit()
+            await session.refresh(expense_to_update)
+            return expense_to_update
+        else:
+            return None
 
     # Delete single expense
     async def delete_single_expense(
