@@ -3,7 +3,7 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from typing import List
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
-from src.cars.service import CarService, ExpensesService
+from src.cars.service import CarService, ExpensesService, DirectoryService
 from src.cars.schemas import (
     CarUpdateSchema,
     CarCreateSchema,
@@ -13,12 +13,17 @@ from src.cars.schemas import (
     ResponseSchema,
     PageResponse,
     GetAllFilter,
+    MakeSchema,
+    ModelSchema,
 )
 
 car_router = APIRouter()
+expenses_router = APIRouter()
+directory_router = APIRouter()
 
 car_service = CarService()
 expenses_service = ExpensesService()
+directory_service = DirectoryService()
 
 
 # Get a Car by id
@@ -40,11 +45,11 @@ async def get_car(
 
 # Get filtered Cars
 @car_router.post(
-    "/filter",
+    "/all",
     response_model=ResponseSchema[PageResponse[CarSchema]],
     response_model_exclude_none=True,
 )
-async def filter_all_cars(
+async def get_all_cars_by_filter(
     search: GetAllFilter,
     session: AsyncSession = Depends(get_session),
 ):
@@ -96,7 +101,7 @@ async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session))
 
 # EXPENSES
 # Create an Expense
-@car_router.post(
+@expenses_router.post(
     "/{car_uid}", status_code=status.HTTP_201_CREATED, response_model=ExpensesSchema
 )
 async def create_expense(
@@ -114,8 +119,28 @@ async def create_expense(
         )
 
 
+# Get single expense
+@expenses_router.get(
+    "/{car_uid}/expenses/{exp_uid}", response_model=List[ExpensesSchema]
+)
+async def get_single_expense(
+    car_uid: str, exp_uid: str, session: AsyncSession = Depends(get_session)
+):
+    result = await expenses_service.get_single_expense(car_uid, exp_uid, session)
+    if result:
+        return result
+    elif result is False:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No expenses yet"
+        )
+
+
 # Get all expenses for a single Car
-@car_router.get("/{car_uid}/expenses", response_model=List[ExpensesSchema])
+@expenses_router.get("/{car_uid}/expenses", response_model=List[ExpensesSchema])
 async def get_expenses_by_car_uid(
     car_uid: str, session: AsyncSession = Depends(get_session)
 ):
@@ -132,8 +157,27 @@ async def get_expenses_by_car_uid(
         )
 
 
+# Udpate single expense
+@expenses_router.patch(
+    "/{car_uid}/expenses/{exp_uid}", response_model=List[ExpensesSchema]
+)
+async def update_single_expense(
+    car_uid: str,
+    exp_uid: str,
+    exp_update_data: ExpensesCreateSchema,
+    session: AsyncSession = Depends(get_session),
+):
+    result = await expenses_service.update_single_expense(
+        car_uid, exp_uid, exp_update_data, session
+    )
+    if result:
+        return result
+    else:  # ????? Where do I raise exceptions? here or in service layer? How to raise different details?
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="????????")
+
+
 # Delete all expenses for a single Car
-@car_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
+@expenses_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_expenses_by_car_uid(
     car_uid: str, session: AsyncSession = Depends(get_session)
 ):
@@ -145,3 +189,52 @@ async def delete_all_expenses_by_car_uid(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
         )
+
+
+# Delete single expense
+@expenses_router.delete(
+    "/{car_uid}/expenses/{exp_uid}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_single_expense(
+    car_uid: str, exp_uid: str, session: AsyncSession = Depends(get_session)
+):
+
+    result = await expenses_service.delete_single_expense(car_uid, exp_uid, session)
+    # REWRITE LOGIC BELOW TO RAISE VALID ERRORS FOR EXP/CAR NOT FOUND
+    if result:  # redo
+        return {}  # redo
+    else:  # redo
+        raise HTTPException(  # redo
+            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"  # redo
+        )  # redo
+
+
+# DIRECTORIES
+@directory_router.get(
+    "/makes",
+    response_model=ResponseSchema[PageResponse[MakeSchema]]
+    | ResponseSchema[MakeSchema],
+)
+async def get_makes(
+    session: AsyncSession = Depends(get_session),
+    page: int = 0,
+    limit: int = 10,
+    requested_make: str | None = None,
+):
+    result = await directory_service.get_models(session, page, limit, requested_make)
+    return ResponseSchema(detail="Success", result=result)
+
+
+@directory_router.get(
+    "/models",
+    response_model=ResponseSchema[PageResponse[ModelSchema]]
+    | ResponseSchema[ModelSchema],
+)
+async def get_models(
+    session: AsyncSession = Depends(get_session),
+    page: int = 0,
+    limit: int = 10,
+    requested_model: str | None = None,
+):
+    result = await directory_service.get_models(session, page, limit, requested_model)
+    return ResponseSchema(detail="Success", result=result)

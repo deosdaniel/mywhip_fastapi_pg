@@ -197,6 +197,27 @@ class ExpensesService:
         else:
             return None
 
+    # Get single expense
+    async def get_single_expense(
+        self, car_uid: str, exp_uid: str, session: AsyncSession
+    ):
+        car_update_service = CarService()
+        car_exists = await car_update_service.get_car(car_uid, session)
+        if car_exists:
+            statement = (
+                select(Expenses)
+                .where(Expenses.car_uid == car_uid)
+                .where(Expenses.expense_id == exp_uid)
+            )
+            result = await session.exec(statement)
+            exp = result.first()
+            if not exp:
+                return None  # Somehow raise 404 "Exp not found"
+            else:
+                return exp
+        else:
+            return False  # Somehow raise 404 "Car not found"
+
     # Get all expenses for a single car
     async def get_expenses(self, car_uid: str, session: AsyncSession):
         car_update_service = CarService()
@@ -209,8 +230,47 @@ class ExpensesService:
         else:
             return False
 
+    # Update single expense
+    async def update_single_expense(
+        self,
+        car_uid: str,
+        exp_uid: str,
+        exp_update_data: ExpensesCreateSchema,
+        session: AsyncSession,
+    ):
+        pass
+        # car_update_service = CarService()
+        # car_exists = await car_update_service.get_car(car_uid, session)
+        # if car_exists:
+        #    statement = (
+        #        select(Expenses)
+        #        .where(Expenses.car_uid == car_uid)
+        #        .where(Expenses.expense_id == exp_uid)
+        #    )
+        #    result = await session.exec(statement)
+        #    exp = result.first()
+        #    if not exp:
+        #        return None  # Somehow raise 404 "Exp not found"
+        #    else:
+        #        return exp
+        # else:
+        #    return False  # Somehow raise 404 "Car not found"
+
+    # Delete single expense
+    async def delete_single_expense(
+        self, car_uid: str, exp_uid: str, session: AsyncSession
+    ):
+        # FIRST TRY TO GET A CAR BY SERVICE FUNC
+        car_update_service = CarService()
+        car_exists = await car_update_service.get_car(car_uid, session)
+        if car_exists:
+            # NEXT TRY TO GET A EXP BY SERVICE FUNC
+            pass
+        else:
+            return False
+
     # Delete all expenses for a single car
-    async def delete_all_expenses_by_car_uid(self, car_uid: int, session: AsyncSession):
+    async def delete_all_expenses_by_car_uid(self, car_uid: str, session: AsyncSession):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)
 
@@ -220,3 +280,79 @@ class ExpensesService:
         await session.exec(statement)
         await session.commit()
         return True
+
+    async def delete_single_expense(
+        self, car_uid: str, exp_uid: str, session: AsyncSession
+    ):
+        # FIRST TRY TO GET A CAR BY SERVICE FUNC
+        car_update_service = CarService()
+        car_exists = await car_update_service.get_car(car_uid, session)
+        if car_exists:
+            # NEXT TRY TO GET A EXP BY SERVICE FUNC
+            pass
+        else:
+            return False
+
+
+class DirectoryService:
+    async def get_makes(
+        self, session: AsyncSession, page, limit, requested_make: str = None
+    ):
+        if requested_make:
+            statement = select(MakesDirectory).where(
+                func.lower(MakesDirectory.make) == func.lower(requested_make)
+            )
+            result = await session.exec(statement)
+            return result.first()
+        else:
+            statement = select(MakesDirectory)
+
+            # Pagination
+
+            statement = statement.offset(page * limit).limit(limit)
+
+            # Counting records, pages
+            count_statement = select(func.count(1)).select_from(Cars)
+            total_records = (await session.exec(count_statement)).one() or 0
+            total_pages = math.ceil(total_records / limit)
+
+            result = await session.exec(statement)
+            result = result.all()
+            return PageResponse(
+                page_number=page,
+                page_size=limit,
+                total_pages=total_pages,
+                total_records=total_records,
+                content=result,
+            )
+
+    async def get_models(
+        self, session: AsyncSession, page, limit, requested_model: str = None
+    ):
+        if requested_model:
+            statement = select(ModelsDirectory).where(
+                func.lower(ModelsDirectory.model) == func.lower(requested_model)
+            )
+            result = await session.exec(statement)
+            return result.first()
+        else:
+            statement = select(ModelsDirectory)
+
+            # Pagination
+
+            statement = statement.offset(page * limit).limit(limit)
+
+            # Counting records, pages
+            count_statement = select(func.count(1)).select_from(Cars)
+            total_records = (await session.exec(count_statement)).one() or 0
+            total_pages = math.ceil(total_records / limit)
+
+            result = await session.exec(statement)
+            result = result.all()
+            return PageResponse(
+                page_number=page,
+                page_size=limit,
+                total_pages=total_pages,
+                total_records=total_records,
+                content=result,
+            )

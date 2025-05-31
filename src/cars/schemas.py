@@ -94,6 +94,19 @@ class ExpensesDTO(BaseModel):
     created_at: datetime
 
 
+"""Directories"""
+
+
+class MakeSchema(BaseModel):
+    uid: uuid.UUID
+    make: str
+
+
+class ModelSchema(BaseModel):
+    uid: uuid.UUID
+    model: str
+
+
 """Pagination"""
 T = TypeVar("T")
 
