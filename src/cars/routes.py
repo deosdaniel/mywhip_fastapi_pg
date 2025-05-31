@@ -205,10 +205,14 @@ async def delete_single_expense(
     # REWRITE LOGIC BELOW TO RAISE VALID ERRORS FOR EXP/CAR NOT FOUND
     if result:  # redo
         return {}  # redo
-    else:  # redo
-        raise HTTPException(  # redo
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"  # redo
-        )  # redo
+    elif result is False:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+        )
 
 
 # Delete all expenses for a single Car

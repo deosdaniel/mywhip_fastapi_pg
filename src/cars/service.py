@@ -244,14 +244,15 @@ class ExpensesService:
     async def delete_single_expense(
         self, car_uid: str, exp_uid: str, session: AsyncSession
     ):
-        # FIRST TRY TO GET A CAR BY SERVICE FUNC
-        car_update_service = CarService()
-        car_exists = await car_update_service.get_car(car_uid, session)
-        if car_exists:
-            # NEXT TRY TO GET A EXP BY SERVICE FUNC
-            pass
-        else:
+        expense_to_delete = await self.get_single_expense(car_uid, exp_uid, session)
+        if expense_to_delete:
+            await session.delete(expense_to_delete)
+            await session.commit()
+            return True
+        elif expense_to_delete is False:
             return False
+        else:
+            return None
 
     # Delete all expenses for a single car
     async def delete_all_expenses_by_car_uid(self, car_uid: str, session: AsyncSession):
