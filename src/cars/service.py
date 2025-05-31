@@ -232,6 +232,8 @@ class ExpensesService:
             await session.commit()
             await session.refresh(expense_to_update)
             return expense_to_update
+        elif expense_to_update is False:
+            return False
         else:
             return None
 

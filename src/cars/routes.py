@@ -183,8 +183,14 @@ async def update_single_expense(
     )
     if result:
         return ResponseSchema(detail="Success", result=result)
-    else:  # ????? Where do I raise exceptions? here or in service layer? How to raise different details?
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="????????")
+    elif result is False:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
+        )
 
 
 # Delete all expenses for a single Car
