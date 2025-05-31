@@ -182,7 +182,7 @@ class ExpensesService:
             return False  # Somehow raise 404 "Car not found"
 
     # Get all expenses for a single car
-    async def get_expenses(
+    async def get_expenses_by_car_uid(
         self, car_uid: str, session: AsyncSession, page: int = 1, limit: int = 10
     ):
         car_update_service = CarService()
@@ -205,13 +205,16 @@ class ExpensesService:
 
             result = await session.exec(statement)
             result = result.all()
-            return PageResponse(
-                page_number=page,
-                page_size=limit,
-                total_pages=total_pages,
-                total_records=total_records,
-                content=result,
-            )
+            if result:
+
+                return PageResponse(
+                    page_number=page,
+                    page_size=limit,
+                    total_pages=total_pages,
+                    total_records=total_records,
+                    content=result,
+                )
+            return None
         else:
             return False
 
@@ -261,18 +264,6 @@ class ExpensesService:
         await session.exec(statement)
         await session.commit()
         return True
-
-    async def delete_single_expense(
-        self, car_uid: str, exp_uid: str, session: AsyncSession
-    ):
-        # FIRST TRY TO GET A CAR BY SERVICE FUNC
-        car_update_service = CarService()
-        car_exists = await car_update_service.get_car(car_uid, session)
-        if car_exists:
-            # NEXT TRY TO GET A EXP BY SERVICE FUNC
-            pass
-        else:
-            return False
 
 
 class DirectoryService:

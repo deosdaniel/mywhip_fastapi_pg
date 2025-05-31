@@ -155,7 +155,7 @@ async def get_expenses_by_car_uid(
     page: int = 1,
     limit: int = 10,
 ):
-    result = await expenses_service.get_expenses(car_uid, session)
+    result = await expenses_service.get_expenses_by_car_uid(car_uid, session)
     if result:
         return ResponseSchema(detail="Success", result=result)
     elif result is False:
@@ -193,21 +193,6 @@ async def update_single_expense(
         )
 
 
-# Delete all expenses for a single Car
-@expenses_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_all_expenses_by_car_uid(
-    car_uid: str, session: AsyncSession = Depends(get_session)
-):
-    result = await expenses_service.delete_all_expenses_by_car_uid(car_uid, session)
-
-    if result:
-        return {}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
-
-
 # Delete single expense
 @expenses_router.delete(
     "/{car_uid}/expenses/{exp_uid}", status_code=status.HTTP_204_NO_CONTENT
@@ -224,6 +209,21 @@ async def delete_single_expense(
         raise HTTPException(  # redo
             status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"  # redo
         )  # redo
+
+
+# Delete all expenses for a single Car
+@expenses_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_all_expenses_by_car_uid(
+    car_uid: str, session: AsyncSession = Depends(get_session)
+):
+    result = await expenses_service.delete_all_expenses_by_car_uid(car_uid, session)
+
+    if result:
+        return {}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
+        )
 
 
 # DIRECTORIES
