@@ -328,7 +328,6 @@ class DirectoryService:
 
             result = await session.exec(statement)
             result = result.all()
-            print(f"Я отдаю список")
             return PageResponse(
                 page_number=page,
                 page_size=limit,
