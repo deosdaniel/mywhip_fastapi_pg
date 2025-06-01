@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, status
-from fastapi.exceptions import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from .schemas import UserCreateSchema, UserSchema, UserUpdateSchema
