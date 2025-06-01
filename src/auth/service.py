@@ -13,7 +13,7 @@ from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse
 
 def raise_item_not_found_exception(item: str):
     return HTTPException(
-        status_code=404, detail=f"Sorry, requested {item}_uid does not exist"
+        status_code=404, detail=f"Sorry, requested {item} does not exist"
     )
 
 
@@ -25,7 +25,16 @@ class UserService:
         if user:
             return user
         else:
-            raise raise_item_not_found_exception("user")
+            raise raise_item_not_found_exception("user_uid")
+
+    async def get_user_by_email(self, email: str, session: AsyncSession):
+        statement = select(Users).where(Users.email == email)
+        result = await session.exec(statement)
+        result = result.first()
+        if result:
+            return result
+        else:
+            raise raise_item_not_found_exception("email")
 
     async def get_all_users(self, session: AsyncSession, page: int, limit: int):
         statement = select(Users).order_by(desc(Users.created_at))
