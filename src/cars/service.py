@@ -1,6 +1,6 @@
 import math
 
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, HTTPException
 from sqlalchemy import delete, func
 from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -16,6 +16,10 @@ from sqlmodel import select, desc, asc
 from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
 
 
+def raise_item_not_found_exception(item: str):
+    return HTTPException(status_code=404, detail=f"Sorry, {item} not found")
+
+
 # Cars
 class CarService:
     # Get single car
@@ -28,7 +32,7 @@ class CarService:
         if car is not None:
             return car
         else:
-            return None
+            return None  # INSTEAD RAISE 404 ERROR - CAR NOT FOUND
 
     # Get Cars filtered list
     async def filter_all_cars(
@@ -120,7 +124,9 @@ class CarService:
         self, car_uid: str, update_data: CarUpdateSchema, session: AsyncSession
     ):
         car_to_update = await self.get_car(car_uid, session)
-        if car_to_update:
+        if (
+            car_to_update
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_CAR??
             update_data_dict = update_data.model_dump()
             for k, v in update_data_dict.items():
                 setattr(car_to_update, k, v)
@@ -133,7 +139,9 @@ class CarService:
     # Delete a Car
     async def delete_car(self, car_uid, session: AsyncSession):
         car_to_delete = await self.get_car(car_uid, session)
-        if car_to_delete is not None:
+        if (
+            car_to_delete is not None
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_CAR??
             await session.delete(car_to_delete)
             await session.commit()
             return True
@@ -149,7 +157,9 @@ class ExpensesService:
     ):
         car_update_service = CarService()
         car_to_update = await car_update_service.get_car(car_uid, session)
-        if car_to_update:
+        if (
+            car_to_update
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_CAR??
             exp_data_dict = exp_data.model_dump()
             new_exp = Expenses(**exp_data_dict)
             new_exp.car_uid = car_uid
@@ -166,7 +176,9 @@ class ExpensesService:
     ):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)
-        if car_exists:
+        if (
+            car_exists
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_CAR??
             statement = (
                 select(Expenses)
                 .where(Expenses.car_uid == car_uid)
@@ -175,11 +187,11 @@ class ExpensesService:
             result = await session.exec(statement)
             exp = result.first()
             if not exp:
-                return None  # Somehow raise 404 "Exp not found"
+                return None  # INSTEAD RAISE 404 ERROR - EXPENSE NOT FOUND
             else:
                 return exp
         else:
-            return False  # Somehow raise 404 "Car not found"
+            return False  # MAYBE THIS IS NOT NECESSARY
 
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
@@ -187,7 +199,9 @@ class ExpensesService:
     ):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)
-        if car_exists:
+        if (
+            car_exists
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_CAR??
             statement = select(Expenses).where(Expenses.car_uid == car_uid)
 
             # Pagination
@@ -216,7 +230,7 @@ class ExpensesService:
                 )
             return None
         else:
-            return False
+            return False  # MAYBE THIS IS NOT NECESSARY
 
     # Update single expense
     async def update_single_expense(
@@ -228,7 +242,9 @@ class ExpensesService:
     ):
 
         expense_to_update = await self.get_single_expense(car_uid, exp_uid, session)
-        if expense_to_update:
+        if (
+            expense_to_update
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_SINGLE_EXPENSE??
             update_data_dict = exp_update_data.model_dump()
             for k, v in update_data_dict.items():
                 setattr(expense_to_update, k, v)
@@ -236,30 +252,34 @@ class ExpensesService:
             await session.refresh(expense_to_update)
             return expense_to_update
         elif expense_to_update is False:
-            return False
+            return False  # MAYBE THIS IS NOT NECESSARY
         else:
-            return None
+            return None  # MAYBE THIS IS NOT NECESSARY
 
     # Delete single expense
     async def delete_single_expense(
         self, car_uid: str, exp_uid: str, session: AsyncSession
     ):
         expense_to_delete = await self.get_single_expense(car_uid, exp_uid, session)
-        if expense_to_delete:
+        if (
+            expense_to_delete
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_SINGLE_EXPENSE??
             await session.delete(expense_to_delete)
             await session.commit()
             return True
         elif expense_to_delete is False:
-            return False
+            return False  # MAYBE THIS IS NOT NECESSARY
         else:
-            return None
+            return None  # MAYBE THIS IS NOT NECESSARY
 
     # Delete all expenses for a single car
     async def delete_all_expenses_by_car_uid(self, car_uid: str, session: AsyncSession):
         car_update_service = CarService()
         car_exists = await car_update_service.get_car(car_uid, session)
 
-        if not car_exists:
+        if (
+            not car_exists
+        ):  # MAYBE THIS "IF" IS NOT NECESSARY IN CASE OF CHECKING FOR 404 IN SELF.GET_CAR??
             return False
         statement = delete(Expenses).where(Expenses.car_uid == car_uid)
         await session.exec(statement)
