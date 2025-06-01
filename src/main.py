@@ -15,28 +15,7 @@ version = "v1"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Код, выполняемый при запуске приложения
-    # async with engine.begin() as conn:
-    #    await conn.run_sync(SQLModel.metadata.create_all)
-    # print("Tables created")
-
-    #    # Заполнение тестовыми данными (если таблица пуста)
-    #    async with AsyncSession(engine) as session:
-    #        existing_cars = await session.exec(select(Cars))
-    #        if not existing_cars.first():
-    #            demo_cars = generate_demo_cars(100)
-    #            session.add_all(demo_cars)
-    #            await session.commit()
-    #            print("Demo data added")
-    #
-    yield  # Здесь приложение работает
-
-    # Код, выполняемый при остановке приложения
-
-
-#    async with engine.begin() as conn:
-#        await conn.run_sync(SQLModel.metadata.drop_all)
-#    print("Tables dropped")
+    yield
 
 
 app = FastAPI(
