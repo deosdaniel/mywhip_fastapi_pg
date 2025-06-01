@@ -13,8 +13,8 @@ class Users(SQLModel, table=True):
     )
     username: str = Field(unique=True, nullable=False)
     email: str = Field(unique=True, nullable=False, index=True)
-    first_name: str
-    last_name: str
+    first_name: str = Field(nullable=True)
+    last_name: str = Field(nullable=True)
     is_verified: bool = Field(default=False)
     password_hash: str = Field(exclude=True)
     created_at: datetime = Field(
