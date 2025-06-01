@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
-from src.cars.routes import car_router, directory_router
-from src.cars.routes import expenses_router
+from src.cars.routes import car_router, expenses_router, directory_router
+from src.auth.routes import auth_router
 
 version = "v1"
 
@@ -25,6 +25,7 @@ app.include_router(expenses_router, prefix=f"/api/{version}/cars", tags=["Expens
 app.include_router(
     directory_router, prefix=f"/api/{version}/directories", tags=["Directories"]
 )
+app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=["Auth"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

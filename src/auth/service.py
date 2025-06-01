@@ -25,7 +25,7 @@ class UserService:
         if user:
             return user
         else:
-            return raise_item_not_found_exception("user")
+            raise raise_item_not_found_exception("user")
 
     async def get_all_users(self, session: AsyncSession, page: int, limit: int):
         statement = select(Users).order_by(desc(Users.created_at))
@@ -53,9 +53,16 @@ class UserService:
         user = result.first()
         return True if user else False
 
+    async def username_exists(self, username: str, session: AsyncSession):
+        statement = select(Users).where(Users.username == username)
+        result = await session.exec(statement)
+        user = result.first()
+        return True if user else False
+
     async def create_user(self, user_data: UserCreateSchema, session: AsyncSession):
         email_exists = await self.email_exists(user_data.email, session)
-        if not email_exists:
+        username_exists = await self.username_exists(user_data.username, session)
+        if not email_exists and not username_exists:
             user_data_dict = user_data.model_dump()
             new_user = Users(**user_data_dict)
             new_user.password_hash = generate_pwd_hash(user_data_dict["password"])
@@ -65,7 +72,7 @@ class UserService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="User with this email already exists",
+                detail="User with this email or username already exists",
             )
 
     async def update_user(

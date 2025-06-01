@@ -28,14 +28,14 @@ async def create_user_account(
     return ResponseSchema(detail="Success", result=result)
 
 
-@auth_router.get("/all", response_model=List[UserSchema])
+@auth_router.get("/all", response_model=ResponseSchema[PageResponse[UserSchema]])
 async def get_all_users(
     session: AsyncSession = Depends(get_session),
     page: int | None = 1,
     limit: int | None = 10,
 ):
-    users = await user_service.get_all_users(session, page, limit)
-    return users
+    result = await user_service.get_all_users(session, page, limit)
+    return ResponseSchema(detail="Success", result=result)
 
 
 @auth_router.get("/{user_uid}", response_model=ResponseSchema[UserSchema])
@@ -53,7 +53,7 @@ async def update_user(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await user_service.update_user(user_uid, user_update_data, session)
-    return result
+    return ResponseSchema(detail="Success", result=result)
 
 
 @auth_router.delete("/{user_uid}", status_code=status.HTTP_204_NO_CONTENT)

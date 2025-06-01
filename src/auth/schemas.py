@@ -2,12 +2,12 @@ import uuid
 from datetime import datetime
 from typing import TypeVar, Generic, Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 
 class UserCreateSchema(BaseModel):
     username: str = Field(min_length=4, max_length=20)
-    email: str = Field(min_length=8, max_length=50)
+    email: EmailStr = Field(min_length=8, max_length=50)
     first_name: str = Field(min_length=2, max_length=50)
     last_name: str = Field(min_length=2, max_length=50)
     password: str = Field(min_length=8, max_length=50)
