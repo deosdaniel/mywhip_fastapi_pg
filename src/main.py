@@ -2,13 +2,8 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
-from src.cars.models import Cars
 from src.cars.routes import car_router, directory_router
 from src.cars.routes import expenses_router
-from src.db.main import engine, SQLModel, get_session
-from src.db.demo_data import generate_demo_cars
 
 version = "v1"
 

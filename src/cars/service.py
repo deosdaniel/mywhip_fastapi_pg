@@ -18,7 +18,7 @@ from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
 
 def raise_item_not_found_exception(item: str):
     return HTTPException(
-        status_code=404, detail=f"Sorry, requested {item}_uid not found"
+        status_code=404, detail=f"Sorry, requested {item}_uid does not exist"
     )
 
 
@@ -57,7 +57,7 @@ class CarService:
         if car:
             return car
         else:
-            raise raise_item_not_found_exception("Car")
+            raise raise_item_not_found_exception("car")
 
     # Get Cars filtered list
     async def filter_all_cars(
@@ -181,7 +181,7 @@ class ExpensesService:
         if exp:
             return exp
         else:
-            raise raise_item_not_found_exception("Expense")
+            raise raise_item_not_found_exception("expense")
 
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
