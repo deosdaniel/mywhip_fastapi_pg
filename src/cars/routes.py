@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, status, Depends, Path
 from fastapi.exceptions import HTTPException
 from typing import List
@@ -37,12 +39,7 @@ async def get_car(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await car_service.get_car(car_uid, session)
-    if result:
-        return ResponseSchema(detail="Success", result=result)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Get filtered Cars
@@ -52,10 +49,10 @@ async def get_car(
     response_model_exclude_none=True,
 )
 async def get_all_cars_by_filter(
-    search: GetAllFilter,
+    filter_schema: GetAllFilter,
     session: AsyncSession = Depends(get_session),
 ):
-    result = await car_service.filter_all_cars(search, session)
+    result = await car_service.filter_all_cars(filter_schema, session)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -78,29 +75,15 @@ async def update_car(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     result = await car_service.update_car(car_uid, car_update_data, session)
-
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cannot update, car does not exist",
-        )
-    else:
-        return ResponseSchema(detail="Success", result=result)
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Delete a Car
 @car_router.delete("/{car_uid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session)):
 
-    car_to_delete = await car_service.delete_car(car_uid, session)
-
-    if car_to_delete:
-        return {}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cannot delete, car does not exist",
-        )
+    await car_service.delete_car(car_uid, session)
+    return {}
 
 
 # EXPENSES
@@ -111,18 +94,13 @@ async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session))
     response_model=ResponseSchema[ExpensesSchema],
 )
 async def create_expense(
-    car_uid: str,
     exp_data: ExpensesCreateSchema,
+    car_uid: str = Path(min_length=32, max_length=36),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
 
     result = await expenses_service.create_expense(car_uid, exp_data, session)
-    if result:
-        return ResponseSchema(detail="Success", result=result)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car does not exist"
-        )
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Get single expense
@@ -130,19 +108,12 @@ async def create_expense(
     "/{car_uid}/expenses/{exp_uid}", response_model=ResponseSchema[ExpensesSchema]
 )
 async def get_single_expense(
-    car_uid: str, exp_uid: str, session: AsyncSession = Depends(get_session)
+    car_uid: str = Path(min_length=32, max_length=36),
+    exp_uid: str = Path(min_length=32, max_length=36),
+    session: AsyncSession = Depends(get_session),
 ):
     result = await expenses_service.get_single_expense(car_uid, exp_uid, session)
-    if result:
-        return ResponseSchema(detail="Success", result=result)
-    elif result is False:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
-        )
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Get all expenses for a single Car
@@ -150,22 +121,15 @@ async def get_single_expense(
     "/{car_uid}/expenses", response_model=ResponseSchema[PageResponse[ExpensesSchema]]
 )
 async def get_expenses_by_car_uid(
-    car_uid: str,
+    car_uid: str = Path(min_length=32, max_length=36),
     session: AsyncSession = Depends(get_session),
     page: int = 1,
     limit: int = 10,
 ):
-    result = await expenses_service.get_expenses_by_car_uid(car_uid, session)
-    if result:
-        return ResponseSchema(detail="Success", result=result)
-    elif result is False:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No expenses yet"
-        )
+    result = await expenses_service.get_expenses_by_car_uid(
+        car_uid, session, page, limit
+    )
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Udpate single expense
@@ -173,24 +137,15 @@ async def get_expenses_by_car_uid(
     "/{car_uid}/expenses/{exp_uid}", response_model=ResponseSchema[ExpensesSchema]
 )
 async def update_single_expense(
-    car_uid: str,
-    exp_uid: str,
     exp_update_data: ExpensesCreateSchema,
+    car_uid: str = Path(min_length=32, max_length=36),
+    exp_uid: str = Path(min_length=32, max_length=36),
     session: AsyncSession = Depends(get_session),
 ):
     result = await expenses_service.update_single_expense(
         car_uid, exp_uid, exp_update_data, session
     )
-    if result:
-        return ResponseSchema(detail="Success", result=result)
-    elif result is False:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
-        )
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Delete single expense
@@ -198,36 +153,22 @@ async def update_single_expense(
     "/{car_uid}/expenses/{exp_uid}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_single_expense(
-    car_uid: str, exp_uid: str, session: AsyncSession = Depends(get_session)
+    car_uid: str = Path(min_length=32, max_length=36),
+    exp_uid: str = Path(min_length=32, max_length=36),
+    session: AsyncSession = Depends(get_session),
 ):
-
-    result = await expenses_service.delete_single_expense(car_uid, exp_uid, session)
-    # REWRITE LOGIC BELOW TO RAISE VALID ERRORS FOR EXP/CAR NOT FOUND
-    if result:  # redo
-        return {}  # redo
-    elif result is False:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found"
-        )
+    await expenses_service.delete_single_expense(car_uid, exp_uid, session)
+    return {}
 
 
 # Delete all expenses for a single Car
 @expenses_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_expenses_by_car_uid(
-    car_uid: str, session: AsyncSession = Depends(get_session)
+    car_uid: str = Path(min_length=32, max_length=36),
+    session: AsyncSession = Depends(get_session),
 ):
-    result = await expenses_service.delete_all_expenses_by_car_uid(car_uid, session)
-
-    if result:
-        return {}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Car not found"
-        )
+    await expenses_service.delete_all_expenses_by_car_uid(car_uid, session)
+    return {}
 
 
 # DIRECTORIES
