@@ -8,7 +8,7 @@ from src.auth.routes import auth_router
 
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from src.cars.service import VinBusyException, EntityNotFoundException
+from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 version = "v1"
 

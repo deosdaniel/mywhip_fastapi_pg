@@ -12,15 +12,7 @@ from .schemas import (
 )
 from sqlmodel import select, desc, asc
 from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
-
-
-class VinBusyException(Exception):
-    pass
-
-
-class EntityNotFoundException(Exception):
-    def __init__(self, entity: str):
-        self.entity = entity
+from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 
 # Cars
