@@ -1,20 +1,13 @@
 import math
-
 from fastapi.exceptions import HTTPException
 from fastapi import status
 from sqlalchemy import func
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from .utils import generate_pwd_hash
-
 from .models import Users
 from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse
-
-
-def raise_item_not_found_exception(item: str):
-    return HTTPException(
-        status_code=404, detail=f"Sorry, requested {item} does not exist"
-    )
+from src.utils.exceptions import EntityNotFoundException
 
 
 class UserService:
@@ -25,7 +18,7 @@ class UserService:
         if user:
             return user
         else:
-            raise raise_item_not_found_exception("user_uid")
+            raise EntityNotFoundException("user_uid")
 
     async def get_user_by_email(self, email: str, session: AsyncSession):
         statement = select(Users).where(Users.email == email)
@@ -34,7 +27,7 @@ class UserService:
         if result:
             return result
         else:
-            raise raise_item_not_found_exception("email")
+            raise EntityNotFoundException("Email")
 
     async def get_all_users(self, session: AsyncSession, page: int, limit: int):
         statement = select(Users).order_by(desc(Users.created_at))
