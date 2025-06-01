@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from sqlmodel import SQLModel, Field
+from typing import TypeVar, Generic, Optional, List
+
+from pydantic import BaseModel, Field
 
 
-class UserCreateSchema(SQLModel):
+class UserCreateSchema(BaseModel):
     username: str = Field(min_length=4, max_length=20)
     email: str = Field(min_length=8, max_length=50)
     first_name: str = Field(min_length=2, max_length=50)
@@ -11,13 +13,13 @@ class UserCreateSchema(SQLModel):
     password: str = Field(min_length=8, max_length=50)
 
 
-class UserUpdateSchema(SQLModel):
+class UserUpdateSchema(BaseModel):
     username: str = Field(min_length=4, max_length=20, default=None)
     first_name: str = Field(min_length=2, max_length=50, default=None)
     last_name: str = Field(min_length=2, max_length=50, default=None)
 
 
-class UserSchema(SQLModel):
+class UserSchema(BaseModel):
     uid: uuid.UUID
     username: str
     email: str
@@ -27,3 +29,20 @@ class UserSchema(SQLModel):
     password_hash: str = Field(exclude=True)
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+
+"""Pagination"""
+T = TypeVar("T")
+
+
+class ResponseSchema(BaseModel, Generic[T]):
+    detail: str
+    result: Optional[T] = None
+
+
+class PageResponse(BaseModel, Generic[T]):
+    page_number: int
+    page_size: int
+    total_pages: int
+    total_records: int
+    content: List[T]

@@ -1,11 +1,14 @@
+import math
+
 from fastapi.exceptions import HTTPException
 from fastapi import status
+from sqlalchemy import func
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from .utils import generate_pwd_hash
 
 from .models import Users
-from .schemas import UserCreateSchema, UserUpdateSchema
+from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse
 
 
 def raise_item_not_found_exception(item: str):
@@ -24,10 +27,25 @@ class UserService:
         else:
             return raise_item_not_found_exception("user")
 
-    async def get_all_users(self, session: AsyncSession):
+    async def get_all_users(self, session: AsyncSession, page: int, limit: int):
         statement = select(Users).order_by(desc(Users.created_at))
+        # Pagination
+        offset_page = page - 1
+        statement = statement.offset(offset_page * limit).limit(limit)
+        # Counting records, pages
+        count_statement = select(func.count(1)).select_from(Users)
+        total_records = (await session.exec(count_statement)).one() or 0
+        total_pages = math.ceil(total_records / limit)
+        # Executing query
         result = await session.exec(statement)
-        return result.all()
+        result = result.all()
+        return PageResponse(
+            page_number=page,
+            page_size=limit,
+            total_pages=total_pages,
+            total_records=total_records,
+            content=result,
+        )
 
     async def email_exists(self, email: str, session: AsyncSession):
         statement = select(Users).where(Users.email == email)

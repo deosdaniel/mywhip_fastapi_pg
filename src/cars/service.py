@@ -272,16 +272,14 @@ class DirectoryService:
             return result
         else:
             statement = select(MakesDirectory)
-
             # Pagination
             offset_page = page - 1
             statement = statement.offset(offset_page * limit).limit(limit)
-
             # Counting records, pages
             count_statement = select(func.count(1)).select_from(MakesDirectory)
             total_records = (await session.exec(count_statement)).one() or 0
             total_pages = math.ceil(total_records / limit)
-
+            # Executing query
             result = await session.exec(statement)
             result = result.all()
             return PageResponse(
@@ -316,16 +314,14 @@ class DirectoryService:
             return result
         else:
             statement = select(ModelsDirectory)
-
             # Pagination
             offset_page = page - 1
             statement = statement.offset(offset_page * limit).limit(limit)
-
             # Counting records, pages
             count_statement = select(func.count(1)).select_from(ModelsDirectory)
             total_records = (await session.exec(count_statement)).one() or 0
             total_pages = math.ceil(total_records / limit)
-
+            # Executing query
             result = await session.exec(statement)
             result = result.all()
             return PageResponse(
