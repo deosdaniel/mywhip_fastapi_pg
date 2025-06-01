@@ -28,6 +28,17 @@ expenses_service = ExpensesService()
 directory_service = DirectoryService()
 
 
+# Create a Car
+@car_router.post(
+    "/", status_code=status.HTTP_201_CREATED, response_model=ResponseSchema[CarSchema]
+)
+async def create_car(
+    car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
+) -> dict:
+    result = await car_service.create_car(car_data, session)
+    return ResponseSchema(detail="Success", result=result)
+
+
 # Get a Car by id
 @car_router.get(
     "/{car_uid}",
@@ -53,17 +64,6 @@ async def get_all_cars_by_filter(
     session: AsyncSession = Depends(get_session),
 ):
     result = await car_service.filter_all_cars(filter_schema, session)
-    return ResponseSchema(detail="Success", result=result)
-
-
-# Create a Car
-@car_router.post(
-    "/", status_code=status.HTTP_201_CREATED, response_model=ResponseSchema[CarSchema]
-)
-async def create_car(
-    car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
-) -> dict:
-    result = await car_service.create_car(car_data, session)
     return ResponseSchema(detail="Success", result=result)
 
 
