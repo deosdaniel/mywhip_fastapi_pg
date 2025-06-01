@@ -21,8 +21,8 @@ class CarStatusChoices(Enum):
 
 
 class CarCreateSchema(BaseModel):
-    make: str
-    model: str
+    make: str = Field(min_length=1)
+    model: str = Field(min_length=1)
     year: int = Field(ge=1970, le=int(datetime.now().year))
     vin: str = Field(pattern=r"^[A-HJ-NPR-Z0-9]{10,17}$", default="JTDKB204093488265")
     pts_num: str = Field(

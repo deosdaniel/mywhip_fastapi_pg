@@ -1,6 +1,4 @@
 import math
-
-from fastapi.exceptions import RequestValidationError, HTTPException
 from sqlalchemy import delete, func
 from sqlalchemy.orm import selectinload
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -16,36 +14,49 @@ from sqlmodel import select, desc, asc
 from .models import Cars, Expenses, MakesDirectory, ModelsDirectory
 
 
-def raise_item_not_found_exception(item: str):
-    return HTTPException(
-        status_code=404, detail=f"Sorry, requested {item}_uid does not exist"
-    )
+class VinBusyException(Exception):
+    pass
+
+
+class EntityNotFoundException(Exception):
+    def __init__(self, entity: str):
+        self.entity = entity
 
 
 # Cars
 class CarService:
     # Create a Car
     async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
-        directory_service = DirectoryService()
-        validate_make = await directory_service.get_makes(
-            session, page=None, limit=None, requested_make=car_data.make
+        statement = (
+            select(Cars).where(Cars.vin == car_data.vin).where(Cars.status != "SOLD")
         )
-        validate_model = await directory_service.get_models(
-            session, page=None, limit=None, requested_model=car_data.model
-        )
-        new_expenses = []
-        if car_data.expenses:
-            new_expenses = [Expenses(**exp.model_dump()) for exp in car_data.expenses]
-        new_car = Cars(
-            **car_data.model_dump(exclude={"make", "model", "expenses"}),
-            make=validate_make.make,
-            model=validate_model.model,
-            expenses=new_expenses,
-        )
-        session.add(new_car)
-        await session.commit()
-        await session.refresh(new_car)
-        return new_car
+        check_vin = await session.exec(statement)
+        check_vin = check_vin.first()
+        if check_vin is None:
+            directory_service = DirectoryService()
+            validate_make = await directory_service.get_makes(
+                session, page=None, limit=None, requested_make=car_data.make
+            )
+            validate_model = await directory_service.get_models(
+                session, page=None, limit=None, requested_model=car_data.model
+            )
+            new_expenses = []
+            if car_data.expenses:
+                new_expenses = [
+                    Expenses(**exp.model_dump()) for exp in car_data.expenses
+                ]
+            new_car = Cars(
+                **car_data.model_dump(exclude={"make", "model", "expenses"}),
+                make=validate_make.make,
+                model=validate_model.model,
+                expenses=new_expenses,
+            )
+            session.add(new_car)
+            await session.commit()
+            await session.refresh(new_car)
+            return new_car
+        else:
+            raise VinBusyException()
 
     # Get single car
     async def get_car(self, car_uid: str, session: AsyncSession):
@@ -57,7 +68,7 @@ class CarService:
         if car:
             return car
         else:
-            raise raise_item_not_found_exception("car")
+            raise EntityNotFoundException("car_uid")
 
     # Get Cars filtered list
     async def filter_all_cars(
@@ -69,9 +80,7 @@ class CarService:
         statement = select(Cars).options(selectinload(Cars.expenses))
         # Counting query
         count_statement = select(func.count(1)).select_from(Cars)
-
         # Filtering
-
         if filter_schema.make:
             statement = statement.filter_by(make=filter_schema.make)
             count_statement = count_statement.filter_by(make=filter_schema.make)
@@ -96,29 +105,21 @@ class CarService:
         if filter_schema.status and filter_schema.status:
             statement = statement.filter_by(status=filter_schema.status)
             count_statement = count_statement.filter_by(status=filter_schema.status)
-
         # Sorting
-
         direction = desc if filter_schema.order_desc else asc
         if filter_schema.sort_by:
             statement = statement.order_by(
                 direction(getattr(Cars, filter_schema.sort_by))
             )
-
         # Pagination
-
         offset_page = filter_schema.page - 1
         statement = statement.offset(offset_page * filter_schema.limit).limit(
             filter_schema.limit
         )
-
         # Counting records, pages
-
         total_records = (await session.exec(count_statement)).one() or 0
         total_pages = math.ceil(total_records / filter_schema.limit)
-
         # Executing query
-
         res = await session.exec(statement)
         result = res.unique().all()
         return PageResponse(
@@ -181,7 +182,7 @@ class ExpensesService:
         if exp:
             return exp
         else:
-            raise raise_item_not_found_exception("expense")
+            raise EntityNotFoundException("exp_uid")
 
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
@@ -190,7 +191,6 @@ class ExpensesService:
         car_update_service = CarService()
         await car_update_service.get_car(car_uid, session)
         statement = select(Expenses).where(Expenses.car_uid == car_uid)
-
         # Pagination
         offset_page = page - 1
         statement = statement.offset(offset_page * limit).limit(limit)
@@ -262,13 +262,7 @@ class DirectoryService:
             result = await session.exec(statement)
             result = result.first()
             if not result or result == "null":
-                raise RequestValidationError(
-                    {
-                        "loc": ("requested_make",),
-                        "msg": "No such Make found in directory",
-                        "type": "value_error",
-                    }
-                )
+                raise EntityNotFoundException("Make")
             return result
         else:
             statement = select(MakesDirectory)
@@ -304,13 +298,7 @@ class DirectoryService:
             result = await session.exec(statement)
             result = result.first()
             if not result or result == "null":
-                raise RequestValidationError(
-                    {
-                        "loc": ("requested_model",),
-                        "msg": "No such Model found in directory",
-                        "type": "value_error",
-                    }
-                )
+                raise EntityNotFoundException("Model")
             return result
         else:
             statement = select(ModelsDirectory)
