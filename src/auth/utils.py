@@ -9,7 +9,7 @@ import logging
 
 pwd_context = CryptContext(schemes=[bcrypt])
 
-ACCESS_TOKEN_EXPIRY = 3600
+ACCESS_TOKEN_EXPIRY = 600
 
 
 def generate_pwd_hash(password: str) -> str:
@@ -20,18 +20,14 @@ def verify_pwd(password: str, hashed_password: str) -> bool:
     return pwd_context.verify(password, hashed_password)
 
 
-def create_access_token(
-    user_data: dict, expiry: timedelta = None, refresh: bool = False
-):
-    # Create and fill all the needed payload
-    payload = {}
-    payload["user"] = user_data
-    payload["exp"] = datetime.now() + (
-        expiry if expiry is not None else timedelta(seconds=ACCESS_TOKEN_EXPIRY)
-    )
-    payload["jti"] = str(uuid.uuid4())  # jti - JWT Token Identifier
-    payload["refresh"] = refresh
-    # Create the token
+def create_access_token(user_uid: str, expiry: timedelta = None):
+    payload = {
+        "sub": user_uid,
+        "iat": datetime.now(),
+        "exp": datetime.now()
+        + (expiry if expiry else timedelta(seconds=ACCESS_TOKEN_EXPIRY)),
+        "jti": str(uuid.uuid4()),
+    }
     token = jwt.encode(
         payload=payload, key=Config.JWT_SECRET, algorithm=Config.JWT_ALGORITHM
     )

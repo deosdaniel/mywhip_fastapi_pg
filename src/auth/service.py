@@ -4,13 +4,28 @@ from fastapi import status
 from sqlalchemy import func
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
-from .utils import generate_pwd_hash
+from .utils import generate_pwd_hash, verify_pwd
 from .models import Users
-from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse
+from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse, UserLoginSchema
 from src.utils.exceptions import EntityNotFoundException
 
 
 class UserService:
+    async def validate_login_user(
+        self, login_data: UserLoginSchema, session: AsyncSession
+    ):
+        exc = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or pwd"
+        )
+        statement = select(Users).where(Users.email == login_data.email)
+        result = await session.exec(statement)
+        user = result.first()
+        if not user:
+            raise exc
+        if not verify_pwd(login_data.password, user.password_hash):
+            raise exc
+        return user
+
     async def get_user_by_uid(self, user_uid: str, session: AsyncSession):
         statement = select(Users).where(Users.uid == user_uid)
         result = await session.exec(statement)

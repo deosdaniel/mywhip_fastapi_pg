@@ -12,12 +12,16 @@ from .schemas import (
     PageResponse,
 )
 from .service import UserService
-from .utils import create_access_token, decode_token, verify_pwd
-from datetime import timedelta
+from .utils import create_access_token, verify_pwd
 from fastapi.responses import JSONResponse
+
+from src.auth.deps import AccessTokenBearer
+from src.auth.models import Users
 
 auth_router = APIRouter()
 user_service = UserService()
+
+access_token_bearer = AccessTokenBearer()
 
 
 @auth_router.post(
@@ -25,11 +29,32 @@ user_service = UserService()
     response_model=ResponseSchema[UserSchema],
     status_code=status.HTTP_201_CREATED,
 )
-async def create_user_account(
+async def register_user(
     user_data: UserCreateSchema, session: AsyncSession = Depends(get_session)
 ):
     result = await user_service.create_user(user_data, session)
     return ResponseSchema(detail="Success", result=result)
+
+
+@auth_router.post("/login")
+async def login_user(
+    login_data: UserLoginSchema, session: AsyncSession = Depends(get_session)
+):
+    user = await user_service.validate_login_user(login_data, session)
+
+    access_token = create_access_token(str(user.uid))
+    return JSONResponse(
+        content={
+            "message": "Login successful",
+            "access_token": access_token,
+            "token_type": "Bearer",
+            "user": {
+                "user_uid": str(user.uid),
+                "email": user.email,
+                "username": user.username,
+            },
+        }
+    )
 
 
 @auth_router.get("/all", response_model=ResponseSchema[PageResponse[UserSchema]])
@@ -69,44 +94,3 @@ async def delete_user_by_uid(
 
 
 REFRESH_TOKEN_EXPIRY = 2
-
-
-@auth_router.post("/login")
-async def login_user(
-    login_data: UserLoginSchema, session: AsyncSession = Depends(get_session)
-):
-    login_email = login_data.email
-    login_password = login_data.password
-    user = await user_service.get_user_by_email(login_email, session)
-    if user:
-        pwd_valid = verify_pwd(login_password, user.password_hash)
-        if pwd_valid:
-            access_token = create_access_token(
-                user_data={
-                    "email": user.email,
-                    "user_uid": str(user.uid),
-                },
-            )
-            refresh_token = create_access_token(
-                user_data={
-                    "email": user.email,
-                    "user_uid": str(user.uid),
-                },
-                refresh=True,
-                expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
-            )
-            return JSONResponse(
-                content={
-                    "message": "Login successful",
-                    "access_token": access_token,
-                    "refresh_token": refresh_token,
-                    "user": {
-                        "email": user.email,
-                        "uid": str(user.uid),
-                    },
-                }
-            )
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Invalid email or password",
-    )
