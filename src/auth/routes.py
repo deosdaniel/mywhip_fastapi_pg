@@ -55,7 +55,7 @@ async def login_user(
 
 @auth_router.get("/me", response_model=ResponseSchema[UserSchema])
 async def get_current_user_info(
-    current_user: Users = Depends(get_current_user),
+    current_user: UserLoginSchema = Depends(get_current_user),
 ):
     return ResponseSchema(detail="Success", result=current_user)
 
