@@ -1,11 +1,11 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from src.config import Config
 import jwt
 import uuid
 import logging
 import bcrypt
 
-ACCESS_TOKEN_EXPIRY = 600
+ACCESS_TOKEN_EXPIRY = 300
 
 
 def gen_pwd_hash(password: str) -> str:
@@ -24,7 +24,7 @@ def verify_pwd(plain_pwd: str, hashed_pwd: str) -> bool:
 def create_access_token(user_uid: str, expiry: timedelta = None):
     payload = {
         "sub": user_uid,
-        "exp": datetime.now()
+        "exp": datetime.now(timezone.utc)
         + (expiry if expiry else timedelta(seconds=ACCESS_TOKEN_EXPIRY)),
         "jti": str(uuid.uuid4()),
     }
