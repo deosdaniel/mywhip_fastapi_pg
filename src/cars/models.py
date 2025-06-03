@@ -1,3 +1,6 @@
+from operator import index
+from typing import TYPE_CHECKING
+
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlmodel import Field, Column, Relationship, SQLModel
@@ -6,6 +9,9 @@ from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
 from .schemas import CarStatusChoices
+
+if TYPE_CHECKING:
+    from ..auth.models import Users
 
 
 class Cars(SQLModel, table=True):
@@ -40,6 +46,12 @@ class Cars(SQLModel, table=True):
     updated_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True)
     )
+
+    owner_uid: UUID = Field(
+        foreign_key="users.uid", index=True, nullable=True
+    )  # Temporary nullable for tests
+
+    owner: "Users" = Relationship(back_populates="cars")
 
     expenses: list["Expenses"] = Relationship(
         back_populates="car",

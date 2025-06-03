@@ -1,8 +1,13 @@
-from sqlmodel import SQLModel, Field, Column
+from typing import TYPE_CHECKING
+
+from sqlmodel import SQLModel, Field, Column, Relationship
 import sqlalchemy.dialects.postgresql as pg
 from sqlalchemy.sql.functions import now
 from datetime import datetime
 import uuid
+
+if TYPE_CHECKING:
+    from src.cars.models import Cars
 
 
 class Users(SQLModel, table=True):
@@ -22,6 +27,11 @@ class Users(SQLModel, table=True):
     )
     updated_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True)
+    )
+
+    cars: list["Cars"] = Relationship(
+        back_populates="owner",
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
 
     def __repr__(self):
