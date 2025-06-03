@@ -30,6 +30,9 @@ class UserSchema(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
+    class Config:
+        from_attributes = True
+
 
 class UserLoginSchema(BaseModel):
     email: EmailStr = Field(min_length=8, max_length=100)

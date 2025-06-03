@@ -1,8 +1,8 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
+from .deps import get_current_user
+from .models import Users
 from .schemas import (
     UserCreateSchema,
     UserSchema,
@@ -12,16 +12,12 @@ from .schemas import (
     PageResponse,
 )
 from .service import UserService
-from .utils import create_access_token, verify_pwd
+from .utils import create_access_token
 from fastapi.responses import JSONResponse
 
-from src.auth.deps import AccessTokenBearer
-from src.auth.models import Users
 
 auth_router = APIRouter()
 user_service = UserService()
-
-access_token_bearer = AccessTokenBearer()
 
 
 @auth_router.post(
@@ -40,7 +36,7 @@ async def register_user(
 async def login_user(
     login_data: UserLoginSchema, session: AsyncSession = Depends(get_session)
 ):
-    user = await user_service.validate_login_user(login_data, session)
+    user = await user_service.login_user(login_data, session)
 
     access_token = create_access_token(str(user.uid))
     return JSONResponse(
@@ -55,6 +51,13 @@ async def login_user(
             },
         }
     )
+
+
+@auth_router.get("/me", response_model=ResponseSchema[UserSchema])
+async def get_current_user_info(
+    current_user: Users = Depends(get_current_user),
+):
+    return ResponseSchema(detail="Success", result=current_user)
 
 
 @auth_router.get("/all", response_model=ResponseSchema[PageResponse[UserSchema]])
