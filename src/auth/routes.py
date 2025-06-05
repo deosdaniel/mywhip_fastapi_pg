@@ -2,11 +2,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.responses import JSONResponse
-from sqlmodel.ext.asyncio.session import AsyncSession
-
-from src.auth.dependencies import get_auth_service
 from src.auth.utils import create_access_token
 from src.auth.service import AuthService
+from src.users.schemas import UserSchema
+from src.auth.schemas import AuthSchema
+from src.auth.dependencies import get_auth_service, get_current_user
 
 auth_router = APIRouter()
 
@@ -30,3 +30,10 @@ async def authenticate_user(
             },
         }
     )
+
+
+@auth_router.get("/me")
+async def get_current_user_info(
+    current_user: AuthSchema = Depends(get_current_user),
+) -> UserSchema:
+    return current_user

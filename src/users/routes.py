@@ -4,26 +4,12 @@ from .schemas import (
     UserCreateSchema,
     UserSchema,
     UserUpdateSchema,
-    UserLoginSchema,
 )
 from .service import UserService
 from .dependencies import get_user_service
 
-from src.auth.dependencies import get_current_user
-
 
 user_router = APIRouter()
-
-
-# ???????????????
-@user_router.get("/me", response_model=ResponseSchema[UserSchema])
-async def get_current_user_info(
-    current_user: UserLoginSchema = Depends(get_current_user),
-):
-    return ResponseSchema(detail="Success", result=current_user)
-
-
-# ???????????????
 
 
 @user_router.post(
