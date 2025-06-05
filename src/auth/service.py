@@ -11,17 +11,14 @@ from src.utils.exceptions import EntityNotFoundException
 
 
 class UserService:
-    async def login_user(self, login_data: UserLoginSchema, session: AsyncSession):
+    async def login_user(self, email: str, password: str, session: AsyncSession):
         exc = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or pwd"
         )
-        check_user = await session.exec(
-            select(Users).where(Users.email == login_data.email)
-        )
-        user = check_user.first()
+        user = await self.get_user_by_email(email, session)
         if not user:
             raise exc
-        if not verify_pwd(login_data.password, user.password_hash):
+        if not verify_pwd(password, user.password_hash):
             raise exc
         return user
 
@@ -32,7 +29,7 @@ class UserService:
         if user:
             return user
         else:
-            raise EntityNotFoundException("user_uid")
+            return None
 
     async def get_user_by_email(self, email: str, session: AsyncSession):
         statement = select(Users).where(Users.email == email)
@@ -41,7 +38,7 @@ class UserService:
         if result:
             return result
         else:
-            raise EntityNotFoundException("Email")
+            return None
 
     async def get_all_users(self, session: AsyncSession, page: int, limit: int):
         statement = select(Users).order_by(desc(Users.created_at))

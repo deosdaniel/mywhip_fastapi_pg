@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from .deps import get_current_user
-from .models import Users
 from .schemas import (
     UserCreateSchema,
     UserSchema,
@@ -15,6 +14,9 @@ from .service import UserService
 from .utils import create_access_token
 from fastapi.responses import JSONResponse
 
+
+from typing import Annotated
+from fastapi.security import OAuth2PasswordRequestForm
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -34,10 +36,12 @@ async def register_user(
 
 @auth_router.post("/login")
 async def login_user(
-    login_data: UserLoginSchema, session: AsyncSession = Depends(get_session)
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: AsyncSession = Depends(get_session),
 ):
-    user = await user_service.login_user(login_data, session)
-
+    user = await user_service.login_user(
+        form_data.username, form_data.password, session
+    )
     access_token = create_access_token(str(user.uid))
     return JSONResponse(
         content={
