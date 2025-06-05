@@ -1,5 +1,7 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
+
+from src.auth.service import AuthService
 from src.users.schemas import UserSchema
 from src.users.service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -20,10 +22,14 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalid or expired"
         )
-    check_user = UserService()
-    user = await check_user.get_user_by_uid(token_data["sub"], session)
+    check_user = UserService(session)
+    user = await check_user.get_user_by_uid(token_data["sub"])
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
     return user
+
+
+def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
+    return AuthService(session)

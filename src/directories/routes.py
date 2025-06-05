@@ -1,12 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from src.db.main import db_session
+from src.directories.dependencies import get_dir_service
 
 from src.utils.schemas_common import ResponseSchema, PageResponse
 from src.directories.schemas import MakeSchema, ModelSchema
 from src.directories.service import DirectoryService
 
 directory_router = APIRouter()
-directory_service = DirectoryService()
 
 
 @directory_router.get(
@@ -15,12 +15,12 @@ directory_service = DirectoryService()
     | ResponseSchema[MakeSchema],
 )
 async def get_makes(
-    session: db_session,
     page: int | None = 1,
     limit: int | None = 10,
     requested_make: str | None = None,
+    directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_makes(session, page, limit, requested_make)
+    result = await directory_service.get_makes(page, limit, requested_make)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -30,10 +30,10 @@ async def get_makes(
     | ResponseSchema[ModelSchema],
 )
 async def get_models(
-    session: db_session,
     page: int = 1,
     limit: int = 10,
     requested_model: str | None = None,
+    directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_models(session, page, limit, requested_model)
+    result = await directory_service.get_models(page, limit, requested_model)
     return ResponseSchema(detail="Success", result=result)
