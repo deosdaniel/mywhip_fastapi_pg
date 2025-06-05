@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from .models import Users
 from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse, UserLoginSchema
+from src.auth.utils import gen_pwd_hash
 
 
 class UserService:
