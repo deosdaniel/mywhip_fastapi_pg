@@ -5,7 +5,6 @@ from src.users.service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from fastapi.security import OAuth2PasswordBearer
-
 from src.auth.utils import decode_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")

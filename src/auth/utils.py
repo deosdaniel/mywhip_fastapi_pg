@@ -1,10 +1,9 @@
 from datetime import timedelta, datetime, timezone
-from src.config import Config
 import jwt
 import uuid
 import logging
 import bcrypt
-
+from src.config import Config
 
 ACCESS_TOKEN_EXPIRY = 300
 

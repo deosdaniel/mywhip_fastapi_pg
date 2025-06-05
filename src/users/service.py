@@ -5,8 +5,9 @@ from sqlalchemy import func
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from .models import Users
-from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse, UserLoginSchema
+from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse
 from src.auth.utils import gen_pwd_hash
+from ..utils.exceptions import EntityNotFoundException
 
 
 class UserService:
@@ -81,15 +82,21 @@ class UserService:
         self, user_uid: str, update_data: UserUpdateSchema, session: AsyncSession
     ):
         user_to_update = await self.get_user_by_uid(user_uid, session)
-        update_data_dict = update_data.model_dump()
-        for k, v in update_data_dict.items():
-            setattr(user_to_update, k, v)
-        await session.commit()
-        await session.refresh(user_to_update)
-        return user_to_update
+        if user_to_update:
+            update_data_dict = update_data.model_dump()
+            for k, v in update_data_dict.items():
+                setattr(user_to_update, k, v)
+            await session.commit()
+            await session.refresh(user_to_update)
+            return user_to_update
+        else:
+            raise EntityNotFoundException("user_uid")
 
     async def delete_user(self, user_uid: str, session: AsyncSession):
         user_to_delete = await self.get_user_by_uid(user_uid, session)
-        await session.delete(user_to_delete)
-        await session.commit()
-        return True
+        if user_to_delete:
+            await session.delete(user_to_delete)
+            await session.commit()
+            return True
+        else:
+            raise EntityNotFoundException("user_uid")

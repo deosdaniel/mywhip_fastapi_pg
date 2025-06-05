@@ -69,6 +69,3 @@ async def delete_user_by_uid(
 ):
     await user_service.delete_user(user_uid, session)
     return {}
-
-
-REFRESH_TOKEN_EXPIRY = 2
