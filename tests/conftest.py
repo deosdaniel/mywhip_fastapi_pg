@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 
 from src.config import Config
-from src.db.main import get_session
+from src.db.core import get_session
 from src.main import app
 import pytest_asyncio
 

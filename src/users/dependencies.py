@@ -1,7 +1,7 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import Depends
 
-from ..db.main import get_session
+from ..db.core import get_session
 from .service import UserService
 
 

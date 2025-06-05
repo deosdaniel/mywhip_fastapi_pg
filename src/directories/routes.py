@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from src.db.main import db_session
 from src.directories.dependencies import get_dir_service
 
 from src.utils.schemas_common import ResponseSchema, PageResponse

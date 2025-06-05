@@ -5,7 +5,7 @@ from src.auth.service import AuthService
 from src.users.schemas import UserSchema
 from src.users.service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.db.main import get_session
+from src.db.core import get_session
 from fastapi.security import OAuth2PasswordBearer
 from src.auth.utils import decode_token
 
