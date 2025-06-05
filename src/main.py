@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 
 from src.auth.routes import auth_router
-from src.cars.routes import car_router, expenses_router, directory_router
+from src.cars.routes import car_router, expenses_router
 from src.users.routes import user_router
+from src.directories.routes import directory_router
 
 
 from fastapi.responses import JSONResponse

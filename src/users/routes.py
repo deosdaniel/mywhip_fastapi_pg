@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
+from src.utils.schemas_common import ResponseSchema, PageResponse
 from .schemas import (
     UserCreateSchema,
     UserSchema,
     UserUpdateSchema,
     UserLoginSchema,
-    ResponseSchema,
-    PageResponse,
 )
 from .service import UserService
 from src.auth.dependencies import get_current_user

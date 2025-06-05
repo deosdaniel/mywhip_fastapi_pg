@@ -37,20 +37,3 @@ class UserSchema(BaseModel):
 class UserLoginSchema(BaseModel):
     email: EmailStr = Field(min_length=8, max_length=100)
     password: str = Field(min_length=8, max_length=50)
-
-
-"""Pagination"""
-T = TypeVar("T")
-
-
-class ResponseSchema(BaseModel, Generic[T]):
-    detail: str
-    result: Optional[T] = None
-
-
-class PageResponse(BaseModel, Generic[T]):
-    page_number: int
-    page_size: int
-    total_pages: int
-    total_records: int
-    content: List[T]

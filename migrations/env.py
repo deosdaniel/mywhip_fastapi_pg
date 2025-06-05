@@ -6,7 +6,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from src.cars.models import Cars, Expenses, MakesDirectory, ModelsDirectory
+from src.cars.models import Cars, Expenses
+from src.directories.models import MakesDirectory, ModelsDirectory
 from src.users.models import Users
 from sqlmodel import SQLModel
 from src.config import Config

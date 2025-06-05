@@ -3,8 +3,7 @@ from datetime import datetime, date
 import uuid
 from enum import Enum
 
-from typing import TypeVar, Generic
-from typing import List, Optional
+from typing import List
 
 """Status choice"""
 
@@ -94,36 +93,6 @@ class ExpensesDTO(BaseModel):
     name: str
     exp_summ: int
     created_at: datetime
-
-
-"""Directories"""
-
-
-class MakeSchema(BaseModel):
-    uid: uuid.UUID
-    make: str
-
-
-class ModelSchema(BaseModel):
-    uid: uuid.UUID
-    model: str
-
-
-"""Pagination"""
-T = TypeVar("T")
-
-
-class ResponseSchema(BaseModel, Generic[T]):
-    detail: str
-    result: Optional[T] = None
-
-
-class PageResponse(BaseModel, Generic[T]):
-    page_number: int
-    page_size: int
-    total_pages: int
-    total_records: int
-    content: List[T]
 
 
 """Filter schemas"""

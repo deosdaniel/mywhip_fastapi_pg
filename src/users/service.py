@@ -5,7 +5,8 @@ from sqlalchemy import func
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from .models import Users
-from .schemas import UserCreateSchema, UserUpdateSchema, PageResponse
+from src.utils.schemas_common import PageResponse
+from .schemas import UserCreateSchema, UserUpdateSchema
 from src.auth.utils import gen_pwd_hash
 from ..utils.exceptions import EntityNotFoundException
 
