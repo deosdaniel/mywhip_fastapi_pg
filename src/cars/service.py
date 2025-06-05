@@ -19,7 +19,7 @@ from src.directories.service import DirectoryService
 # Cars
 class CarService:
     # Create a Car
-    async def create_car(self, car_data: CarCreateSchema, session: AsyncSession):
+    async def create_car(self, session: AsyncSession, car_data: CarCreateSchema):
         statement = (
             select(Cars).where(Cars.vin == car_data.vin).where(Cars.status != "SOLD")
         )
@@ -52,7 +52,7 @@ class CarService:
             raise VinBusyException()
 
     # Get single car
-    async def get_car(self, car_uid: str, session: AsyncSession):
+    async def get_car(self, session: AsyncSession, car_uid: str):
         statement = (
             select(Cars).options(selectinload(Cars.expenses)).where(Cars.uid == car_uid)
         )
@@ -125,7 +125,7 @@ class CarService:
 
     # Update Car data
     async def update_car(
-        self, car_uid: str, update_data: CarUpdateSchema, session: AsyncSession
+        self, session: AsyncSession, car_uid: str, update_data: CarUpdateSchema
     ):
         car_to_update = await self.get_car(car_uid, session)
         update_data_dict = update_data.model_dump()
@@ -136,7 +136,7 @@ class CarService:
         return car_to_update
 
     # Delete a Car
-    async def delete_car(self, car_uid, session: AsyncSession):
+    async def delete_car(self, session: AsyncSession, car_uid):
         car_to_delete = await self.get_car(car_uid, session)
         await session.delete(car_to_delete)
         await session.commit()

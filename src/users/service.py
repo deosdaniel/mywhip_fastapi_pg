@@ -13,7 +13,7 @@ from ..utils.exceptions import EntityNotFoundException
 
 class UserService:
 
-    async def get_user_by_uid(self, user_uid: str, session: AsyncSession):
+    async def get_user_by_uid(self, session: AsyncSession, user_uid: str):
         statement = select(Users).where(Users.uid == user_uid)
         result = await session.exec(statement)
         user = result.first()
@@ -22,7 +22,7 @@ class UserService:
         else:
             return None
 
-    async def get_user_by_email(self, email: str, session: AsyncSession):
+    async def get_user_by_email(self, session: AsyncSession, email: str):
         statement = select(Users).where(Users.email == email)
         result = await session.exec(statement)
         result = result.first()
@@ -51,19 +51,19 @@ class UserService:
             content=result,
         )
 
-    async def email_exists(self, email: str, session: AsyncSession):
+    async def email_exists(self, session: AsyncSession, email: str):
         statement = select(Users).where(Users.email == email)
         result = await session.exec(statement)
         user = result.first()
         return True if user else False
 
-    async def username_exists(self, username: str, session: AsyncSession):
+    async def username_exists(self, session: AsyncSession, username: str):
         statement = select(Users).where(Users.username == username)
         result = await session.exec(statement)
         user = result.first()
         return True if user else False
 
-    async def create_user(self, user_data: UserCreateSchema, session: AsyncSession):
+    async def create_user(self, session: AsyncSession, user_data: UserCreateSchema):
         email_exists = await self.email_exists(user_data.email, session)
         username_exists = await self.username_exists(user_data.username, session)
         if not email_exists and not username_exists:
@@ -80,7 +80,7 @@ class UserService:
             )
 
     async def update_user(
-        self, user_uid: str, update_data: UserUpdateSchema, session: AsyncSession
+        self, session: AsyncSession, user_uid: str, update_data: UserUpdateSchema
     ):
         user_to_update = await self.get_user_by_uid(user_uid, session)
         if user_to_update:
@@ -93,7 +93,7 @@ class UserService:
         else:
             raise EntityNotFoundException("user_uid")
 
-    async def delete_user(self, user_uid: str, session: AsyncSession):
+    async def delete_user(self, session: AsyncSession, user_uid: str):
         user_to_delete = await self.get_user_by_uid(user_uid, session)
         if user_to_delete:
             await session.delete(user_to_delete)

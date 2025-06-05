@@ -7,7 +7,7 @@ from src.auth.utils import verify_pwd
 
 
 class AuthService:
-    async def authenticate_user(self, email: str, password: str, session: AsyncSession):
+    async def authenticate_user(self, session: AsyncSession, email: str, password: str):
         exc = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid email or pwd"
         )

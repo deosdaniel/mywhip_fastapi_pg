@@ -1,6 +1,5 @@
-from fastapi import APIRouter, status, Depends, Path
-from sqlmodel.ext.asyncio.session import AsyncSession
-from src.db.main import get_session
+from fastapi import APIRouter
+from src.db.main import db_session
 
 from src.utils.schemas_common import ResponseSchema, PageResponse
 from src.directories.schemas import MakeSchema, ModelSchema
@@ -16,7 +15,7 @@ directory_service = DirectoryService()
     | ResponseSchema[MakeSchema],
 )
 async def get_makes(
-    session: AsyncSession = Depends(get_session),
+    session: db_session,
     page: int | None = 1,
     limit: int | None = 10,
     requested_make: str | None = None,
@@ -31,7 +30,7 @@ async def get_makes(
     | ResponseSchema[ModelSchema],
 )
 async def get_models(
-    session: AsyncSession = Depends(get_session),
+    session: db_session,
     page: int = 1,
     limit: int = 10,
     requested_model: str | None = None,
