@@ -1,7 +1,9 @@
 from fastapi import APIRouter, status, Path, Depends
 
+from src.auth.dependencies import get_current_user
 from src.cars.dependencies import get_exp_service, get_car_service
 from src.cars.service import CarService, ExpensesService
+from src.users.schemas import UserSchema
 from src.utils.schemas_common import ResponseSchema, PageResponse
 from src.cars.schemas import (
     CarUpdateSchema,
@@ -21,9 +23,11 @@ expenses_router = APIRouter()
     "/", status_code=status.HTTP_201_CREATED, response_model=ResponseSchema[CarSchema]
 )
 async def create_car(
-    car_data: CarCreateSchema, car_service: CarService = Depends(get_car_service)
+    car_data: CarCreateSchema,
+    current_user: UserSchema = Depends(get_current_user),
+    car_service: CarService = Depends(get_car_service),
 ) -> dict:
-    result = await car_service.create_car(car_data)
+    result = await car_service.create_car(car_data, owner_uid=current_user.uid)
     return ResponseSchema(detail="Success", result=result)
 
 

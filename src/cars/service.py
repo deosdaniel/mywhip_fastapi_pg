@@ -1,4 +1,6 @@
 import math
+from uuid import UUID
+
 from sqlalchemy import delete, func
 from sqlalchemy.orm import selectinload
 from src.utils.schemas_common import PageResponse
@@ -19,7 +21,7 @@ from ..utils.base_service import BaseService
 # Cars
 class CarService(BaseService):
     # Create a Car
-    async def create_car(self, car_data: CarCreateSchema):
+    async def create_car(self, car_data: CarCreateSchema, owner_uid: UUID):
         statement = (
             select(Cars).where(Cars.vin == car_data.vin).where(Cars.status != "SOLD")
         )
@@ -43,6 +45,7 @@ class CarService(BaseService):
                 make=validate_make.make,
                 model=validate_model.model,
                 expenses=new_expenses,
+                owner_uid=owner_uid
             )
             self.session.add(new_car)
             await self.session.commit()
