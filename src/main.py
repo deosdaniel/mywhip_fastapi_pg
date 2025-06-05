@@ -2,8 +2,10 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Request
-from src.cars.routes import car_router, expenses_router, directory_router
+
 from src.auth.routes import auth_router
+from src.cars.routes import car_router, expenses_router, directory_router
+from src.users.routes import user_router
 
 
 from fastapi.responses import JSONResponse
@@ -46,12 +48,14 @@ def entity_not_found(request: Request, exc: EntityNotFoundException):
     )
 
 
+app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=["Auth"])
+app.include_router(user_router, prefix=f"/api/{version}/users", tags=["Users"])
 app.include_router(car_router, prefix=f"/api/{version}/cars", tags=["Cars"])
 app.include_router(expenses_router, prefix=f"/api/{version}/cars", tags=["Expenses"])
 app.include_router(
     directory_router, prefix=f"/api/{version}/directories", tags=["Directories"]
 )
-app.include_router(auth_router, prefix=f"/api/{version}/auth", tags=["Auth"])
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

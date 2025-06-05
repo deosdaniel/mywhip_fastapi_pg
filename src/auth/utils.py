@@ -5,6 +5,7 @@ import uuid
 import logging
 import bcrypt
 
+
 ACCESS_TOKEN_EXPIRY = 300
 
 

@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import now
 from .schemas import CarStatusChoices
 
 if TYPE_CHECKING:
-    from ..auth.models import Users
+    from ..users.models import Users
 
 
 class Cars(SQLModel, table=True):

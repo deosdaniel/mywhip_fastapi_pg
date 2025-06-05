@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from src.cars.models import Cars, Expenses, MakesDirectory, ModelsDirectory
-from src.auth.models import Users
+from src.users.models import Users
 from sqlmodel import SQLModel
 from src.config import Config
 
