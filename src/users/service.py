@@ -14,8 +14,8 @@ from src.utils.base_service_repo import BaseService
 class UserService(BaseService[UsersRepository]):
 
     async def create_user(self, user_data: UserCreateSchema):
-        email_exists = await self.repository.get_user_by_email(user_data.email)
-        username_exists = await self.repository.get_user_by_username(user_data.username)
+        email_exists = await self.get_user_by_email(user_data.email)
+        username_exists = await self.get_user_by_username(user_data.username)
         if not email_exists and not username_exists:
             user_dict = user_data.model_dump()
             user_dict["password_hash"] = gen_pwd_hash(user_data.password)
