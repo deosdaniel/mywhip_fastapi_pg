@@ -1,14 +1,9 @@
 import math
 from fastapi.exceptions import HTTPException
 from fastapi import status
-from sqlalchemy import func
-
-from sqlmodel import select, desc
-from .models import Users
 from src.utils.schemas_common import PageResponse
-from .repositories import UsersRepository
 from .schemas import UserCreateSchema, UserUpdateSchema
-from src.auth.utils import gen_pwd_hash
+from ..auth.utils import gen_pwd_hash
 
 from ..utils.exceptions import EntityNotFoundException
 
@@ -21,7 +16,9 @@ class UserService(BaseService):
         email_exists = await self.repository.get_user_by_email(user_data.email)
         username_exists = await self.repository.get_user_by_username(user_data.username)
         if not email_exists and not username_exists:
-            return await self.repository.create_user(user_data)
+            user_dict = user_data.model_dump()
+            user_dict["password_hash"] = gen_pwd_hash(user_data.password)
+            return await self.repository.create_user(user_dict)
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -67,11 +64,12 @@ class UserService(BaseService):
         )
 
     async def update_user(self, user_uid: str, update_data: UserUpdateSchema):
-        update_user = await self.repository.update_user(user_uid, update_data)
-        if update_user:
-            return update_user
-        else:
+        user = await self.repository.get_user_by_uid(user_uid)
+        if not user:
             raise EntityNotFoundException("user_uid")
+        update_dict = update_data.model_dump(exclude_unset=True)
+        updated_user = await self.repository.update_user(user_uid, update_dict)
+        return updated_user
 
     async def delete_user(self, user_uid: str):
         delete_user = await self.repository.delete_user(user_uid)

@@ -1,7 +1,5 @@
-from pydantic_core.core_schema import none_schema
 from sqlalchemy import desc, func
-from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel import select, desc
+from sqlmodel import select, desc, update
 
 from src.auth.utils import gen_pwd_hash
 from src.users.models import Users
@@ -11,10 +9,9 @@ from src.utils.base_service_repo import BaseRepository
 
 class UsersRepository(BaseRepository):
 
-    async def create_user(self, user_data: UserCreateSchema) -> Users:
-        user_dict = user_data.model_dump()
-        user = Users(**user_dict)
-        user.password_hash = gen_pwd_hash(user_dict["password"])
+    async def create_user(self, user_data: dict) -> Users:
+
+        user = Users(**user_data)
         self.session.add(user)
         await self.session.commit()
         return user
@@ -50,17 +47,16 @@ class UsersRepository(BaseRepository):
         result = await self.session.exec(select(func.count(Users.uid)))
         return result.one()
 
-    async def update_user(self, user_uid: str, update_data: UserUpdateSchema) -> Users:
-        user_to_update = await self.get_user_by_uid(user_uid)
-        if user_to_update:
-            update_data_dict = update_data.model_dump()
-            for k, v in update_data_dict.items():
-                setattr(user_to_update, k, v)
-            await self.session.commit()
-            await self.session.refresh(user_to_update)
-            return user_to_update
-        else:
+    async def update_user(self, user_uid: str, update_dict: dict) -> Users:
+        user = await self.get_user_by_uid(user_uid)
+        if not user:
             return None
+        await self.session.exec(
+            update(Users).where(Users.uid == user_uid).values(**update_dict)
+        )
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
 
     async def delete_user(self, user_uid: str):
         user_to_delete = await self.get_user_by_uid(user_uid)
