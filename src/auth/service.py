@@ -3,7 +3,7 @@ from fastapi import status
 
 from src.users.service import UserService
 from src.auth.utils import verify_pwd
-from src.utils.base_service import BaseService
+from src.utils.base_service_repo import BaseService
 
 
 class AuthService(BaseService):

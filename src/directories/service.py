@@ -5,7 +5,7 @@ from src.directories.models import MakesDirectory, ModelsDirectory
 from src.utils.exceptions import EntityNotFoundException
 from src.utils.schemas_common import PageResponse
 
-from src.utils.base_service import BaseService
+from src.utils.base_service_repo import BaseService
 
 
 class DirectoryService(BaseService):

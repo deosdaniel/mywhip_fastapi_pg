@@ -15,7 +15,7 @@ from .models import Cars, Expenses
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 from src.directories.service import DirectoryService
-from ..utils.base_service import BaseService
+from ..utils.base_service_repo import BaseService
 
 
 # Cars
