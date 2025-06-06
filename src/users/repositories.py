@@ -1,9 +1,6 @@
 from sqlalchemy import desc, func
 from sqlmodel import select, desc, update
-
-from src.auth.utils import gen_pwd_hash
 from src.users.models import Users
-from src.users.schemas import UserUpdateSchema, UserCreateSchema
 from src.utils.base_service_repo import BaseRepository
 
 
