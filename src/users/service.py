@@ -2,6 +2,7 @@ import math
 from fastapi.exceptions import HTTPException
 from fastapi import status
 from src.utils.schemas_common import PageResponse
+from .repositories import UsersRepository
 from .schemas import UserCreateSchema, UserUpdateSchema
 from ..auth.utils import gen_pwd_hash
 
@@ -10,7 +11,7 @@ from ..utils.exceptions import EntityNotFoundException
 from src.utils.base_service_repo import BaseService
 
 
-class UserService(BaseService):
+class UserService(BaseService[UsersRepository]):
 
     async def create_user(self, user_data: UserCreateSchema):
         email_exists = await self.repository.get_user_by_email(user_data.email)
