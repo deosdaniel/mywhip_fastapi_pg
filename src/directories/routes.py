@@ -16,10 +16,18 @@ directory_router = APIRouter()
 async def get_makes(
     page: int | None = 1,
     limit: int | None = 10,
+    directory_service: DirectoryService = Depends(get_dir_service),
+):
+    result = await directory_service.get_makes(page, limit)
+    return ResponseSchema(detail="Success", result=result)
+
+
+@directory_router.get("/makes/{requested_make}")
+async def get_single_make(
     requested_make: str | None = None,
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_makes(page, limit, requested_make)
+    result = await directory_service.get_single_make(requested_make)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -31,8 +39,16 @@ async def get_makes(
 async def get_models(
     page: int = 1,
     limit: int = 10,
+    directory_service: DirectoryService = Depends(get_dir_service),
+):
+    result = await directory_service.get_models(page, limit)
+    return ResponseSchema(detail="Success", result=result)
+
+
+@directory_router.get("/makes/{requested_model}")
+async def get_single_model(
     requested_model: str | None = None,
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_models(page, limit, requested_model)
+    result = await directory_service.get_single_model(requested_model)
     return ResponseSchema(detail="Success", result=result)
