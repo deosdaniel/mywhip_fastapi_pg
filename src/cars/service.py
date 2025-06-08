@@ -69,10 +69,9 @@ class CarService(BaseService[CarsRepository]):
 
     # Update Car data
     async def update_car(self, car_uid: str, update_data: CarUpdateSchema):
+        await self.get_car_by_uid(car_uid)
         update_dict = update_data.model_dump(exclude_unset=True)
         updated_car = await self.repository.update_car(car_uid, update_dict)
-        if not updated_car:
-            raise EntityNotFoundException("car_uid")
         return updated_car
 
     # Delete a Car
@@ -85,6 +84,7 @@ class CarService(BaseService[CarsRepository]):
 
 # Expenses
 class ExpensesService(BaseService[ExpensesRepository]):
+    # Add car_service to have access to it's methods
     def __init__(self, repository: ExpensesRepository, car_service: CarService):
         super().__init__(repository)
         self.car_service = car_service
@@ -98,46 +98,31 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Get single expense
     async def get_single_expense(self, car_uid: str, exp_uid: str):
-        car_update_service = CarService(self.session)
-        await car_update_service.get_car(car_uid)
-        statement = (
-            select(Expenses)
-            .where(Expenses.car_uid == car_uid)
-            .where(Expenses.uid == exp_uid)
-        )
-        result = await self.session.exec(statement)
-        exp = result.first()
-        if exp:
-            return exp
-        else:
+        await self.car_service.get_car_by_uid(car_uid)
+        exp = await self.repository.get_single_exp(car_uid, exp_uid)
+        if not exp:
             raise EntityNotFoundException("exp_uid")
+        return exp
 
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
         self, car_uid: str, page: int = 1, limit: int = 10
     ):
-        car_update_service = CarService(self.session)
-        await car_update_service.get_car(car_uid)
-        statement = select(Expenses).where(Expenses.car_uid == car_uid)
-        # Pagination
-        offset_page = page - 1
-        statement = statement.offset(offset_page * limit).limit(limit)
-        # Counting records, pages
-        count_statement = (
-            select(func.count(1))
-            .select_from(Expenses)
-            .where(Expenses.car_uid == car_uid)
-        )
-        total_records = (await self.session.exec(count_statement)).one() or 0
+        await self.car_service.get_car_by_uid(car_uid)
+
+        offset_page = (page - 1) * limit
+
+        expenses = await self.repository.get_exp_by_car_uid(car_uid, offset_page, limit)
+
+        total_records = await self.repository.count_exp_by_car_uid(car_uid)
         total_pages = math.ceil(total_records / limit)
-        result = await self.session.exec(statement)
-        result = result.all()
+
         return PageResponse(
             page_number=page,
             page_size=limit,
             total_pages=total_pages,
             total_records=total_records,
-            content=result,
+            content=expenses,
         )
 
     # Update single expense
@@ -147,13 +132,13 @@ class ExpensesService(BaseService[ExpensesRepository]):
         exp_uid: str,
         exp_update_data: ExpensesCreateSchema,
     ):
-        expense_to_update = await self.get_single_expense(car_uid, exp_uid)
-        update_data_dict = exp_update_data.model_dump()
-        for k, v in update_data_dict.items():
-            setattr(expense_to_update, k, v)
-        await self.session.commit()
-        await self.session.refresh(expense_to_update)
-        return expense_to_update
+        await self.get_single_expense(car_uid, exp_uid)
+        update_data_dict = exp_update_data.model_dump(exclude_unset=True)
+        updated_exp = await self.repository.update_single_exp(
+            car_uid, exp_uid, update_data_dict
+        )
+
+        return updated_exp
 
     # Delete single expense
     async def delete_single_expense(
@@ -161,16 +146,15 @@ class ExpensesService(BaseService[ExpensesRepository]):
         car_uid: str,
         exp_uid: str,
     ):
-        expense_to_delete = await self.get_single_expense(car_uid, exp_uid)
-        await self.session.delete(expense_to_delete)
-        await self.session.commit()
-        return True
+        await self.get_single_expense(car_uid, exp_uid)
+        delete_exp = await self.repository.delete_single_exp(car_uid, exp_uid)
+        if delete_exp:
+            return True
+        else:
+            raise EntityNotFoundException("exp_uid")
 
     # Delete all expenses for a single car
     async def delete_all_expenses_by_car_uid(self, car_uid: str):
-        car_update_service = CarService(self.session)
-        await car_update_service.get_car(car_uid)
-        statement = delete(Expenses).where(Expenses.car_uid == car_uid)
-        await self.session.exec(statement)
-        await self.session.commit()
+        await self.get_expenses_by_car_uid(car_uid)
+        await self.repository.delete_exp_by_car_uid(car_uid)
         return True

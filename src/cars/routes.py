@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Path, Depends
+from fastapi import APIRouter, status, Path, Depends, Query
 
 from src.auth.dependencies import get_current_user
 from src.cars.dependencies import get_exp_service, get_car_service
@@ -116,8 +116,8 @@ async def get_single_expense(
 )
 async def get_expenses_by_car_uid(
     car_uid: str = Path(min_length=32, max_length=36),
-    page: int = 1,
-    limit: int = 10,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
     expenses_service: ExpensesService = Depends(get_exp_service),
 ):
     result = await expenses_service.get_expenses_by_car_uid(car_uid, page, limit)

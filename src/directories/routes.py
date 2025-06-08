@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from src.directories.dependencies import get_dir_service
 
 from src.utils.schemas_common import ResponseSchema, PageResponse
@@ -14,8 +14,8 @@ directory_router = APIRouter()
     | ResponseSchema[MakeSchema],
 )
 async def get_makes(
-    page: int | None = 1,
-    limit: int | None = 10,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
     result = await directory_service.get_makes(page, limit)

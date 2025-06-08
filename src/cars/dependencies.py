@@ -24,6 +24,8 @@ def get_exp_repository(
 
 def get_exp_service(
     repository: ExpensesRepository = Depends(get_exp_repository),
-    car_service: CarService = Depends(get_car_service),
+    car_service: CarService = Depends(
+        get_car_service
+    ),  # to have access to it's methods
 ) -> ExpensesService:
     return ExpensesService(repository, car_service)

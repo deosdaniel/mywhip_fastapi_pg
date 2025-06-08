@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from src.utils.schemas_common import ResponseSchema, PageResponse
 from .schemas import (
     UserCreateSchema,
@@ -26,8 +26,8 @@ async def create_user(
 
 @user_router.get("/all", response_model=ResponseSchema[PageResponse[UserSchema]])
 async def get_all_users(
-    page: int | None = 1,
-    limit: int | None = 10,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
     user_service: UserService = Depends(get_user_service),
 ):
     result = await user_service.get_all_users(page, limit)

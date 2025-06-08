@@ -76,8 +76,6 @@ class CarsRepository(BaseRepository):
 
     async def update_car(self, car_uid: str, car_update_dict: dict) -> Cars:
         car = await self.get_car_by_uid(car_uid)
-        if not car:
-            return None
         await self.session.exec(
             update(Cars).where(Cars.uid == car_uid).values(**car_update_dict)
         )
@@ -103,19 +101,64 @@ class ExpensesRepository(BaseRepository):
         return new_exp
 
     async def get_single_exp(self, car_uid: str, expense_uid: str) -> Expenses:
-        pass
+        statement = (
+            select(Expenses)
+            .where(Expenses.car_uid == car_uid)
+            .where(Expenses.uid == expense_uid)
+        )
+        result = await self.session.exec(statement)
+        return result.one_or_none()
+
+    async def get_exp_by_car_uid(
+        self, car_uid: str, offset_page: int, limit: int
+    ) -> list[Expenses]:
+        statement = (
+            select(Expenses)
+            .where(Expenses.car_uid == car_uid)
+            .offset(offset_page)
+            .limit(limit)
+            .order_by(desc(Expenses.created_at))
+        )
+        return await self.session.exec(statement)
 
     async def count_exp_by_car_uid(self, car_uid: str) -> int:
-        pass
+        count_statement = (
+            select(func.count(1))
+            .select_from(Expenses)
+            .where(Expenses.car_uid == car_uid)
+        )
+        result = await self.session.exec(count_statement)
+        return result.one()
 
-    async def get_exp_by_car_uid(self, car_uid: str) -> Expenses:
-        pass
-
-    async def update_single_exp(self, car_uid: str, expense_uid: str) -> Expenses:
-        pass
+    async def update_single_exp(
+        self, car_uid: str, expense_uid: str, update_data_dict: dict
+    ) -> Expenses:
+        exp = await self.get_single_exp(car_uid, expense_uid)
+        await self.session.exec(
+            update(Expenses)
+            .where(Expenses.car_uid == car_uid)
+            .where(Expenses.uid == expense_uid)
+            .values(**update_data_dict)
+        )
+        await self.session.commit()
+        await self.session.refresh(exp)
+        return exp
 
     async def delete_single_exp(self, car_uid: str, expense_uid: str) -> bool:
-        pass
+        exp_to_delete = await self.get_single_exp(car_uid, expense_uid)
+        if exp_to_delete:
+            await self.session.delete(exp_to_delete)
+            await self.session.commit()
+            return True
+        else:
+            return False
 
     async def delete_exp_by_car_uid(self, car_uid: str) -> bool:
-        pass
+        result = await self.session.exec(
+            select(Expenses).where(Expenses.car_uid == car_uid)
+        )
+        exps = result.all()
+        for exp in exps:
+            await self.session.delete(exp)
+        await self.session.commit()
+        return True
