@@ -1,13 +1,10 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 
-from src.auth.repositories import AuthRepository
 from src.auth.service import AuthService
 from src.users.dependencies import get_user_service
 from src.users.schemas import UserSchema
 from src.users.service import UserService
-from sqlmodel.ext.asyncio.session import AsyncSession
-from src.db.core import get_session
 from fastapi.security import OAuth2PasswordBearer
 from src.auth.utils import decode_token
 
@@ -32,12 +29,7 @@ async def get_current_user(
     return user
 
 
-def get_auth_repository(session: AsyncSession = Depends(get_session)) -> AuthRepository:
-    return AuthRepository(session)
-
-
 def get_auth_service(
-    repository: AuthRepository = Depends(get_auth_repository),
     user_service: UserService = Depends(get_user_service),
 ) -> AuthService:
-    return AuthService(repository, user_service)
+    return AuthService(user_service)
