@@ -1,9 +1,8 @@
 import math
-from uuid import UUID
 
 from sqlalchemy import delete, func
-from sqlalchemy.orm import selectinload
 from src.utils.schemas_common import PageResponse
+from .repositories import CarsRepository, ExpensesRepository
 from .schemas import (
     CarCreateSchema,
     CarUpdateSchema,
@@ -15,52 +14,34 @@ from .models import Cars, Expenses
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 from src.directories.service import DirectoryService
+from ..directories.repositories import DirectoryRepository
 from ..utils.base_service_repo import BaseService
 
 
 # Cars
-class CarService(BaseService):
+class CarService(BaseService[CarsRepository]):
     # Create a Car
-    async def create_car(self, car_data: CarCreateSchema, owner_uid: UUID):
-        statement = (
-            select(Cars).where(Cars.vin == car_data.vin).where(Cars.status != "SOLD")
-        )
-        check_vin = await self.session.exec(statement)
-        check_vin = check_vin.first()
-        if check_vin is None:
-            directory_service = DirectoryService(self.session)
-            validate_make = await directory_service.get_makes(
-                page=None, limit=None, requested_make=car_data.make
-            )
-            validate_model = await directory_service.get_models(
-                page=None, limit=None, requested_model=car_data.model
-            )
-            new_expenses = []
-            if car_data.expenses:
-                new_expenses = [
-                    Expenses(**exp.model_dump()) for exp in car_data.expenses
-                ]
-            new_car = Cars(
-                **car_data.model_dump(exclude={"make", "model", "expenses"}),
-                make=validate_make.make,
-                model=validate_model.model,
-                expenses=new_expenses,
-                owner_uid=owner_uid
-            )
-            self.session.add(new_car)
-            await self.session.commit()
-            await self.session.refresh(new_car)
-            return new_car
-        else:
+    async def create_car(
+        self,
+        car_data: CarCreateSchema,
+        # owner_uid: UUID,
+    ):
+        if await self.repository.check_vin_collision(car_data.vin):
             raise VinBusyException()
 
+        # await DirectoryRepository.get_single_make(self, car_data.make)
+        # await DirectoryRepository.get_single_model(self, car_data.model)
+
+        new_car_dict = car_data.model_dump()
+        new_car_dict["make"] = car_data.make
+        new_car_dict["model"] = car_data.model
+        # new_car_dict["owner_uid"] = owner_uid
+        return await self.repository.create_car(new_car_dict)
+
     # Get single car
-    async def get_car(self, car_uid: str):
-        statement = (
-            select(Cars).options(selectinload(Cars.expenses)).where(Cars.uid == car_uid)
-        )
-        res = await self.session.exec(statement)
-        car = res.first()
+    async def get_car_by_uid(self, car_uid: str):
+
+        car = await self.repository.get_car_by_uid(car_uid)
         if car:
             return car
         else:
@@ -71,90 +52,48 @@ class CarService(BaseService):
         self,
         filter_schema: GetAllFilter,
     ):
-        # Base query
-        statement = select(Cars).options(selectinload(Cars.expenses))
-        # Counting query
-        count_statement = select(func.count(1)).select_from(Cars)
-        # Filtering
-        if filter_schema.make:
-            statement = statement.filter_by(make=filter_schema.make)
-            count_statement = count_statement.filter_by(make=filter_schema.make)
-        if filter_schema.model:
-            statement = statement.filter_by(model=filter_schema.model)
-            count_statement = count_statement.filter_by(model=filter_schema.model)
-        if filter_schema.prod_year:
-            if filter_schema.prod_year.year_from:
-                statement = statement.filter(
-                    Cars.year >= filter_schema.prod_year.year_from
-                )
-                count_statement = count_statement.filter(
-                    Cars.year >= filter_schema.prod_year.year_from
-                )
-            if filter_schema.prod_year.year_to:
-                statement = statement.filter(
-                    Cars.year <= filter_schema.prod_year.year_to
-                )
-                count_statement = count_statement.filter(
-                    Cars.year <= filter_schema.prod_year.year_to
-                )
-        if filter_schema.status and filter_schema.status:
-            statement = statement.filter_by(status=filter_schema.status)
-            count_statement = count_statement.filter_by(status=filter_schema.status)
-        # Sorting
-        direction = desc if filter_schema.order_desc else asc
-        if filter_schema.sort_by:
-            statement = statement.order_by(
-                direction(getattr(Cars, filter_schema.sort_by))
-            )
-        # Pagination
-        offset_page = filter_schema.page - 1
-        statement = statement.offset(offset_page * filter_schema.limit).limit(
-            filter_schema.limit
-        )
-        # Counting records, pages
-        total_records = (await self.session.exec(count_statement)).one() or 0
+
+        offset_page = (filter_schema.page - 1) * filter_schema.limit
+
+        cars = await self.repository.get_cars_filtered(offset_page, filter_schema)
+
+        total_records = await self.repository.count_filtered_records(filter_schema)
         total_pages = math.ceil(total_records / filter_schema.limit)
-        # Executing query
-        res = await self.session.exec(statement)
-        result = res.unique().all()
         return PageResponse(
             page_number=filter_schema.page,
             page_size=filter_schema.limit,
             total_pages=total_pages,
             total_records=total_records,
-            content=result,
+            content=cars,
         )
 
     # Update Car data
     async def update_car(self, car_uid: str, update_data: CarUpdateSchema):
-        car_to_update = await self.get_car(car_uid)
-        update_data_dict = update_data.model_dump()
-        for k, v in update_data_dict.items():
-            setattr(car_to_update, k, v)
-        await self.session.commit()
-        await self.session.refresh(car_to_update)
-        return car_to_update
+        update_dict = update_data.model_dump(exclude_unset=True)
+        updated_car = await self.repository.update_car(car_uid, update_dict)
+        if not updated_car:
+            raise EntityNotFoundException("car_uid")
+        return updated_car
 
     # Delete a Car
     async def delete_car(self, car_uid):
-        car_to_delete = await self.get_car(car_uid)
-        await self.session.delete(car_to_delete)
-        await self.session.commit()
+        delete_car = await self.repository.delete_car(car_uid)
+        if not delete_car:
+            raise EntityNotFoundException("car_uid")
         return True
 
 
 # Expenses
-class ExpensesService(BaseService):
+class ExpensesService(BaseService[ExpensesRepository]):
+    def __init__(self, repository: ExpensesRepository, car_service: CarService):
+        super().__init__(repository)
+        self.car_service = car_service
+
     # Create an expense
     async def create_expense(self, car_uid: str, exp_data: ExpensesCreateSchema):
-        car_update_service = CarService(self.session)
-        await car_update_service.get_car(car_uid)
-
+        car = await self.car_service.get_car_by_uid(car_uid)
         exp_data_dict = exp_data.model_dump()
-        new_exp = Expenses(**exp_data_dict)
-        new_exp.car_uid = car_uid
-        self.session.add(new_exp)
-        await self.session.commit()
+        new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
         return new_exp
 
     # Get single expense

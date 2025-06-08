@@ -65,11 +65,10 @@ class UserService(BaseService[UsersRepository]):
         )
 
     async def update_user(self, user_uid: str, update_data: UserUpdateSchema):
-        user = await self.repository.get_user_by_uid(user_uid)
-        if not user:
-            raise EntityNotFoundException("user_uid")
         update_dict = update_data.model_dump(exclude_unset=True)
         updated_user = await self.repository.update_user(user_uid, update_dict)
+        if not updated_user:
+            raise EntityNotFoundException("user_uid")
         return updated_user
 
     async def delete_user(self, user_uid: str):

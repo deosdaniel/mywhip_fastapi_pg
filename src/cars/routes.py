@@ -24,10 +24,13 @@ expenses_router = APIRouter()
 )
 async def create_car(
     car_data: CarCreateSchema,
-    current_user: UserSchema = Depends(get_current_user),
+    # current_user: UserSchema = Depends(get_current_user),
     car_service: CarService = Depends(get_car_service),
 ) -> dict:
-    result = await car_service.create_car(car_data, owner_uid=current_user.uid)
+    result = await car_service.create_car(
+        car_data,
+        # owner_uid=current_user.uid
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -37,11 +40,11 @@ async def create_car(
     response_model=ResponseSchema[CarSchema],
     response_model_exclude_none=True,
 )
-async def get_car(
+async def get_car_by_uid(
     car_uid: str = Path(min_length=32, max_length=36),
     car_service: CarService = Depends(get_car_service),
 ) -> dict:
-    result = await car_service.get_car(car_uid)
+    result = await car_service.get_car_by_uid(car_uid)
     return ResponseSchema(detail="Success", result=result)
 
 
