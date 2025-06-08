@@ -31,7 +31,6 @@ class CarCreateSchema(BaseModel):
     date_purchased: date = Field(default=date.today)
     price_purchased: int = Field(gt=50000)
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
-    # expenses: List["ExpensesCreateSchema"] | None = None
 
 
 class CarCreateResponse(BaseModel):

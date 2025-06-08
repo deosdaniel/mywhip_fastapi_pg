@@ -1,6 +1,5 @@
 import math
-
-from sqlalchemy import delete, func
+from uuid import UUID
 from src.utils.schemas_common import PageResponse
 from .repositories import CarsRepository, ExpensesRepository
 from .schemas import (
@@ -9,12 +8,9 @@ from .schemas import (
     ExpensesCreateSchema,
     GetAllFilter,
 )
-from sqlmodel import select, desc, asc
-from .models import Cars, Expenses
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 from src.directories.service import DirectoryService
-from ..directories.repositories import DirectoryRepository
 from ..utils.base_service_repo import BaseService
 
 
@@ -29,7 +25,7 @@ class CarService(BaseService[CarsRepository]):
     async def create_car(
         self,
         car_data: CarCreateSchema,
-        # owner_uid: UUID,
+        owner_uid: UUID,
     ):
         vin_collision = await self.repository.check_vin_collision(car_data.vin)
         if vin_collision:
@@ -41,7 +37,7 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict = car_data.model_dump()
         new_car_dict["make"] = car_data.make
         new_car_dict["model"] = car_data.model
-        # new_car_dict["owner_uid"] = owner_uid
+        new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create_car(new_car_dict)
 
     # Get single car
