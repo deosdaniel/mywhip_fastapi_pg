@@ -34,6 +34,19 @@ class CarCreateSchema(BaseModel):
     # expenses: List["ExpensesCreateSchema"] | None = None
 
 
+class CarCreateResponse(BaseModel):
+    uid: uuid.UUID
+    make: str
+    model: str
+    year: int
+    vin: str
+    pts_num: str
+    sts_num: str
+    date_purchased: date | None = None
+    price_purchased: int = None
+    status: CarStatusChoices | None = None
+
+
 class CarUpdateSchema(BaseModel):
     price_purchased: int | None = Field(gt=50000)
     date_listed: date | None = None

@@ -11,7 +11,11 @@ from src.directories.routes import directory_router
 
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from src.utils.exceptions import VinBusyException, EntityNotFoundException
+from src.utils.exceptions import (
+    VinBusyException,
+    EntityNotFoundException,
+    MakeModelException,
+)
 
 version = "v1"
 
@@ -45,6 +49,16 @@ def entity_not_found(request: Request, exc: EntityNotFoundException):
         content={
             "status": "Failed",
             "message": f"Sorry, requested {exc.entity} does not exist.",
+        }
+    )
+
+
+@app.exception_handler(MakeModelException)
+def entity_not_found(request: Request, exc: MakeModelException):
+    return JSONResponse(
+        content={
+            "status": "Failed",
+            "message": f"Sorry mate, selected Make has no model called {exc.model}.",
         }
     )
 

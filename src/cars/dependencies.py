@@ -4,6 +4,8 @@ from fastapi import Depends
 from ..db.core import get_session
 from .service import CarService, ExpensesService
 from .repositories import CarsRepository, ExpensesRepository
+from ..directories.dependencies import get_dir_service
+from ..directories.service import DirectoryService
 
 
 def get_car_repository(session: AsyncSession = Depends(get_session)) -> CarsRepository:
@@ -12,8 +14,9 @@ def get_car_repository(session: AsyncSession = Depends(get_session)) -> CarsRepo
 
 def get_car_service(
     repository: CarsRepository = Depends(get_car_repository),
+    dir_service: DirectoryService = Depends(get_dir_service),
 ) -> CarService:
-    return CarService(repository)
+    return CarService(repository, dir_service)
 
 
 def get_exp_repository(

@@ -12,6 +12,7 @@ from src.cars.schemas import (
     ExpensesCreateSchema,
     CarSchema,
     GetAllFilter,
+    CarCreateResponse,
 )
 
 car_router = APIRouter()
@@ -20,7 +21,9 @@ expenses_router = APIRouter()
 
 # Create a Car
 @car_router.post(
-    "/", status_code=status.HTTP_201_CREATED, response_model=ResponseSchema[CarSchema]
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ResponseSchema[CarCreateResponse],
 )
 async def create_car(
     car_data: CarCreateSchema,

@@ -20,18 +20,21 @@ from ..utils.base_service_repo import BaseService
 
 # Cars
 class CarService(BaseService[CarsRepository]):
+    # Add car_service to have access to it's methods
+    def __init__(self, repository: CarsRepository, dir_service: DirectoryService):
+        super().__init__(repository)
+        self.dir_service = dir_service
+
     # Create a Car
     async def create_car(
         self,
         car_data: CarCreateSchema,
         # owner_uid: UUID,
     ):
-        if await self.repository.check_vin_collision(car_data.vin):
-            raise VinBusyException()
 
-        # await DirectoryRepository.get_single_make(self, car_data.make)
-        # await DirectoryRepository.get_single_model(self, car_data.model)
-
+        make = await self.dir_service.get_single_make(car_data.make)
+        model = await self.dir_service.check_model(make.uid, car_data.model)
+        print(f"make {make} model {model}")
         new_car_dict = car_data.model_dump()
         new_car_dict["make"] = car_data.make
         new_car_dict["model"] = car_data.model
