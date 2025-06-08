@@ -1,7 +1,9 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 
+from src.auth.repositories import AuthRepository
 from src.auth.service import AuthService
+from src.users.dependencies import get_user_service
 from src.users.schemas import UserSchema
 from src.users.service import UserService
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -14,7 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    session: AsyncSession = Depends(get_session),
+    user_service: UserService = Depends(get_user_service),
 ) -> UserSchema:
 
     token_data = decode_token(token)
@@ -22,8 +24,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalid or expired"
         )
-    check_user = UserService(session)
-    user = await check_user.get_user_by_uid(token_data["sub"])
+    user = await user_service.get_user_by_uid(token_data["sub"])
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
@@ -31,5 +32,12 @@ async def get_current_user(
     return user
 
 
-def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
-    return AuthService(session)
+def get_auth_repository(session: AsyncSession = Depends(get_session)) -> AuthRepository:
+    return AuthRepository(session)
+
+
+def get_auth_service(
+    repository: AuthRepository = Depends(get_auth_repository),
+    user_service: UserService = Depends(get_user_service),
+) -> AuthService:
+    return AuthService(repository, user_service)
