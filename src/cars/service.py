@@ -31,6 +31,9 @@ class CarService(BaseService[CarsRepository]):
         car_data: CarCreateSchema,
         # owner_uid: UUID,
     ):
+        vin_collision = await self.repository.check_vin_collision(car_data.vin)
+        if vin_collision:
+            raise VinBusyException
 
         make = await self.dir_service.get_single_make(car_data.make)
         model = await self.dir_service.check_model(make.uid, car_data.model)

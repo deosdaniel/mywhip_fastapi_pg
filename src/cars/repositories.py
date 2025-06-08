@@ -6,10 +6,11 @@ from src.utils.base_service_repo import BaseRepository
 
 
 class CarsRepository(BaseRepository):
-    async def check_vin_collision(self, vin: str) -> bool:
-        statement = select(Cars).where(Cars.vin == vin).where(Cars.status != "SOLD")
-        check_vin = await self.session.exec(statement)
-        return check_vin.one_or_none() is not None
+
+    async def check_vin_collision(self, vin: str) -> Cars:
+        statement = select(Cars).where(Cars.vin == vin, Cars.status != "SOLD")
+        result = await self.session.exec(statement)
+        return result.one_or_none()
 
     async def create_car(self, new_car_dict: dict) -> Cars:
         car = Cars(**new_car_dict)
