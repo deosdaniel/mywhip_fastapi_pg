@@ -33,9 +33,13 @@ class DirectoryRepository(BaseRepository):
         make = await self.session.exec(statement)
         return make.one_or_none()
 
-    async def get_single_model(self, requested_model) -> ModelsDirectory:
-        statement = select(ModelsDirectory).where(
-            func.lower(ModelsDirectory.model) == func.lower(requested_model)
+    async def get_single_model_by_make(
+        self, requested_model, make_uid: str
+    ) -> ModelsDirectory:
+        statement = (
+            select(ModelsDirectory)
+            .where(ModelsDirectory.make_uid == make_uid)
+            .where(func.lower(ModelsDirectory.model) == func.lower(requested_model))
         )
         model = await self.session.exec(statement)
         return model.one_or_none()

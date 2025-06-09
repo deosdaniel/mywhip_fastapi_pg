@@ -31,9 +31,10 @@ class CarService(BaseService[CarsRepository]):
         vin_collision = await self.repository.check_vin_collision(car_data.vin)
         if vin_collision:
             raise VinBusyException
-
         make = await self.dir_service.get_single_make(car_data.make)
-        model = await self.dir_service.check_model(make.uid, car_data.model)
+        model = await self.dir_service.get_single_model_by_make(
+            car_data.model, make.uid
+        )
         print(f"make {make} model {model}")
         new_car_dict = car_data.model_dump()
         new_car_dict["make"] = car_data.make

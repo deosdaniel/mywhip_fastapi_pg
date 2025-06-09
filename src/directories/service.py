@@ -34,19 +34,11 @@ class DirectoryService(BaseService[DirectoryRepository]):
         else:
             raise EntityNotFoundException("Make")
 
-    async def get_single_model(self, requested_model: str):
-        model = await self.repository.get_single_model(requested_model)
+    async def get_single_model_by_make(self, requested_model: str, make_uid: str):
+        model = await self.repository.get_single_model_by_make(
+            requested_model, make_uid
+        )
         if model:
             return model
         else:
             raise EntityNotFoundException("Model")
-
-    async def check_model(self, make_uid: str, requested_model: str):
-        try:
-            model = await self.get_single_model(requested_model)
-        except EntityNotFoundException:
-            raise EntityNotFoundException("Model")
-        if model.make_uid != make_uid:
-            raise MakeModelException(model.model)
-        else:
-            return model
