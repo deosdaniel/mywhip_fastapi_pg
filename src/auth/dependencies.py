@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, status
 
 from src.auth.service import AuthService
 from src.users.dependencies import get_user_service
+from src.users.models import Users
 from src.users.schemas import UserSchema
 from src.users.service import UserService
 from fastapi.security import OAuth2PasswordBearer
@@ -21,7 +22,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalid or expired"
         )
-    user = await user_service.get_user_by_uid(token_data["sub"])
+    user = await user_service.get_by_uid(table=Users, uid=token_data["sub"])
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"

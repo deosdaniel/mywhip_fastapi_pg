@@ -35,6 +35,7 @@ class CarCreateSchema(BaseModel):
 
 class CarCreateResponse(BaseModel):
     uid: uuid.UUID
+    owner_uid: uuid.UUID
     make: str
     model: str
     year: int

@@ -39,7 +39,7 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict["make"] = car_data.make
         new_car_dict["model"] = car_data.model
         new_car_dict["owner_uid"] = owner_uid
-        return await self.repository.create_car(new_car_dict)
+        return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
     # Get Cars filtered list
     async def filter_all_cars(

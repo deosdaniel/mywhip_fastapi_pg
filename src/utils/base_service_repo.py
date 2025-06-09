@@ -1,11 +1,12 @@
 import math
+from xml.dom.minidom import Entity
 
 from pydantic import BaseModel
 from sqlmodel import SQLModel, select, update, desc
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy import func
 
-from typing import TypeVar, Generic, Optional
+from typing import TypeVar, Generic, Optional, Type
 
 from src.utils.exceptions import EntityNotFoundException
 from src.utils.schemas_common import PageResponse
@@ -14,6 +15,12 @@ from src.utils.schemas_common import PageResponse
 class BaseRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def create(self, table: Type[SQLModel], new_entity_dict: dict) -> SQLModel:
+        entity = table(**new_entity_dict)
+        self.session.add(entity)
+        await self.session.commit()
+        return entity
 
     async def get_by_uid(self, table: SQLModel, uid: str) -> SQLModel:
         result = await self.session.exec(select(table).where(table.uid == uid))

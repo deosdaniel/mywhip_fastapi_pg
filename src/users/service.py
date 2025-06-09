@@ -1,5 +1,7 @@
 from fastapi.exceptions import HTTPException
 from fastapi import status
+
+from .models import Users
 from .repositories import UsersRepository
 from .schemas import UserCreateSchema
 from ..auth.utils import gen_pwd_hash
@@ -16,7 +18,7 @@ class UserService(BaseService[UsersRepository]):
         if not email_exists and not username_exists:
             user_dict = user_data.model_dump()
             user_dict["password_hash"] = gen_pwd_hash(user_data.password)
-            return await self.repository.create_user(user_dict)
+            return await self.repository.create(table=Users, new_entity_dict=user_dict)
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
