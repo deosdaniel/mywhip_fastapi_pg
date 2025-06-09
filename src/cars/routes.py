@@ -1,7 +1,9 @@
 from fastapi import APIRouter, status, Path, Depends, Query
+from sqlmodel import SQLModel
 
 from src.auth.dependencies import get_current_user
 from src.cars.dependencies import get_exp_service, get_car_service
+from src.cars.models import Cars
 from src.cars.service import CarService, ExpensesService
 from src.users.schemas import UserSchema
 from src.utils.schemas_common import ResponseSchema, PageResponse
@@ -44,7 +46,7 @@ async def get_car_by_uid(
     car_uid: str = Path(min_length=32, max_length=36),
     car_service: CarService = Depends(get_car_service),
 ) -> dict:
-    result = await car_service.get_car_by_uid(car_uid)
+    result = await car_service.get_by_uid(Cars, car_uid)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -68,7 +70,7 @@ async def update_car(
     car_update_data: CarUpdateSchema,
     car_service: CarService = Depends(get_car_service),
 ) -> dict:
-    result = await car_service.update_car(car_uid, car_update_data)
+    result = await car_service.update_by_uid(Cars, car_uid, car_update_data)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -76,7 +78,7 @@ async def update_car(
 @car_router.delete("/{car_uid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_car(car_uid: str, car_service: CarService = Depends(get_car_service)):
 
-    await car_service.delete_car(car_uid)
+    await car_service.delete_by_uid(Cars, car_uid)
     return {}
 
 

@@ -12,42 +12,6 @@ from src.utils.base_service_repo import BaseService
 
 
 class DirectoryService(BaseService[DirectoryRepository]):
-    async def get_all_makes(
-        self,
-        page: int = None,
-        limit: int = None,
-    ):
-
-        offset_page = (page - 1) * limit
-
-        makes = await self.repository.get_all_makes(offset_page, limit)
-        total_records = await self.repository.count_all_records_makes()
-        total_pages = math.ceil(total_records / limit)
-        return PageResponse(
-            page_number=page,
-            page_size=limit,
-            total_pages=total_pages,
-            total_records=total_records,
-            content=makes,
-        )
-
-    async def get_all_models(
-        self,
-        page: int | None,
-        limit: int | None,
-    ):
-        offset_page = (page - 1) * limit
-
-        models = await self.repository.get_all_models(offset_page, limit)
-        total_records = await self.repository.count_all_records_models()
-        total_pages = math.ceil(total_records / limit)
-        return PageResponse(
-            page_number=page,
-            page_size=limit,
-            total_pages=total_pages,
-            total_records=total_records,
-            content=models,
-        )
 
     async def get_models_by_make(self, page: int, limit: int, make_uid: str):
         offset_page = (page - 1) * limit

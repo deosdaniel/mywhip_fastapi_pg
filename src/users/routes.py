@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status, Query
 from src.utils.schemas_common import ResponseSchema, PageResponse
+from .models import Users
 from .schemas import (
     UserCreateSchema,
     UserSchema,
@@ -28,9 +29,10 @@ async def create_user(
 async def get_all_users(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
+    sort: bool = Query(default=True, case_sensitive=False),
     user_service: UserService = Depends(get_user_service),
 ):
-    result = await user_service.get_all_users(page, limit)
+    result = await user_service.get_all_records(Users, page, limit, sort)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -38,7 +40,7 @@ async def get_all_users(
 async def get_user_by_uid(
     user_uid: str, user_service: UserService = Depends(get_user_service)
 ) -> dict:
-    result = await user_service.get_user_by_uid(user_uid)
+    result = await user_service.get_by_uid(Users, user_uid)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -48,7 +50,7 @@ async def update_user(
     user_update_data: UserUpdateSchema,
     user_service: UserService = Depends(get_user_service),
 ) -> dict:
-    result = await user_service.update_user(user_uid, user_update_data)
+    result = await user_service.update_by_uid(Users, user_uid, user_update_data)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -56,5 +58,5 @@ async def update_user(
 async def delete_user_by_uid(
     user_uid: str, user_service: UserService = Depends(get_user_service)
 ):
-    await user_service.delete_user(user_uid)
+    await user_service.delete_by_uid(Users, user_uid)
     return {}

@@ -18,10 +18,6 @@ class CarsRepository(BaseRepository):
         await self.session.commit()
         return car
 
-    async def get_car_by_uid(self, car_uid: str) -> Cars:
-        car = await self.session.exec(select(Cars).where(Cars.uid == car_uid))
-        return car.one_or_none()
-
     async def get_cars_filtered(self, offset_page, filter_schema: GetAllFilter):
         # Base query
         statement = select(Cars)
@@ -74,23 +70,6 @@ class CarsRepository(BaseRepository):
 
         result = await self.session.exec(statement)
         return result.one()
-
-    async def update_car(self, car_uid: str, car_update_dict: dict) -> Cars:
-        car = await self.get_car_by_uid(car_uid)
-        await self.session.exec(
-            update(Cars).where(Cars.uid == car_uid).values(**car_update_dict)
-        )
-        await self.session.commit()
-        await self.session.refresh(car)
-        return car
-
-    async def delete_car(self, car_uid: str) -> bool:
-        car_to_delete = await self.get_car_by_uid(car_uid)
-        if not car_to_delete:
-            return False
-        await self.session.delete(car_to_delete)
-        await self.session.commit()
-        return True
 
 
 class ExpensesRepository(BaseRepository):

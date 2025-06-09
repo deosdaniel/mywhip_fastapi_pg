@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from src.directories.dependencies import get_dir_service
+from src.directories.models import MakesDirectory, ModelsDirectory
 
 from src.utils.schemas_common import ResponseSchema, PageResponse
 from src.directories.schemas import MakeSchema, ModelSchema
@@ -18,7 +19,7 @@ async def get_all_makes(
     limit: int = Query(default=10, ge=1),
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_all_makes(page, limit)
+    result = await directory_service.get_all_records(MakesDirectory, page, limit)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -32,7 +33,7 @@ async def get_all_models(
     limit: int = 10,
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_all_models(page, limit)
+    result = await directory_service.get_all_records(ModelsDirectory, page, limit)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -49,22 +50,3 @@ async def get_models_by_make(
 ):
     result = await directory_service.get_models_by_make(page, limit, make_uid)
     return ResponseSchema(detail="Success", result=result)
-
-
-# @directory_router.get("/models/{requested_model}")
-# async def get_single_model(
-#    requested_model: str | None = None,
-#    directory_service: DirectoryService = Depends(get_dir_service),
-# ):
-#    result = await directory_service.get_single_model(requested_model)
-#    return ResponseSchema(detail="Success", result=result)
-#
-
-# @directory_router.get("/makes/{requested_make}")
-# async def get_single_make(
-#    requested_make: str | None = None,
-#    directory_service: DirectoryService = Depends(get_dir_service),
-# ):
-#    result = await directory_service.get_single_make(requested_make)
-#    return ResponseSchema(detail="Success", result=result)
-#

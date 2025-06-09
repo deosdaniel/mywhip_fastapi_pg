@@ -6,18 +6,6 @@ from src.directories.models import MakesDirectory, ModelsDirectory
 
 class DirectoryRepository(BaseRepository):
 
-    async def get_all_makes(self, offset_page: int, limit: int) -> list[MakesDirectory]:
-        statement = select(MakesDirectory).offset(offset_page).limit(limit)
-        makes = await self.session.exec(statement)
-        return makes
-
-    async def get_all_models(
-        self, offset_page: int, limit: int
-    ) -> list[ModelsDirectory]:
-        statement = select(ModelsDirectory).offset(offset_page).limit(limit)
-        models = await self.session.exec(statement)
-        return models
-
     async def get_models_by_make(
         self, offset_page: int, limit: int, make_uid: str
     ) -> list[ModelsDirectory]:
@@ -29,14 +17,6 @@ class DirectoryRepository(BaseRepository):
         )
         models = await self.session.exec(statement)
         return models
-
-    async def count_all_records_makes(self):
-        result = await self.session.exec(select(func.count(MakesDirectory.uid)))
-        return result.one()
-
-    async def count_all_records_models(self):
-        result = await self.session.exec(select(func.count(ModelsDirectory.uid)))
-        return result.one()
 
     async def count_models_by_make(self, make_uid: str):
         result = await self.session.exec(
@@ -59,6 +39,3 @@ class DirectoryRepository(BaseRepository):
         )
         model = await self.session.exec(statement)
         return model.one_or_none()
-
-    async def check_model(self, make_uid: str, requested_model: str):
-        pass

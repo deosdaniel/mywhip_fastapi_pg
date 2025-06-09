@@ -1,6 +1,7 @@
 import math
 from uuid import UUID
 from src.utils.schemas_common import PageResponse
+from .models import Cars
 from .repositories import CarsRepository, ExpensesRepository
 from .schemas import (
     CarCreateSchema,
@@ -40,15 +41,6 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create_car(new_car_dict)
 
-    # Get single car
-    async def get_car_by_uid(self, car_uid: str):
-
-        car = await self.repository.get_car_by_uid(car_uid)
-        if car:
-            return car
-        else:
-            raise EntityNotFoundException("car_uid")
-
     # Get Cars filtered list
     async def filter_all_cars(
         self,
@@ -69,20 +61,6 @@ class CarService(BaseService[CarsRepository]):
             content=cars,
         )
 
-    # Update Car data
-    async def update_car(self, car_uid: str, update_data: CarUpdateSchema):
-        await self.get_car_by_uid(car_uid)
-        update_dict = update_data.model_dump(exclude_unset=True)
-        updated_car = await self.repository.update_car(car_uid, update_dict)
-        return updated_car
-
-    # Delete a Car
-    async def delete_car(self, car_uid):
-        delete_car = await self.repository.delete_car(car_uid)
-        if not delete_car:
-            raise EntityNotFoundException("car_uid")
-        return True
-
 
 # Expenses
 class ExpensesService(BaseService[ExpensesRepository]):
@@ -93,14 +71,14 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Create an expense
     async def create_expense(self, car_uid: str, exp_data: ExpensesCreateSchema):
-        car = await self.car_service.get_car_by_uid(car_uid)
+        car = await self.get_by_uid(Cars, car_uid)
         exp_data_dict = exp_data.model_dump()
         new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
         return new_exp
 
     # Get single expense
     async def get_single_expense(self, car_uid: str, exp_uid: str):
-        await self.car_service.get_car_by_uid(car_uid)
+        await self.get_by_uid(Cars, car_uid)
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
         if not exp:
             raise EntityNotFoundException("exp_uid")
@@ -110,7 +88,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def get_expenses_by_car_uid(
         self, car_uid: str, page: int = 1, limit: int = 10
     ):
-        await self.car_service.get_car_by_uid(car_uid)
+        await self.get_by_uid(Cars, car_uid)
 
         offset_page = (page - 1) * limit
 
