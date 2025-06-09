@@ -31,14 +31,11 @@ class CarService(BaseService[CarsRepository]):
         vin_collision = await self.repository.check_vin_collision(car_data.vin)
         if vin_collision:
             raise VinBusyException
-        make = await self.dir_service.get_single_make(car_data.make)
-        model = await self.dir_service.get_single_model_by_make(
-            car_data.model, make.uid
-        )
-        print(f"make {make} model {model}")
+        await self.dir_service.validate_make_model(car_data.make, car_data.model)
+
         new_car_dict = car_data.model_dump()
-        new_car_dict["make"] = car_data.make
-        new_car_dict["model"] = car_data.model
+        new_car_dict["make"] = car_data.make.lower().capitalize()
+        new_car_dict["model"] = car_data.model.lower().capitalize()
         new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
