@@ -39,6 +39,20 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
+    async def get_my_cars(self, page: int, limit: int, owner_uid: UUID):
+        offset_page = (page - 1) * limit
+        cars = await self.repository.get_my_cars(offset_page, limit, owner_uid)
+
+        total_records = await self.repository.count_my_cars(owner_uid)
+        total_pages = math.ceil(total_records / limit)
+        return PageResponse(
+            page_number=page,
+            page_size=limit,
+            total_pages=total_pages,
+            total_records=total_records,
+            content=cars,
+        )
+
     # Get Cars filtered list
     async def filter_all_cars(
         self,

@@ -36,6 +36,23 @@ async def create_car(
     return ResponseSchema(detail="Success", result=result)
 
 
+@car_router.get(
+    "/my_cars",
+    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model_exclude_none=True,
+)
+async def get_my_cars(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+) -> dict:
+    result = await car_service.get_my_cars(
+        page=page, limit=limit, owner_uid=current_user.uid
+    )
+    return ResponseSchema(detail="Success", result=result)
+
+
 # Get a Car by id
 @car_router.get(
     "/{car_uid}",
@@ -47,19 +64,6 @@ async def get_car_by_uid(
     car_service: CarService = Depends(get_car_service),
 ) -> dict:
     result = await car_service.get_by_uid(Cars, car_uid)
-    return ResponseSchema(detail="Success", result=result)
-
-
-# Get filtered Cars
-@car_router.post(
-    "/all",
-    response_model=ResponseSchema[PageResponse[CarSchema]],
-    response_model_exclude_none=True,
-)
-async def get_all_cars_by_filter(
-    filter_schema: GetAllFilter, car_service: CarService = Depends(get_car_service)
-):
-    result = await car_service.filter_all_cars(filter_schema)
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -80,6 +84,19 @@ async def delete_car(car_uid: str, car_service: CarService = Depends(get_car_ser
 
     await car_service.delete_by_uid(Cars, car_uid)
     return {}
+
+
+# Get filtered Cars
+@car_router.post(
+    "/all",
+    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model_exclude_none=True,
+)
+async def get_all_cars_by_filter(
+    filter_schema: GetAllFilter, car_service: CarService = Depends(get_car_service)
+):
+    result = await car_service.filter_all_cars(filter_schema)
+    return ResponseSchema(detail="Success", result=result)
 
 
 # EXPENSES

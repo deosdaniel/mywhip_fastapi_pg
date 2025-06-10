@@ -18,6 +18,21 @@ class CarsRepository(BaseRepository):
         await self.session.commit()
         return car
 
+    async def get_my_cars(self, offset_page: int, limit: int, owner_uid: str):
+        statement = (
+            select(Cars)
+            .where(Cars.owner_uid == owner_uid)
+            .offset(offset_page)
+            .limit(limit)
+        )
+        return await self.session.exec(statement)
+
+    async def count_my_cars(self, owner_uid: str):
+        result = await self.session.exec(
+            select(func.count(Cars.uid)).where(Cars.owner_uid == owner_uid)
+        )
+        return result.one()
+
     async def get_cars_filtered(self, offset_page, filter_schema: GetAllFilter):
         # Base query
         statement = select(Cars)
