@@ -1,41 +1,55 @@
-from uuid import uuid4
+from fastapi import APIRouter, status, Path, Depends, Query
+from sqlmodel import SQLModel
 
-from fastapi import APIRouter, status, Depends, Path
-from fastapi.exceptions import HTTPException
-from typing import List
-from sqlmodel.ext.asyncio.session import AsyncSession
-from src.db.main import get_session
-from src.cars.service import CarService, ExpensesService, DirectoryService
+from src.auth.dependencies import get_current_user, require_admin, require_self_or_admin
+from src.cars.dependencies import get_exp_service, get_car_service
+from src.cars.models import Cars
+from src.cars.service import CarService, ExpensesService
+from src.users.schemas import UserSchema
+from src.utils.schemas_common import ResponseSchema, PageResponse
 from src.cars.schemas import (
     CarUpdateSchema,
     CarCreateSchema,
     ExpensesSchema,
     ExpensesCreateSchema,
     CarSchema,
-    ResponseSchema,
-    PageResponse,
     GetAllFilter,
-    MakeSchema,
-    ModelSchema,
+    CarCreateResponse,
 )
 
 car_router = APIRouter()
 expenses_router = APIRouter()
-directory_router = APIRouter()
-
-car_service = CarService()
-expenses_service = ExpensesService()
-directory_service = DirectoryService()
 
 
 # Create a Car
 @car_router.post(
-    "/", status_code=status.HTTP_201_CREATED, response_model=ResponseSchema[CarSchema]
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ResponseSchema[CarCreateResponse],
 )
 async def create_car(
-    car_data: CarCreateSchema, session: AsyncSession = Depends(get_session)
+    car_data: CarCreateSchema,
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.create_car(car_data, session)
+    result = await car_service.create_car(car_data=car_data, owner_uid=current_user.uid)
+    return ResponseSchema(detail="Success", result=result)
+
+
+@car_router.get(
+    "/my_cars",
+    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model_exclude_none=True,
+)
+async def get_my_cars(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+) -> dict:
+    result = await car_service.get_my_cars(
+        page=page, limit=limit, owner_uid=current_user.uid
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -45,25 +59,14 @@ async def create_car(
     response_model=ResponseSchema[CarSchema],
     response_model_exclude_none=True,
 )
-async def get_car(
+async def get_car_by_uid(
     car_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.get_car(car_uid, session)
-    return ResponseSchema(detail="Success", result=result)
-
-
-# Get filtered Cars
-@car_router.post(
-    "/all",
-    response_model=ResponseSchema[PageResponse[CarSchema]],
-    response_model_exclude_none=True,
-)
-async def get_all_cars_by_filter(
-    filter_schema: GetAllFilter,
-    session: AsyncSession = Depends(get_session),
-):
-    result = await car_service.filter_all_cars(filter_schema, session)
+    result = await car_service.get_car_with_owner_check(
+        car_uid=car_uid, current_user=current_user
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -72,18 +75,38 @@ async def get_all_cars_by_filter(
 async def update_car(
     car_uid: str,
     car_update_data: CarUpdateSchema,
-    session: AsyncSession = Depends(get_session),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.update_car(car_uid, car_update_data, session)
+    result = await car_service.update_car(
+        car_uid=car_uid, car_data=car_update_data, current_user=current_user
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
 # Delete a Car
 @car_router.delete("/{car_uid}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session)):
-
-    await car_service.delete_car(car_uid, session)
+async def delete_car(
+    car_uid: str,
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+):
+    await car_service.delete_car(car_uid=car_uid, current_user=current_user)
     return {}
+
+
+# Get filtered Cars
+@car_router.post(
+    "/all",
+    dependencies=[Depends(require_admin)],
+    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model_exclude_none=True,
+)
+async def get_all_cars_by_filter(
+    filter_schema: GetAllFilter, car_service: CarService = Depends(get_car_service)
+):
+    result = await car_service.filter_all_cars(filter_schema)
+    return ResponseSchema(detail="Success", result=result)
 
 
 # EXPENSES
@@ -96,10 +119,13 @@ async def delete_car(car_uid: str, session: AsyncSession = Depends(get_session))
 async def create_expense(
     exp_data: ExpensesCreateSchema,
     car_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
+    expenses_service: ExpensesService = Depends(get_exp_service),
+    current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
 
-    result = await expenses_service.create_expense(car_uid, exp_data, session)
+    result = await expenses_service.create_expense(
+        car_uid=car_uid, exp_data=exp_data, current_user=current_user
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -110,24 +136,11 @@ async def create_expense(
 async def get_single_expense(
     car_uid: str = Path(min_length=32, max_length=36),
     exp_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
+    expenses_service: ExpensesService = Depends(get_exp_service),
+    current_user: UserSchema = Depends(get_current_user),
 ):
-    result = await expenses_service.get_single_expense(car_uid, exp_uid, session)
-    return ResponseSchema(detail="Success", result=result)
-
-
-# Get all expenses for a single Car
-@expenses_router.get(
-    "/{car_uid}/expenses", response_model=ResponseSchema[PageResponse[ExpensesSchema]]
-)
-async def get_expenses_by_car_uid(
-    car_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
-    page: int = 1,
-    limit: int = 10,
-):
-    result = await expenses_service.get_expenses_by_car_uid(
-        car_uid, session, page, limit
+    result = await expenses_service.get_single_expense(
+        car_uid=car_uid, exp_uid=exp_uid, current_user=current_user
     )
     return ResponseSchema(detail="Success", result=result)
 
@@ -140,10 +153,14 @@ async def update_single_expense(
     exp_update_data: ExpensesCreateSchema,
     car_uid: str = Path(min_length=32, max_length=36),
     exp_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
+    expenses_service: ExpensesService = Depends(get_exp_service),
+    current_user: UserSchema = Depends(get_current_user),
 ):
     result = await expenses_service.update_single_expense(
-        car_uid, exp_uid, exp_update_data, session
+        car_uid=car_uid,
+        exp_uid=exp_uid,
+        exp_update_data=exp_update_data,
+        current_user=current_user,
     )
     return ResponseSchema(detail="Success", result=result)
 
@@ -155,48 +172,40 @@ async def update_single_expense(
 async def delete_single_expense(
     car_uid: str = Path(min_length=32, max_length=36),
     exp_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
+    expenses_service: ExpensesService = Depends(get_exp_service),
+    current_user: UserSchema = Depends(get_current_user),
 ):
-    await expenses_service.delete_single_expense(car_uid, exp_uid, session)
+    await expenses_service.delete_single_expense(
+        car_uid=car_uid, exp_uid=exp_uid, current_user=current_user
+    )
     return {}
+
+
+# Get all expenses for a single Car
+@expenses_router.get(
+    "/{car_uid}/expenses", response_model=ResponseSchema[PageResponse[ExpensesSchema]]
+)
+async def get_expenses_by_car_uid(
+    car_uid: str = Path(min_length=32, max_length=36),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
+    expenses_service: ExpensesService = Depends(get_exp_service),
+    current_user: UserSchema = Depends(get_current_user),
+):
+    result = await expenses_service.get_expenses_by_car_uid(
+        car_uid=car_uid, page=page, limit=limit, current_user=current_user
+    )
+    return ResponseSchema(detail="Success", result=result)
 
 
 # Delete all expenses for a single Car
 @expenses_router.delete("/{car_uid}/expenses", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_expenses_by_car_uid(
     car_uid: str = Path(min_length=32, max_length=36),
-    session: AsyncSession = Depends(get_session),
+    expenses_service: ExpensesService = Depends(get_exp_service),
+    current_user: UserSchema = Depends(get_current_user),
 ):
-    await expenses_service.delete_all_expenses_by_car_uid(car_uid, session)
+    await expenses_service.delete_all_expenses_by_car_uid(
+        car_uid=car_uid, current_user=current_user
+    )
     return {}
-
-
-# DIRECTORIES
-@directory_router.get(
-    "/makes",
-    response_model=ResponseSchema[PageResponse[MakeSchema]]
-    | ResponseSchema[MakeSchema],
-)
-async def get_makes(
-    session: AsyncSession = Depends(get_session),
-    page: int | None = 1,
-    limit: int | None = 10,
-    requested_make: str | None = None,
-):
-    result = await directory_service.get_makes(session, page, limit, requested_make)
-    return ResponseSchema(detail="Success", result=result)
-
-
-@directory_router.get(
-    "/models",
-    response_model=ResponseSchema[PageResponse[ModelSchema]]
-    | ResponseSchema[ModelSchema],
-)
-async def get_models(
-    session: AsyncSession = Depends(get_session),
-    page: int = 1,
-    limit: int = 10,
-    requested_model: str | None = None,
-):
-    result = await directory_service.get_models(session, page, limit, requested_model)
-    return ResponseSchema(detail="Success", result=result)

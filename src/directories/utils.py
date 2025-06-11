@@ -1,13 +1,13 @@
 import pandas as pd
 from sqlalchemy import select, delete
 from sqlmodel import Session, create_engine
-from src.cars.models import MakesDirectory, ModelsDirectory
+from src.directories.models import MakesDirectory, ModelsDirectory
 
 engine = create_engine("postgresql://postgres:rootroot@localhost:5432/my_whip")
 
 
 def insert_makes():
-    df = pd.read_csv("make_model.csv")
+    df = pd.read_csv("make_model_dataset.csv")
     df_makes = df.drop("model", axis=1)
     df_makes = df_makes.drop_duplicates(subset="make")
     df_makes = df_makes.reset_index(drop=True)
@@ -25,7 +25,7 @@ def insert_models():
     with Session(engine) as session:
         makes = session.exec(select(MakesDirectory.uid, MakesDirectory.make)).all()
         make_to_uid = {make: uid for uid, make in makes}
-        df = pd.read_csv("make_model.csv")
+        df = pd.read_csv("make_model_dataset.csv")
         try:
             df["make_uid"] = df["make"].map(make_to_uid)
         except Exception as e:

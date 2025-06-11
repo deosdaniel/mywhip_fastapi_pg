@@ -10,7 +10,7 @@ from src.cars.models import Cars, Expenses
 from src.cars.schemas import CarStatusChoices
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.main import engine
+from src.db.core import engine
 import asyncio
 
 fake = Faker("ru_RU")  # Для русскоязычных данных

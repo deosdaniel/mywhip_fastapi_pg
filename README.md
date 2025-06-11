@@ -34,7 +34,7 @@ This project uses Alembic for database migrations.
 ```python
 from src.cars.models import Cars
 from src.expenses.models import Expenses
-from src.auth.models import Users
+from src.users.models import Users
 from sqlmodel import SQLModel
 from src.config import Config
 
