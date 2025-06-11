@@ -1,7 +1,9 @@
 import math
 from uuid import UUID
+
+from fastapi import HTTPException, status
 from src.utils.schemas_common import PageResponse
-from .models import Cars
+from .models import Cars, Expenses
 from .repositories import CarsRepository, ExpensesRepository
 from .schemas import (
     CarCreateSchema,
@@ -12,6 +14,7 @@ from .schemas import (
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 from src.directories.service import DirectoryService
+from ..users.schemas import UserSchema, UserRole
 from ..utils.base_service_repo import BaseService
 
 
@@ -53,6 +56,28 @@ class CarService(BaseService[CarsRepository]):
             content=cars,
         )
 
+    async def get_car_with_owner_check(self, car_uid: str, current_user: UserSchema):
+        car = await self.get_by_uid(Cars, car_uid)
+        if not car:
+            raise EntityNotFoundException("car_uid")
+        if current_user.role != UserRole.ADMIN and str(car.owner_uid) != str(
+            current_user.uid
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
+        return car
+
+    async def update_car(
+        self, car_uid: str, car_data: CarUpdateSchema, current_user: UserSchema
+    ) -> Cars:
+        await self.get_car_with_owner_check(car_uid, current_user)
+        return await self.update_by_uid(Cars, car_uid, car_data)
+
+    async def delete_car(self, car_uid: str, current_user: UserSchema) -> None:
+        await self.get_car_with_owner_check(car_uid, current_user)
+        return await self.delete_by_uid(Cars, car_uid)
+
     # Get Cars filtered list
     async def filter_all_cars(
         self,
@@ -82,25 +107,62 @@ class ExpensesService(BaseService[ExpensesRepository]):
         self.car_service = car_service
 
     # Create an expense
-    async def create_expense(self, car_uid: str, exp_data: ExpensesCreateSchema):
-        car = await self.get_by_uid(Cars, car_uid)
+    async def create_expense(
+        self, car_uid: str, exp_data: ExpensesCreateSchema, current_user: UserSchema
+    ) -> Expenses:
+        await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp_data_dict = exp_data.model_dump()
         new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
         return new_exp
 
     # Get single expense
-    async def get_single_expense(self, car_uid: str, exp_uid: str):
-        await self.get_by_uid(Cars, car_uid)
+    async def get_single_expense(
+        self, car_uid: str, exp_uid: str, current_user: UserSchema
+    ) -> Expenses:
+        await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
         if not exp:
             raise EntityNotFoundException("exp_uid")
         return exp
 
+    # Update single expense
+    async def update_single_expense(
+        self,
+        car_uid: str,
+        exp_uid: str,
+        exp_update_data: ExpensesCreateSchema,
+        current_user: UserSchema,
+    ) -> Expenses:
+        await self.get_single_expense(car_uid, exp_uid, current_user)
+        update_data_dict = exp_update_data.model_dump(exclude_unset=True)
+        updated_exp = await self.repository.update_single_exp(
+            car_uid, exp_uid, update_data_dict
+        )
+        return updated_exp
+
+    # Delete single expense
+    async def delete_single_expense(
+        self,
+        car_uid: str,
+        exp_uid: str,
+        current_user: UserSchema,
+    ):
+        await self.get_single_expense(car_uid, exp_uid, current_user)
+        delete_exp = await self.repository.delete_single_exp(car_uid, exp_uid)
+        if delete_exp:
+            return True
+        else:
+            raise EntityNotFoundException("exp_uid")
+
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
-        self, car_uid: str, page: int = 1, limit: int = 10
-    ):
-        await self.get_by_uid(Cars, car_uid)
+        self,
+        car_uid: str,
+        current_user: UserSchema,
+        page: int = 1,
+        limit: int = 10,
+    ) -> list[Expenses]:
+        await self.car_service.get_car_with_owner_check(car_uid, current_user)
 
         offset_page = (page - 1) * limit
 
@@ -117,36 +179,10 @@ class ExpensesService(BaseService[ExpensesRepository]):
             content=expenses,
         )
 
-    # Update single expense
-    async def update_single_expense(
-        self,
-        car_uid: str,
-        exp_uid: str,
-        exp_update_data: ExpensesCreateSchema,
-    ):
-        await self.get_single_expense(car_uid, exp_uid)
-        update_data_dict = exp_update_data.model_dump(exclude_unset=True)
-        updated_exp = await self.repository.update_single_exp(
-            car_uid, exp_uid, update_data_dict
-        )
-
-        return updated_exp
-
-    # Delete single expense
-    async def delete_single_expense(
-        self,
-        car_uid: str,
-        exp_uid: str,
-    ):
-        await self.get_single_expense(car_uid, exp_uid)
-        delete_exp = await self.repository.delete_single_exp(car_uid, exp_uid)
-        if delete_exp:
-            return True
-        else:
-            raise EntityNotFoundException("exp_uid")
-
     # Delete all expenses for a single car
-    async def delete_all_expenses_by_car_uid(self, car_uid: str):
-        await self.get_expenses_by_car_uid(car_uid)
+    async def delete_all_expenses_by_car_uid(
+        self, car_uid: str, current_user: UserSchema
+    ) -> None:
+        await self.get_expenses_by_car_uid(car_uid, current_user)
         await self.repository.delete_exp_by_car_uid(car_uid)
         return True
