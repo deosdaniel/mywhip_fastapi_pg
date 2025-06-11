@@ -33,7 +33,7 @@ async def get_current_user(
 async def check_admin_privileges(
     current_user: UserSchema = Depends(get_current_user),
 ) -> UserSchema:
-    if not current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to perform this action",

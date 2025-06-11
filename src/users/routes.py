@@ -9,7 +9,7 @@ from .schemas import (
 )
 from .service import UserService
 from .dependencies import get_user_service
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, check_admin_privileges
 
 user_router = APIRouter()
 
@@ -26,7 +26,11 @@ async def create_user(
     return ResponseSchema(detail="Success", result=result)
 
 
-@user_router.get("/all", response_model=ResponseSchema[PageResponse[UserSchema]])
+@user_router.get(
+    "/all",
+    dependencies=[Depends(check_admin_privileges)],
+    response_model=ResponseSchema[PageResponse[UserSchema]],
+)
 async def get_all_users(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
