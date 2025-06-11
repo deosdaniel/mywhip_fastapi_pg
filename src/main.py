@@ -8,7 +8,7 @@ from src.cars.routes import car_router, expenses_router
 from src.users.routes import user_router
 from src.directories.routes import directory_router
 
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 from src.utils.exceptions import (
@@ -30,6 +30,15 @@ app = FastAPI(
     description="A REST API for a Car-CRM web service",
     version=version,
     lifespan=lifespan,
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
