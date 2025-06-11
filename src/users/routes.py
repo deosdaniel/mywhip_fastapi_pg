@@ -9,7 +9,7 @@ from .schemas import (
 )
 from .service import UserService
 from .dependencies import get_user_service
-from ..auth.dependencies import get_current_user, check_admin_privileges
+from ..auth.dependencies import get_current_user, require_admin, require_self_or_admin
 
 user_router = APIRouter()
 
@@ -28,7 +28,7 @@ async def create_user(
 
 @user_router.get(
     "/all",
-    dependencies=[Depends(check_admin_privileges)],
+    dependencies=[Depends(require_admin)],
     response_model=ResponseSchema[PageResponse[UserSchema]],
 )
 async def get_all_users(
@@ -45,13 +45,8 @@ async def get_all_users(
 async def get_user_by_uid(
     user_uid: str,
     user_service: UserService = Depends(get_user_service),
-    current_user: UserSchema = Depends(get_current_user),
+    _: UserSchema = Depends(require_self_or_admin),
 ) -> dict:
-    if current_user != UserRole.ADMIN and str(current_user.uid) != user_uid:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Can not access other user's data",
-        )
     result = await user_service.get_by_uid(Users, user_uid)
     return ResponseSchema(detail="Success", result=result)
 
@@ -61,6 +56,7 @@ async def update_user(
     user_uid: str,
     user_update_data: UserUpdateSchema,
     user_service: UserService = Depends(get_user_service),
+    _: UserSchema = Depends(require_self_or_admin),
 ) -> dict:
     result = await user_service.update_by_uid(Users, user_uid, user_update_data)
     return ResponseSchema(detail="Success", result=result)
@@ -68,7 +64,9 @@ async def update_user(
 
 @user_router.delete("/{user_uid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_by_uid(
-    user_uid: str, user_service: UserService = Depends(get_user_service)
+    user_uid: str,
+    user_service: UserService = Depends(get_user_service),
+    _: UserSchema = Depends(require_self_or_admin),
 ):
     await user_service.delete_by_uid(Users, user_uid)
     return {}

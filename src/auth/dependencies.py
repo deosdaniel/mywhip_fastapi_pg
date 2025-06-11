@@ -30,13 +30,25 @@ async def get_current_user(
     return user
 
 
-async def check_admin_privileges(
+async def require_admin(
     current_user: UserSchema = Depends(get_current_user),
 ) -> UserSchema:
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to perform this action",
+        )
+    return current_user
+
+
+async def require_self_or_admin(
+    user_uid: str,
+    current_user: UserSchema = Depends(get_current_user),
+) -> UserSchema:
+    if current_user.role != UserRole.ADMIN and str(current_user.uid) != str(user_uid):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You only have access to your own data",
         )
     return current_user
 
