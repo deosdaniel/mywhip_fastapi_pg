@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, status, Query, HTTPException
 from src.utils.schemas_common import ResponseSchema, PageResponse
 from .models import Users
 from .schemas import (
     UserCreateSchema,
     UserSchema,
     UserUpdateSchema,
+    UserRole,
 )
 from .service import UserService
 from .dependencies import get_user_service
-
+from ..auth.dependencies import get_current_user
 
 user_router = APIRouter()
 
@@ -38,8 +39,15 @@ async def get_all_users(
 
 @user_router.get("/{user_uid}", response_model=ResponseSchema[UserSchema])
 async def get_user_by_uid(
-    user_uid: str, user_service: UserService = Depends(get_user_service)
+    user_uid: str,
+    user_service: UserService = Depends(get_user_service),
+    current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
+    if current_user != UserRole.ADMIN and str(current_user.uid) != user_uid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Can not access other user's data",
+        )
     result = await user_service.get_by_uid(Users, user_uid)
     return ResponseSchema(detail="Success", result=result)
 

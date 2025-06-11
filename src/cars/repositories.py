@@ -24,6 +24,7 @@ class CarsRepository(BaseRepository):
             .where(Cars.owner_uid == owner_uid)
             .offset(offset_page)
             .limit(limit)
+            .order_by(desc(Cars.created_at))
         )
         return await self.session.exec(statement)
 

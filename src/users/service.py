@@ -3,7 +3,7 @@ from fastapi import status
 
 from .models import Users
 from .repositories import UsersRepository
-from .schemas import UserCreateSchema
+from .schemas import UserCreateSchema, UserRole
 from ..auth.utils import gen_pwd_hash
 
 
@@ -18,6 +18,7 @@ class UserService(BaseService[UsersRepository]):
         if not email_exists and not username_exists:
             user_dict = user_data.model_dump()
             user_dict["password_hash"] = gen_pwd_hash(user_data.password)
+            user_dict["role"] = UserRole.USER
             return await self.repository.create(table=Users, new_entity_dict=user_dict)
         else:
             raise HTTPException(

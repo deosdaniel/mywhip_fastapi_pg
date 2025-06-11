@@ -1,6 +1,13 @@
 import uuid
 from datetime import datetime
+from enum import Enum
+
 from pydantic import BaseModel, Field, EmailStr
+
+
+class UserRole(str, Enum):
+    USER = "user"
+    ADMIN = "admin"
 
 
 class UserCreateSchema(BaseModel):
@@ -19,6 +26,7 @@ class UserUpdateSchema(BaseModel):
 
 class UserSchema(BaseModel):
     uid: uuid.UUID
+    role: UserRole
     username: str
     email: str
     first_name: str | None = None

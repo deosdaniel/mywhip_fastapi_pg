@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from src.auth.service import AuthService
 from src.users.dependencies import get_user_service
 from src.users.models import Users
-from src.users.schemas import UserSchema
+from src.users.schemas import UserSchema, UserRole
 from src.users.service import UserService
 from fastapi.security import OAuth2PasswordBearer
 from src.auth.utils import decode_token
@@ -28,6 +28,17 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
     return user
+
+
+async def check_admin_privileges(
+    current_user: UserSchema = Depends(get_current_user),
+) -> UserSchema:
+    if not current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to perform this action",
+        )
+    return current_user
 
 
 def get_auth_service(
