@@ -94,7 +94,7 @@ export default function EditProfile() {
         return (
             <div className="flex flex-col items-center">
                 <div className="text-red-500 mb-8">{error}</div>
-                <button onClick={() => window.location.reload()} className="bg-blue-500 text-white px-4 py-2 rounded">
+                <button onClick={() => window.location.reload()} className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer">
                     Попробовать снова
                 </button>
             </div>
