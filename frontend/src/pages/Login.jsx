@@ -14,7 +14,7 @@ function Login() {
             const response = await login(email,password)
             console.log("Успешный ответ: ", response)
             localStorage.setItem("token", response.access_token);
-            navigate("/dashboard")
+            navigate("/me")
         } catch (error) {
             console.log("Ошибка входа: ",error.response?.data || error);
         }
