@@ -143,7 +143,7 @@ async def test_get_all_users_role(
 
 
 @pytest.mark.asyncio
-async def test_get_all_users_pagination_and_sorting(
+async def test_get_all_users_sorted_by_username(
     client, mock_user_factory, override_current_user
 ):
     admin_user = mock_user_factory(UserRole.ADMIN)
@@ -163,27 +163,34 @@ async def test_get_all_users_pagination_and_sorting(
         )
         assert response.status_code == 201
 
-    expected_sorted = list(reversed(usernames))
+    expected_sorted = sorted(usernames)
 
-    response = await client.get("/api/v1/users/all?page=1&limit=3&sort=true")
-    assert response.status_code == 200
+    # Page 1 (first 3 alphabetically)
+    response = await client.get(
+        "/api/v1/users/all?page=1&limit=3&sort_by=username&order=asc"
+    )
     data = response.json()["result"]
-    usernames_page_1 = [user["username"] for user in data["content"]]
+    usernames_page_1 = [u["username"] for u in data["content"]]
     assert usernames_page_1 == expected_sorted[:3]
 
-    response = await client.get("/api/v1/users/all?page=2&limit=3&sort=true")
-    assert response.status_code == 200
+    # Page 2
+    response = await client.get(
+        "/api/v1/users/all?page=2&limit=3&sort_by=username&order=asc"
+    )
     data = response.json()["result"]
-    usernames_page_2 = [user["username"] for user in data["content"]]
+    usernames_page_2 = [u["username"] for u in data["content"]]
     assert usernames_page_2 == expected_sorted[3:6]
 
-    response = await client.get("/api/v1/users/all?page=3&limit=3&sort=true")
-    assert response.status_code == 200
+    # Page 3
+    response = await client.get(
+        "/api/v1/users/all?page=3&limit=3&sort_by=username&order=asc"
+    )
     data = response.json()["result"]
-    usernames_page_3 = [user["username"] for user in data["content"]]
+    usernames_page_3 = [u["username"] for u in data["content"]]
     assert usernames_page_3 == expected_sorted[6:]
 
-    assert data["total"] == 7
+    assert data["total_records"] == 7
+    assert data["total_pages"] == 3
 
 
 @pytest.mark.parametrize(

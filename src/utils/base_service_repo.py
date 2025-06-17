@@ -4,7 +4,7 @@ from xml.dom.minidom import Entity
 
 from fastapi import HTTPException
 from pydantic import BaseModel
-from sqlmodel import SQLModel, select, update, desc
+from sqlmodel import SQLModel, select, update, desc, asc
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy import func
 
@@ -56,13 +56,26 @@ class BaseRepository:
         return result.one()
 
     async def get_all_records(
-        self, table: SQLModel, offset_page: int, limit: int, sort: Optional[bool] = None
+        self,
+        table: SQLModel,
+        offset_page: int,
+        limit: int,
+        sort_by: str = "created_at",
+        order: str = "desc",
     ) -> list[SQLModel]:
+        if not hasattr(table, sort_by):
+            raise ValueError(
+                f"Model'{table.__name__} has no field '{sort_by}' to sort by"
+            )
+        column = getattr(table, sort_by)
         statement = select(table).offset(offset_page).limit(limit)
-        if sort:
-            statement = statement.order_by(desc(table.created_at))
-        records = await self.session.exec(statement)
-        return records
+        statement = (
+            statement.order_by(desc(column))
+            if order == "desc"
+            else statement.order_by(asc(column))
+        )
+        result = await self.session.exec(statement)
+        return result.all()
 
 
 R = TypeVar("R", bound=BaseRepository)
@@ -98,11 +111,18 @@ class BaseService(Generic[R]):
         return True
 
     async def get_all_records(
-        self, table: SQLModel, page: int, limit: int, sort: Optional[bool] = None
-    ) -> list[SQLModel]:
+        self,
+        table: SQLModel,
+        page: int,
+        limit: int,
+        sort_by: str = "created_at",
+        order: str = "desc",
+    ):
         offset_page = (page - 1) * limit
 
-        users = await self.repository.get_all_records(table, offset_page, limit, sort)
+        records = await self.repository.get_all_records(
+            table, offset_page, limit, sort_by, order
+        )
 
         total_records = await self.repository.count_all_records(table)
         total_pages = math.ceil(total_records / limit)
@@ -112,5 +132,5 @@ class BaseService(Generic[R]):
             page_size=limit,
             total_pages=total_pages,
             total_records=total_records,
-            content=users,
+            content=records,
         )
