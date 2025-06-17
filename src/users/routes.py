@@ -28,7 +28,6 @@ async def create_user(
 
 @user_router.get(
     "/all",
-    dependencies=[Depends(require_admin)],
     response_model=ResponseSchema[PageResponse[UserSchema]],
 )
 async def get_all_users(
@@ -36,6 +35,7 @@ async def get_all_users(
     limit: int = Query(default=10, ge=1),
     sort: bool = Query(default=True, case_sensitive=False),
     user_service: UserService = Depends(get_user_service),
+    _: UserSchema = Depends(require_admin),
 ):
     result = await user_service.get_all_records(Users, page, limit, sort)
     return ResponseSchema(detail="Success", result=result)
