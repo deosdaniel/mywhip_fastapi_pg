@@ -58,22 +58,24 @@ class BaseRepository:
     async def get_all_records(
         self,
         table: SQLModel,
-        offset_page: int,
+        offset: int,
         limit: int,
-        sort_by: str = "created_at",
+        sort_by: Optional[str] = None,
         order: str = "desc",
     ) -> list[SQLModel]:
-        if not hasattr(table, sort_by):
-            raise ValueError(
-                f"Model'{table.__name__} has no field '{sort_by}' to sort by"
-            )
-        column = getattr(table, sort_by)
-        statement = select(table).offset(offset_page).limit(limit)
-        statement = (
-            statement.order_by(desc(column))
-            if order == "desc"
-            else statement.order_by(asc(column))
-        )
+        statement = select(table).offset(offset).limit(limit)
+
+        if sort_by:
+            sort_column = getattr(table, sort_by, None)
+            if sort_column is None:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid sort field: {sort_by}"
+                )
+            if order == "desc":
+                statement = statement.order_by(desc(sort_column))
+            else:
+                statement = statement.order_by(asc(sort_column))
+
         result = await self.session.exec(statement)
         return result.all()
 
@@ -117,8 +119,14 @@ class BaseService(Generic[R]):
         limit: int,
         sort_by: str = "created_at",
         order: str = "desc",
+        allowed_sort_fields: Optional[list[str]] = None,
     ):
         offset_page = (page - 1) * limit
+
+        if allowed_sort_fields and sort_by not in allowed_sort_fields:
+            raise HTTPException(
+                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+            )
 
         records = await self.repository.get_all_records(
             table, offset_page, limit, sort_by, order

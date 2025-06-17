@@ -143,7 +143,7 @@ async def test_get_all_users_role(
 
 
 @pytest.mark.asyncio
-async def test_get_all_users_sorted_by_username(
+async def test_get_all_users_pagination_sorted_by_username(
     client, mock_user_factory, override_current_user
 ):
     admin_user = mock_user_factory(UserRole.ADMIN)

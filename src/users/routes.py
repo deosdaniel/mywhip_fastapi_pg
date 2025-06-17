@@ -41,7 +41,12 @@ async def get_all_users(
     _: UserSchema = Depends(require_admin),
 ):
     result = await user_service.get_all_records(
-        Users, page=page, limit=limit, sort_by=sort_by, order=order
+        Users,
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        order=order,
+        allowed_sort_fields=["created_at", "username", "email"],
     )
     return ResponseSchema(detail="Success", result=result)
 
