@@ -31,8 +31,10 @@ class BaseRepository:
 
     async def update_by_uid(
         self, table: SQLModel, uid: str, update_dict: dict
-    ) -> SQLModel:
+    ) -> Optional[SQLModel]:
         updatable = await self.get_by_uid(table, uid)
+        if not updatable:
+            return None
         fixed_uid = UUID(uid)
         await self.session.exec(
             update(table).where(table.uid == fixed_uid).values(**update_dict)

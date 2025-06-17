@@ -142,6 +142,50 @@ async def test_get_all_users_role(
     assert response.status_code == expected_status
 
 
+@pytest.mark.asyncio
+async def test_get_all_users_pagination_and_sorting(
+    client, mock_user_factory, override_current_user
+):
+    admin_user = mock_user_factory(UserRole.ADMIN)
+    override_current_user(admin_user)
+
+    usernames = ["tony", "chris", "paulie", "carmella", "corrado", "meadow", "silvio"]
+    for name in usernames:
+        response = await client.post(
+            "/api/v1/users/signup",
+            json={
+                "username": name,
+                "email": f"{name}@sopranos.com",
+                "first_name": name,
+                "last_name": "Soprano",
+                "password": "sopranos123",
+            },
+        )
+        assert response.status_code == 201
+
+    expected_sorted = list(reversed(usernames))
+
+    response = await client.get("/api/v1/users/all?page=1&limit=3&sort=true")
+    assert response.status_code == 200
+    data = response.json()["result"]
+    usernames_page_1 = [user["username"] for user in data["content"]]
+    assert usernames_page_1 == expected_sorted[:3]
+
+    response = await client.get("/api/v1/users/all?page=2&limit=3&sort=true")
+    assert response.status_code == 200
+    data = response.json()["result"]
+    usernames_page_2 = [user["username"] for user in data["content"]]
+    assert usernames_page_2 == expected_sorted[3:6]
+
+    response = await client.get("/api/v1/users/all?page=3&limit=3&sort=true")
+    assert response.status_code == 200
+    data = response.json()["result"]
+    usernames_page_3 = [user["username"] for user in data["content"]]
+    assert usernames_page_3 == expected_sorted[6:]
+
+    assert data["total"] == 7
+
+
 @pytest.mark.parametrize(
     "actor_role,is_self,expected_status",
     [
@@ -257,6 +301,22 @@ async def test_update_user_by_uid_empty_request(
     assert response.status_code == 422
 
 
+@pytest.mark.asyncio
+async def test_update_user_by_uid_nonexistent_uid(
+    client, mock_user_factory, override_current_user
+):
+    non_existent_uid = uuid.uuid4()
+
+    mock_user = mock_user_factory(UserRole.ADMIN)
+    override_current_user(mock_user)
+
+    response = await client.patch(
+        f"/api/v1/users/{non_existent_uid}",
+        json={"first_name": "Some", "last_name": "Thing"},
+    )
+    assert response.status_code == 404
+
+
 @pytest.mark.parametrize(
     "actor_role, is_self, expected_status",
     [
@@ -297,3 +357,15 @@ async def test_delete_user_by_uid_role_and_ownership(
         override_current_user(mock_user_factory(UserRole.ADMIN))
         response = await client.get(f"/api/v1/users/{user_uid}")
         assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_user_by_uid_nonexistent_uid(
+    client, mock_user_factory, override_current_user
+):
+    non_existent_uid = uuid.uuid4()
+    mock_user = mock_user_factory(UserRole.ADMIN)
+    override_current_user(mock_user)
+
+    response = await client.delete(f"/api/v1/users/{non_existent_uid}")
+    assert response.status_code == 404
