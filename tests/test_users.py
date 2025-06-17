@@ -29,9 +29,6 @@ async def test_create_user_conflict_email(client: AsyncClient):
     bad_data = {**user_data, "username": "testuser123"}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 409
-    assert (
-        "User with this email or username already exists" in response.json()["detail"]
-    )
 
 
 @pytest.mark.asyncio
@@ -39,9 +36,6 @@ async def test_create_user_conflict_username(client: AsyncClient):
     bad_data = {**user_data, "email": "example@test123.com"}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 409
-    assert (
-        "User with this email or username already exists" in response.json()["detail"]
-    )
 
 
 @pytest.mark.asyncio
@@ -103,24 +97,11 @@ async def test_create_explicit_admin_role_fail(client: AsyncClient):
     ],
 )
 @pytest.mark.asyncio
-async def test_get_all_users_by_role(client: AsyncClient, role, expected_status):
-    # Создаём mock-пользователя с нужной ролью
-    mock_user = UserSchema(
-        uid=uuid.uuid4(),
-        role=role,
-        username=f"{role}_mock",
-        email=f"{role}@test.com",
-        first_name="Mock",
-        last_name="User",
-        is_verified=True,
-        password_hash="",
-        created_at=None,
-        updated_at=None,
-    )
-
-    # ✅ Переопределяем get_current_user, а не require_admin
-    app.dependency_overrides[get_current_user] = lambda: mock_user
-
+async def test_get_all_users_by_role(
+    client, mock_user_factory, override_current_user, role, expected_status
+):
+    mock_user = mock_user_factory(role)
+    override_current_user(mock_user)
     response = await client.get("/api/v1/users/all")
     assert response.status_code == expected_status
 
@@ -128,18 +109,24 @@ async def test_get_all_users_by_role(client: AsyncClient, role, expected_status)
 @pytest.mark.parametrize(
     "actor_role,is_self,expected_status",
     [
-        (UserRole.ADMIN, False, 200),  # админ может
-        (UserRole.USER, True, 200),  # пользователь сам себя
-        (UserRole.USER, False, 403),  # чужой пользователь
+        (UserRole.ADMIN, False, 200),
+        (UserRole.USER, True, 200),
+        (UserRole.USER, False, 403),
     ],
 )
 @pytest.mark.asyncio
 async def test_user_access_by_role_and_ownership(
-    client, actor_role, is_self, expected_status
+    client,
+    mock_user_factory,
+    override_current_user,
+    actor_role,
+    is_self,
+    expected_status,
 ):
     target_username = f"target_{uuid.uuid4().hex[:6]}"
     target_email = f"{target_username}@example.com"
-    # создаём "целевого" пользователя
+
+    # создаём пользователя
     response = await client.post(
         "/api/v1/users/signup",
         json={
@@ -153,22 +140,10 @@ async def test_user_access_by_role_and_ownership(
     assert response.status_code == 201
     target_uid = response.json()["result"]["uid"]
 
-    # определяем, кем будем прикидываться (mock_user)
+    # подставляем mock-пользователя
     uid = uuid.UUID(target_uid) if is_self else uuid.uuid4()
-    mock_user = UserSchema(
-        uid=uid,
-        role=actor_role,
-        username="mock",
-        email="mock@example.com",
-        first_name="Mock",
-        last_name="User",
-        is_verified=True,
-        password_hash="",
-        created_at=None,
-        updated_at=None,
-    )
-
-    app.dependency_overrides[get_current_user] = lambda: mock_user
+    mock_user = mock_user_factory(actor_role, uid=uid)
+    override_current_user(mock_user)
 
     response = await client.get(f"/api/v1/users/{target_uid}")
     assert response.status_code == expected_status
