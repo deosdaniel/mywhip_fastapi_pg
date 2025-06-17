@@ -1,23 +1,22 @@
 import uuid
-
 import pytest
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
-
 from httpx import AsyncClient, ASGITransport
-
 from src.auth.dependencies import get_current_user
 from src.main import app
 from src.db.core import get_session
 from src.users.schemas import UserSchema, UserRole
+
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine_test = create_async_engine(DATABASE_URL, echo=False)
 TestSession = sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
 
 
+# ✅ Создание и удаление таблиц один раз за сессию
 @pytest.fixture(scope="session", autouse=True)
 async def prepare_database():
     async with engine_test.begin() as conn:
@@ -25,6 +24,16 @@ async def prepare_database():
     yield
     async with engine_test.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
+
+
+# ✅ Очистка данных после каждого теста
+@pytest.fixture(autouse=True)
+async def clean_database():
+    # После каждого теста удаляем все записи из всех таблиц
+    yield
+    async with engine_test.begin() as conn:
+        for table in reversed(SQLModel.metadata.sorted_tables):
+            await conn.execute(table.delete())
 
 
 @pytest.fixture

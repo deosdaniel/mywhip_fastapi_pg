@@ -1,9 +1,7 @@
 import uuid
 import pytest
 from httpx import AsyncClient
-from src.users.schemas import UserSchema, UserRole
-from src.auth.dependencies import get_current_user  # ✅ Переопределяем именно это
-from src.main import app
+from src.users.schemas import UserRole
 
 
 # Общие данные для создания пользователя
@@ -26,16 +24,54 @@ async def test_create_user_success(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_user_conflict_email(client: AsyncClient):
-    bad_data = {**user_data, "username": "testuser123"}
-    response = await client.post("/api/v1/users/signup", json=bad_data)
+    await client.post(
+        "/api/v1/users/signup",
+        json={
+            "username": "testuser",
+            "email": "test@example.com",
+            "first_name": "Test",
+            "last_name": "User",
+            "password": "securepassword",
+        },
+    )
+    response = await client.post(
+        "/api/v1/users/signup",
+        json={
+            "username": "testuser123",
+            "email": "test@example.com",
+            "first_name": "Test",
+            "last_name": "User",
+            "password": "securepassword",
+        },
+    )
     assert response.status_code == 409
+    assert "already exists" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
 async def test_create_user_conflict_username(client: AsyncClient):
-    bad_data = {**user_data, "email": "example@test123.com"}
-    response = await client.post("/api/v1/users/signup", json=bad_data)
+    await client.post(
+        "/api/v1/users/signup",
+        json={
+            "username": "testuser",
+            "email": "test@example.com",
+            "first_name": "Test",
+            "last_name": "User",
+            "password": "securepassword",
+        },
+    )
+    response = await client.post(
+        "/api/v1/users/signup",
+        json={
+            "username": "testuser",
+            "email": "test123@example.com",
+            "first_name": "Test",
+            "last_name": "User",
+            "password": "securepassword",
+        },
+    )
     assert response.status_code == 409
+    assert "already exists" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
