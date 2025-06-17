@@ -233,6 +233,30 @@ async def test_update_user_by_uid_role_and_ownership(
         assert response.json()["result"]["first_name"] == "New"
 
 
+@pytest.mark.asyncio
+async def test_update_user_by_uid_empty_request(
+    client, mock_user_factory, override_current_user
+):
+    response = await client.post(
+        "/api/v1/users/signup",
+        json={
+            "username": "empty_patch",
+            "email": "empty@patch.com",
+            "first_name": "Empty",
+            "last_name": "Patch",
+            "password": "securepassword",
+        },
+    )
+    assert response.status_code == 201
+    user_uid = response.json()["result"]["uid"]
+
+    mock_user = mock_user_factory(UserRole.USER, uid=user_uid)
+    override_current_user(mock_user)
+
+    response = await client.patch(f"/api/v1/users/{user_uid}", json={})
+    assert response.status_code == 422
+
+
 @pytest.mark.parametrize(
     "actor_role, is_self, expected_status",
     [

@@ -2,6 +2,7 @@ import math
 from uuid import UUID
 from xml.dom.minidom import Entity
 
+from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlmodel import SQLModel, select, update, desc
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -80,6 +81,8 @@ class BaseService(Generic[R]):
         self, table: SQLModel, uid: str, update_dict: BaseModel
     ) -> SQLModel:
         update_dict = update_dict.model_dump(exclude_unset=True)
+        if not update_dict:
+            raise HTTPException(status_code=422, detail="Update body cannot be empty")
         updated_entity = await self.repository.update_by_uid(table, uid, update_dict)
         if updated_entity:
             return updated_entity
