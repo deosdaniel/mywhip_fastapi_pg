@@ -133,7 +133,7 @@ async def test_create_explicit_admin_role_fail(client: AsyncClient):
     ],
 )
 @pytest.mark.asyncio
-async def test_get_all_users_by_role(
+async def test_get_all_users_role(
     client, mock_user_factory, override_current_user, role, expected_status
 ):
     mock_user = mock_user_factory(role)
@@ -151,7 +151,7 @@ async def test_get_all_users_by_role(
     ],
 )
 @pytest.mark.asyncio
-async def test_user_access_by_role_and_ownership(
+async def test_get_user_by_uid_role_and_ownership(
     client,
     mock_user_factory,
     override_current_user,

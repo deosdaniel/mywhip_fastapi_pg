@@ -45,6 +45,7 @@ app.add_middleware(
 @app.exception_handler(VinBusyException)
 def vin_exception_handler(request: Request, exc: VinBusyException):
     return JSONResponse(
+        status_code=409,
         content={
             "status": "Failed",
             "message": f"Sorry, a vehicle with this VIN-number is currently possessed by someone else.",
@@ -55,20 +56,22 @@ def vin_exception_handler(request: Request, exc: VinBusyException):
 @app.exception_handler(EntityNotFoundException)
 def entity_not_found(request: Request, exc: EntityNotFoundException):
     return JSONResponse(
+        status_code=404,
         content={
             "status": "Failed",
             "message": f"Sorry, requested {exc.entity} does not exist.",
-        }
+        },
     )
 
 
 @app.exception_handler(MakeModelException)
 def entity_not_found(request: Request, exc: MakeModelException):
     return JSONResponse(
+        status_code=404,
         content={
             "status": "Failed",
             "message": f"Sorry mate, selected Make has no model called {exc.model}.",
-        }
+        },
     )
 
 
