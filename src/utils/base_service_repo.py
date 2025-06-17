@@ -1,4 +1,5 @@
 import math
+from uuid import UUID
 from xml.dom.minidom import Entity
 
 from pydantic import BaseModel
@@ -23,15 +24,17 @@ class BaseRepository:
         return entity
 
     async def get_by_uid(self, table: SQLModel, uid: str) -> SQLModel:
-        result = await self.session.exec(select(table).where(table.uid == uid))
+        fixed_uid = UUID(uid)
+        result = await self.session.exec(select(table).where(table.uid == fixed_uid))
         return result.one_or_none()
 
     async def update_by_uid(
         self, table: SQLModel, uid: str, update_dict: dict
     ) -> SQLModel:
         updatable = await self.get_by_uid(table, uid)
+        fixed_uid = UUID(uid)
         await self.session.exec(
-            update(table).where(table.uid == uid).values(**update_dict)
+            update(table).where(table.uid == fixed_uid).values(**update_dict)
         )
         await self.session.commit()
         await self.session.refresh(updatable)

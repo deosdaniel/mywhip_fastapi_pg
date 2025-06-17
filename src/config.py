@@ -13,7 +13,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     DATABASE_URL: str
-    TEST_DATABASE_URL: str
     JWT_SECRET: str
     JWT_ALGORITHM: str
 
