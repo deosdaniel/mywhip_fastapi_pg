@@ -22,7 +22,7 @@ class UserService(BaseService[UsersRepository]):
             return await self.repository.create(table=Users, new_entity_dict=admin_dict)
         else:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="Admin with this email or username already exists",
             )
 
@@ -36,7 +36,7 @@ class UserService(BaseService[UsersRepository]):
             return await self.repository.create(table=Users, new_entity_dict=user_dict)
         else:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="User with this email or username already exists",
             )
 

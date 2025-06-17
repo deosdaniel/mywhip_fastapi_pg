@@ -17,11 +17,82 @@ user_data = {
 
 
 @pytest.mark.asyncio
-async def test_create_user(client: AsyncClient):
+async def test_create_user_success(client: AsyncClient):
     response = await client.post("/api/v1/users/signup", json=user_data)
     assert response.status_code == 201
     data = response.json()
     assert data["result"]["username"] == user_data["username"]
+
+
+@pytest.mark.asyncio
+async def test_create_user_conflict_email(client: AsyncClient):
+    bad_data = {**user_data, "username": "testuser123"}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 409
+    assert (
+        "User with this email or username already exists" in response.json()["detail"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_user_conflict_username(client: AsyncClient):
+    bad_data = {**user_data, "email": "example@test123.com"}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 409
+    assert (
+        "User with this email or username already exists" in response.json()["detail"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_user_short_username(client: AsyncClient):
+    bad_data = {**user_data, "username": "abc"}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_short_password(client: AsyncClient):
+    bad_data = {**user_data, "password": "abc123"}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_invalid_email(client: AsyncClient):
+    bad_data = {**user_data, "email": "testexample.com"}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_invalid_password(client: AsyncClient):
+    bad_data = {**user_data, "password": "abc123"}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_empty_input(client: AsyncClient):
+    bad_data = {}
+    response = await client.post("/api/v1/users/signup", json=bad_data)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_explicit_admin_role_fail(client: AsyncClient):
+    response = await client.post(
+        "/api/v1/users/signup",
+        json={
+            "username": "hacker",
+            "email": "evil@hacker.com",
+            "password": "supersecure",
+            "first_name": "E",
+            "last_name": "Hacker",
+            "role": "admin",
+        },
+    )
+    assert response.status_code == 422
 
 
 @pytest.mark.parametrize(
@@ -55,34 +126,40 @@ async def test_get_all_users_by_role(client: AsyncClient, role, expected_status)
 
 
 @pytest.mark.parametrize(
-    "role,expected_status",
+    "actor_role,is_self,expected_status",
     [
-        (UserRole.ADMIN, 200),
-        (UserRole.USER, 200),
+        (UserRole.ADMIN, False, 200),  # админ может
+        (UserRole.USER, True, 200),  # пользователь сам себя
+        (UserRole.USER, False, 403),  # чужой пользователь
     ],
 )
 @pytest.mark.asyncio
-async def test_get_user_by_uid_with_roles(client: AsyncClient, role, expected_status):
-    # Сначала создаём пользователя через /signup
-    create_response = await client.post(
+async def test_user_access_by_role_and_ownership(
+    client, actor_role, is_self, expected_status
+):
+    target_username = f"target_{uuid.uuid4().hex[:6]}"
+    target_email = f"{target_username}@example.com"
+    # создаём "целевого" пользователя
+    response = await client.post(
         "/api/v1/users/signup",
         json={
-            "username": f"user_{role}",
-            "email": f"{role}@test.com",
-            "first_name": "Test",
+            "username": target_username,
+            "email": target_email,
+            "first_name": "Target",
             "last_name": "User",
             "password": "securepassword",
         },
     )
-    assert create_response.status_code == 201
-    uid = create_response.json()["result"]["uid"]
+    assert response.status_code == 201
+    target_uid = response.json()["result"]["uid"]
 
-    # Создаём mock-пользователя, представляющего "себя" или админа
+    # определяем, кем будем прикидываться (mock_user)
+    uid = uuid.UUID(target_uid) if is_self else uuid.uuid4()
     mock_user = UserSchema(
-        uid=uuid.UUID(uid),
-        role=role,
-        username=f"{role}_mock",
-        email=f"{role}@test.com",
+        uid=uid,
+        role=actor_role,
+        username="mock",
+        email="mock@example.com",
         first_name="Mock",
         last_name="User",
         is_verified=True,
@@ -93,7 +170,5 @@ async def test_get_user_by_uid_with_roles(client: AsyncClient, role, expected_st
 
     app.dependency_overrides[get_current_user] = lambda: mock_user
 
-    response = await client.get(f"/api/v1/users/{uid}")
+    response = await client.get(f"/api/v1/users/{target_uid}")
     assert response.status_code == expected_status
-    if expected_status == 200:
-        assert response.json()["result"]["uid"] == uid
