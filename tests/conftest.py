@@ -5,6 +5,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
+
+from src.directories.models import MakesDirectory, ModelsDirectory
 from src.main import app
 from src.db.core import get_session
 from src.users.schemas import UserSchema, UserRole
@@ -59,7 +61,7 @@ async def client(test_session):
 
 # auth router
 @pytest.fixture
-async def create_user(
+def create_user(
     client,
 ):  # для создания реального пользователя с токеном через /signup
     async def _create(username, email, password="securepassword"):
@@ -80,7 +82,7 @@ async def create_user(
 
 
 @pytest.fixture
-async def get_access_token(
+def get_access_token(
     client, create_user
 ):  # Создать пользователя функцией выше и залогиниться
     async def _get(email="authuser@example.com", password="securepassword"):
@@ -122,3 +124,32 @@ def override_current_user():
 
     yield _override
     app.dependency_overrides.pop(get_current_user, None)
+
+
+# справочники
+@pytest.fixture(scope="function", autouse=True)
+def make_factory():
+    async def _create(
+        session: AsyncSession, make_name: str = "SomeMake"
+    ) -> MakesDirectory:
+        make = MakesDirectory(make=make_name)
+        session.add(make)
+        await session.commit()
+        await session.refresh(make)
+        return make
+
+    return _create
+
+
+@pytest.fixture(scope="function", autouse=True)
+def model_factory():
+    async def _create(
+        session: AsyncSession, model_name: str = "SomeModel", make_uid: uuid.UUID = None
+    ) -> ModelsDirectory:
+        model = ModelsDirectory(model=model_name, make_uid=make_uid)
+        session.add(model)
+        await session.commit()
+        await session.refresh(model)
+        return model
+
+    return _create
