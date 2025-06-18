@@ -34,6 +34,7 @@ class DirectoryService(BaseService[DirectoryRepository]):
         models = await self.repository.get_models_by_make(
             make_uid=make_uid, offset_page=offset_page, limit=limit, order=order
         )
+
         total_records = await self.repository.count_models_by_make(make_uid)
         total_pages = math.ceil(total_records / limit)
         return PageResponse(
