@@ -5,10 +5,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
-from src.auth.dependencies import get_current_user
 from src.main import app
 from src.db.core import get_session
 from src.users.schemas import UserSchema, UserRole
+from src.auth.dependencies import get_current_user
 
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -27,7 +27,7 @@ async def prepare_database():
 
 
 # ✅ Очистка данных после каждого теста
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 async def clean_database():
     # После каждого теста удаляем все записи из всех таблиц
     yield
@@ -36,7 +36,7 @@ async def clean_database():
             await conn.execute(table.delete())
 
 
-@pytest.fixture
+@pytest.fixture(scope="function", autouse=True)
 async def test_session():
     async def override_get_session():
         async with TestSession() as session:
@@ -47,7 +47,7 @@ async def test_session():
     app.dependency_overrides.pop(get_session, None)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function", autouse=True)
 async def client(test_session):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
