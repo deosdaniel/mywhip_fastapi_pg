@@ -77,5 +77,6 @@ async def get_models_by_make(
         limit=limit,
         sort_by="model",
         order=order_by,
+        allowed_sort_fields="model",
     )
     return ResponseSchema(detail="Success", result=result)
