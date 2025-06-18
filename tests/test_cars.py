@@ -24,7 +24,7 @@ car_list = [
         "pts_num": "55ХВ123123",
         "sts_num": "9955123123",
         "date_purchased": "2025-06-18",
-        "price_purchased": 100500,
+        "price_purchased": 250000,
         "status": "FRESH",
     },
     {
@@ -34,8 +34,8 @@ car_list = [
         "vin": "JZX10012345678902",
         "pts_num": "55ХВ123123",
         "sts_num": "9955123123",
-        "date_purchased": "2025-06-18",
-        "price_purchased": 100500,
+        "date_purchased": "2025-06-17",
+        "price_purchased": 750000,
         "status": "FRESH",
     },
     {
@@ -45,8 +45,30 @@ car_list = [
         "vin": "JZX10012345678903",
         "pts_num": "55ХВ123123",
         "sts_num": "9955123123",
-        "date_purchased": "2025-06-18",
-        "price_purchased": 100500,
+        "date_purchased": "2025-06-14",
+        "price_purchased": 420000,
+        "status": "FRESH",
+    },
+    {
+        "make": "Nissan",
+        "model": "Juke",
+        "year": 2012,
+        "vin": "JZX10012345678923",
+        "pts_num": "55ХВ123123",
+        "sts_num": "9955123123",
+        "date_purchased": "2025-06-11",
+        "price_purchased": 67200,
+        "status": "FRESH",
+    },
+    {
+        "make": "Opel",
+        "model": "Astra",
+        "year": 2017,
+        "vin": "JZX10012348678923",
+        "pts_num": "55ХВ123123",
+        "sts_num": "9955123123",
+        "date_purchased": "2025-06-11",
+        "price_purchased": 524000,
         "status": "FRESH",
     },
 ]
@@ -354,4 +376,18 @@ async def test_cars_get_my_cars_success(client, get_access_token):
     )
     data = response.json()
     assert response.status_code == 200
-    assert len(data["result"]["content"]) == 3
+    assert len(data["result"]["content"]) == 5
+
+    response = await client.get(
+        "/api/v1/cars/my_cars?page=1&limit=2",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    data = response.json()
+    assert len(data["result"]["content"]) == 2
+
+    response = await client.get(
+        "/api/v1/cars/my_cars?page=3&limit=2",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    data = response.json()
+    assert len(data["result"]["content"]) == 1
