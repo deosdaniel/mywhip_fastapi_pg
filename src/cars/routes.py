@@ -58,6 +58,7 @@ async def get_my_cars(
         order=order,
         allowed_sort_fields=[
             "created_at",
+            "updated_at",
             "year",
             "make",
             "model",

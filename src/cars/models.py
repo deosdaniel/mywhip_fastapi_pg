@@ -43,7 +43,7 @@ class Cars(SQLModel, table=True):
         sa_column=Column(pg.TIMESTAMP, default=now(), nullable=False)
     )
     updated_at: datetime = Field(
-        sa_column=Column(pg.TIMESTAMP, default=None, onupdate=now(), nullable=True)
+        sa_column=Column(pg.TIMESTAMP, default=now(), onupdate=now(), nullable=True)
     )
     owner_uid: UUID = Field(
         sa_column=Column(

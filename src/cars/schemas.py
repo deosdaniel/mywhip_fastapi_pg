@@ -82,7 +82,7 @@ class CarSchema(BaseModel):
     autoru_link: str | None = None
     drom_link: str | None = None
     created_at: datetime | None = None
-    updated_at: datetime | None = None
+    updated_at: datetime | None = created_at
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
     expenses: List["ExpensesDTO"] | None = None
 
