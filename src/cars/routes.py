@@ -56,7 +56,12 @@ async def get_my_cars(
         limit=limit,
         sort_by=sort_by,
         order=order,
-        allowed_sort_fields=["year"],
+        allowed_sort_fields=[
+            "created_at",
+            "year",
+            "make",
+            "model",
+        ],
         owner_uid=current_user.uid,
     )
     return ResponseSchema(detail="Success", result=result)
