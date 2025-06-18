@@ -59,7 +59,7 @@ def entity_not_found(request: Request, exc: EntityNotFoundException):
         status_code=404,
         content={
             "status": "Failed",
-            "message": f"Sorry, requested {exc.entity} does not exist.",
+            "detail": f"Sorry, requested {exc.entity} does not exist.",
         },
     )
 
@@ -70,7 +70,7 @@ def entity_not_found(request: Request, exc: MakeModelException):
         status_code=404,
         content={
             "status": "Failed",
-            "message": f"Sorry mate, selected Make has no model called {exc.model}.",
+            "detail": f"Sorry mate, selected Make has no model called {exc.model}.",
         },
     )
 

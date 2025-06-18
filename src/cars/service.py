@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -42,9 +43,28 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
-    async def get_my_cars(self, page: int, limit: int, owner_uid: UUID):
+    async def get_my_cars(
+        self,
+        page: int,
+        limit: int,
+        owner_uid: UUID,
+        sort_by: str = "created_at",
+        allowed_sort_fields: Optional[list[str]] = None,
+        order: str = "desc",
+    ):
         offset_page = (page - 1) * limit
-        cars = await self.repository.get_my_cars(offset_page, limit, owner_uid)
+
+        if allowed_sort_fields and sort_by not in allowed_sort_fields:
+            raise HTTPException(
+                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+            )
+        cars = await self.repository.get_my_cars(
+            offset_page=offset_page,
+            limit=limit,
+            sort_by=sort_by,
+            order=order,
+            owner_uid=owner_uid,
+        )
 
         total_records = await self.repository.count_my_cars(owner_uid)
         total_pages = math.ceil(total_records / limit)

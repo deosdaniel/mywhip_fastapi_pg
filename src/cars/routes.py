@@ -44,11 +44,20 @@ async def create_car(
 async def get_my_cars(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
+    sort_by: str = Query(default="created_at", description="Поле сортировки"),
+    order: str = Query(
+        default="desc", pattern="^(asc|desc)$", description="Порядок сортировки"
+    ),
     car_service: CarService = Depends(get_car_service),
     current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
     result = await car_service.get_my_cars(
-        page=page, limit=limit, owner_uid=current_user.uid
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        order=order,
+        allowed_sort_fields=["year"],
+        owner_uid=current_user.uid,
     )
     return ResponseSchema(detail="Success", result=result)
 

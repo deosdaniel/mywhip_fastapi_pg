@@ -1,3 +1,6 @@
+from typing import Optional
+
+from fastapi import HTTPException
 from sqlalchemy import func, desc, asc
 from sqlmodel import select, update
 from src.cars.models import Cars, Expenses
@@ -18,14 +21,31 @@ class CarsRepository(BaseRepository):
         await self.session.commit()
         return car
 
-    async def get_my_cars(self, offset_page: int, limit: int, owner_uid: str):
+    async def get_my_cars(
+        self,
+        offset_page: int,
+        limit: int,
+        owner_uid: str,
+        sort_by: Optional[str] = None,
+        order: str = "desc",
+    ):
         statement = (
             select(Cars)
             .where(Cars.owner_uid == owner_uid)
             .offset(offset_page)
             .limit(limit)
-            .order_by(desc(Cars.created_at))
         )
+        if sort_by:
+            sort_column = getattr(Cars, sort_by, None)
+            if sort_column is None:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid sort field: {sort_by}"
+                )
+            if order == "desc":
+                statement = statement.order_by(desc(sort_column))
+            else:
+                statement = statement.order_by(asc(sort_column))
+
         return await self.session.exec(statement)
 
     async def count_my_cars(self, owner_uid: str):
