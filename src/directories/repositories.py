@@ -14,7 +14,6 @@ class DirectoryRepository(BaseRepository):
         make_uid: UUID,
         offset_page: int,
         limit: int,
-        order: str = "desc",
     ) -> list[ModelsDirectory]:
         statement = (
             select(ModelsDirectory)
