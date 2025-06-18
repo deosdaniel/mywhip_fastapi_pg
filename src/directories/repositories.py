@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from src.utils.base_service_repo import BaseRepository
 from sqlmodel import select
@@ -10,7 +11,7 @@ class DirectoryRepository(BaseRepository):
 
     async def get_models_by_make(
         self,
-        make_uid: str,
+        make_uid: UUID,
         offset_page: int,
         limit: int,
         order: str = "desc",
