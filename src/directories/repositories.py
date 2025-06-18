@@ -1,3 +1,5 @@
+from typing import Optional
+
 from src.utils.base_service_repo import BaseRepository
 from sqlmodel import select
 from sqlalchemy import func
@@ -7,7 +9,11 @@ from src.directories.models import MakesDirectory, ModelsDirectory
 class DirectoryRepository(BaseRepository):
 
     async def get_models_by_make(
-        self, offset_page: int, limit: int, make_uid: str
+        self,
+        make_uid: str,
+        offset_page: int,
+        limit: int,
+        order: str = "desc",
     ) -> list[ModelsDirectory]:
         statement = (
             select(ModelsDirectory)

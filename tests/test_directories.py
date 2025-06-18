@@ -28,17 +28,43 @@ async def test_get_all_makes(client):
     assert "content" in data
     assert isinstance(data["content"], list)
     assert len(data["content"]) > 0
+    # Pagination
+    response_2 = await client.get("/api/v1/directories/makes?page=1&limit=1")
+    data_2 = response_2.json()
+    assert len(data_2["result"]["content"]) == 1
+    # Order_by
+    response_3 = await client.get(
+        "/api/v1/directories/makes?page=1&limit=10&order_by=desc"
+    )
+    data_3 = response_3.json()
+    assert (
+        data_3["result"]["content"][0]["make"] > data_3["result"]["content"][-1]["make"]
+    )
 
 
-# @pytest.mark.asyncio
-# async def test_dir_get_all_makes(client, make_factory):
-#    async with TestSession() as session:
-#        await make_factory(session, "Toyota")
-#        await make_factory(session, "Mitsubishi")
-#        await make_factory(session, "Ford")
-#        await make_factory(session, "Honda")
-#
-#    response = await client.get("/api/v1/directories/makes")
-#    assert response.status == 200
-#    result = response.json()["result"]
-#    assert result["total_records"] == 4
+@pytest.mark.asyncio
+async def test_get_all_models(client):
+    response = await client.get("/api/v1/directories/models")
+    assert response.status_code == 200
+    data = response.json()["result"]
+    assert "content" in data
+    assert isinstance(data["content"], list)
+    assert len(data["content"]) > 0
+    # Pagination
+    response_2 = await client.get("/api/v1/directories/models?page=1&limit=1")
+    data_2 = response_2.json()
+    assert len(data_2["result"]["content"]) == 1
+    # Order_by
+    response_3 = await client.get(
+        "/api/v1/directories/models?page=1&limit=10&order_by=desc"
+    )
+    data_3 = response_3.json()
+    assert (
+        data_3["result"]["content"][0]["model"]
+        > data_3["result"]["content"][-1]["model"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_models_by_make(client):
+    response = await client.get("/api/v1/directories/makes/{make_uid}/models")

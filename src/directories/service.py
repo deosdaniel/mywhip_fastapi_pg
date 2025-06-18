@@ -1,6 +1,7 @@
 import math
+from typing import Optional
 
-
+from fastapi import HTTPException
 from sqlalchemy import func
 from sqlmodel import select
 from src.directories.models import MakesDirectory, ModelsDirectory
@@ -13,10 +14,25 @@ from src.utils.base_service_repo import BaseService
 
 class DirectoryService(BaseService[DirectoryRepository]):
 
-    async def get_models_by_make(self, page: int, limit: int, make_uid: str):
+    async def get_models_by_make(
+        self,
+        make_uid: str,
+        page: int,
+        limit: int,
+        sort_by: str = "model",
+        order: str = "desc",
+        allowed_sort_fields: Optional[list[str]] = None,
+    ):
         offset_page = (page - 1) * limit
 
-        models = await self.repository.get_models_by_make(offset_page, limit, make_uid)
+        if allowed_sort_fields and sort_by not in allowed_sort_fields:
+            raise HTTPException(
+                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+            )
+
+        models = await self.repository.get_models_by_make(
+            make_uid=make_uid, offset_page=offset_page, limit=limit, order=order
+        )
         total_records = await self.repository.count_models_by_make(make_uid)
         total_pages = math.ceil(total_records / limit)
         return PageResponse(
