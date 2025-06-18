@@ -1,9 +1,9 @@
+import uuid
+
 import pytest
 from sqlmodel import select
-
 from src.db.core import get_session
 from src.directories.models import MakesDirectory, ModelsDirectory
-from tests.conftest import TestSession
 
 
 @pytest.mark.asyncio
@@ -67,4 +67,12 @@ async def test_get_all_models(client):
 
 @pytest.mark.asyncio
 async def test_get_models_by_make(client):
-    response = await client.get("/api/v1/directories/makes/{make_uid}/models")
+    prep_response = await client.get("/api/v1/directories/makes")
+    assert prep_response.status_code == 200
+    prep_data = prep_response.json()["result"]
+    test_make_uid = prep_data["content"][0]["uid"]
+
+    response = await client.get(f"/api/v1/directories/makes/{test_make_uid}/models")
+    assert response.status_code == 200
+    data = response.json()["result"]
+    assert len(data["content"]) > 0

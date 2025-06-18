@@ -1,5 +1,6 @@
 import math
 from typing import Optional
+from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import func
@@ -16,7 +17,7 @@ class DirectoryService(BaseService[DirectoryRepository]):
 
     async def get_models_by_make(
         self,
-        make_uid: str,
+        make_uid: UUID,
         page: int,
         limit: int,
         sort_by: str = "model",

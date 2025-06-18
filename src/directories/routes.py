@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 from src.directories.dependencies import get_dir_service
 from src.directories.models import MakesDirectory, ModelsDirectory
@@ -63,7 +65,7 @@ async def get_all_models(
     | ResponseSchema[ModelSchema],
 )
 async def get_models_by_make(
-    make_uid: str,
+    make_uid: UUID,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
     order_by: str = Query(
