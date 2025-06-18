@@ -17,9 +17,19 @@ directory_router = APIRouter()
 async def get_all_makes(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
+    order: str = Query(
+        default="asc", pattern="^(asc|desc)$", description="Порядок сортировки"
+    ),
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_all_records(MakesDirectory, page, limit)
+    result = await directory_service.get_all_records(
+        MakesDirectory,
+        page=page,
+        limit=limit,
+        sort_by="make",
+        order=order,
+        allowed_sort_fields=["make"],
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
@@ -31,9 +41,19 @@ async def get_all_makes(
 async def get_all_models(
     page: int = 1,
     limit: int = 10,
+    order: str = Query(
+        default="asc", pattern="^(asc|desc)$", description="Порядок сортировки"
+    ),
     directory_service: DirectoryService = Depends(get_dir_service),
 ):
-    result = await directory_service.get_all_records(ModelsDirectory, page, limit)
+    result = await directory_service.get_all_records(
+        ModelsDirectory,
+        page=page,
+        limit=limit,
+        sort_by="model",
+        order=order,
+        allowed_sort_fields=["model"],
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
