@@ -41,8 +41,8 @@ async def get_all_makes(
     | ResponseSchema[ModelSchema],
 )
 async def get_all_models(
-    page: int = 1,
-    limit: int = 10,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1),
     order_by: str = Query(
         default="asc", pattern="^(asc|desc)$", description="Порядок сортировки"
     ),
