@@ -1,3 +1,4 @@
+import os
 import uuid
 import pytest
 from sqlmodel import SQLModel
@@ -5,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient, ASGITransport
-
+import pandas as pd
 from src.directories.models import MakesDirectory, ModelsDirectory
 from src.main import app
 from src.db.core import get_session
@@ -35,7 +36,8 @@ async def clean_database():
     yield
     async with engine_test.begin() as conn:
         for table in reversed(SQLModel.metadata.sorted_tables):
-            await conn.execute(table.delete())
+            if table.name not in {"makesdir", "modelsdir"}:
+                await conn.execute(table.delete())
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -127,29 +129,34 @@ def override_current_user():
 
 
 # справочники
-@pytest.fixture(scope="function", autouse=True)
-def make_factory():
-    async def _create(
-        session: AsyncSession, make_name: str = "SomeMake"
-    ) -> MakesDirectory:
-        make = MakesDirectory(make=make_name)
-        session.add(make)
+@pytest.fixture(scope="session", autouse=True)
+async def load_directories(prepare_database):
+    BASE_DIR = os.path.dirname(__file__)
+    csv_path = os.path.join(BASE_DIR, "../src/directories/make_model_dataset.csv")
+    df = pd.read_csv(csv_path)
+    df_makes = (
+        df.drop("model", axis=1).drop_duplicates(subset="make").reset_index(drop=True)
+    )
+
+    async with TestSession() as session:
+        # Добавляем марки с явным UUID, генерируемым в Python
+        make_map = {}
+        for _, row in df_makes.iterrows():
+            make_obj = MakesDirectory(
+                uid=uuid.uuid4(),  # вот тут создаём UUID вручную
+                make=row["make"],
+            )
+            session.add(make_obj)
+            await session.flush()  # нужно, чтобы получить uid сразу после добавления
+            make_map[row["make"]] = make_obj.uid
+
+        # Добавляем модели с явным UUID
+        for _, row in df.iterrows():
+            model_obj = ModelsDirectory(
+                uid=uuid.uuid4(),  # также явно задаём UUID для моделей
+                model=row["model"],
+                make_uid=make_map[row["make"]],
+            )
+            session.add(model_obj)
+
         await session.commit()
-        await session.refresh(make)
-        return make
-
-    return _create
-
-
-@pytest.fixture(scope="function", autouse=True)
-def model_factory():
-    async def _create(
-        session: AsyncSession, model_name: str = "SomeModel", make_uid: uuid.UUID = None
-    ) -> ModelsDirectory:
-        model = ModelsDirectory(model=model_name, make_uid=make_uid)
-        session.add(model)
-        await session.commit()
-        await session.refresh(model)
-        return model
-
-    return _create

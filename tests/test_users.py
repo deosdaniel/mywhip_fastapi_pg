@@ -15,7 +15,7 @@ user_data = {
 
 
 @pytest.mark.asyncio
-async def test_create_user_success(client: AsyncClient):
+async def test_create_user_success(client):
     response = await client.post("/api/v1/users/signup", json=user_data)
     assert response.status_code == 201
     data = response.json()
@@ -23,7 +23,7 @@ async def test_create_user_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_user_conflict_email(client: AsyncClient):
+async def test_create_user_conflict_email(client):
     await client.post(
         "/api/v1/users/signup",
         json={
@@ -49,7 +49,7 @@ async def test_create_user_conflict_email(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_user_conflict_username(client: AsyncClient):
+async def test_create_user_conflict_username(client):
     await client.post(
         "/api/v1/users/signup",
         json={
@@ -75,42 +75,42 @@ async def test_create_user_conflict_username(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_create_user_short_username(client: AsyncClient):
+async def test_create_user_short_username(client):
     bad_data = {**user_data, "username": "abc"}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_create_user_short_password(client: AsyncClient):
+async def test_create_user_short_password(client):
     bad_data = {**user_data, "password": "abc123"}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_create_user_invalid_email(client: AsyncClient):
+async def test_create_user_invalid_email(client):
     bad_data = {**user_data, "email": "testexample.com"}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_create_user_invalid_password(client: AsyncClient):
+async def test_create_user_invalid_password(client):
     bad_data = {**user_data, "password": "abc123"}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_create_user_empty_input(client: AsyncClient):
+async def test_create_user_empty_input(client):
     bad_data = {}
     response = await client.post("/api/v1/users/signup", json=bad_data)
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_create_explicit_admin_role_fail(client: AsyncClient):
+async def test_create_explicit_admin_role_fail(client):
     response = await client.post(
         "/api/v1/users/signup",
         json={
