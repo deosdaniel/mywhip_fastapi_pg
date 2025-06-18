@@ -57,8 +57,47 @@ async def client(test_session):
 # --- Новые общие фикстуры: ---
 
 
+# auth router
 @pytest.fixture
-def mock_user_factory():
+async def create_user(
+    client,
+):  # для создания реального пользователя с токеном через /signup
+    async def _create(username, email, password="securepassword"):
+        response = await client.post(
+            "/api/v1/users/signup",
+            json={
+                "username": username,
+                "email": email,
+                "first_name": "Test",
+                "last_name": "User",
+                "password": password,
+            },
+        )
+        assert response.status_code == 201
+        return response.json()["result"]
+
+    return _create
+
+
+@pytest.fixture
+async def get_access_token(
+    client, create_user
+):  # Создать пользователя функцией выше и залогиниться
+    async def _get(email="authuser@example.com", password="securepassword"):
+        await create_user("authuser", email, password)
+        response = await client.post(
+            "/api/v1/auth/login",
+            data={"username": email, "password": password},
+        )
+        assert response.status_code == 200
+        return response.json()["access_token"]
+
+    return _get
+
+
+# user-router
+@pytest.fixture
+def mock_user_factory():  # для подмены в защищенных эндпоинтах
     def _create(role: UserRole, uid: uuid.UUID = None) -> UserSchema:
         return UserSchema(
             uid=uid or uuid.uuid4(),

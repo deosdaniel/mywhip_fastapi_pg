@@ -40,9 +40,9 @@ async def authenticate_user(
 @auth_router.get("/validate")
 async def verify_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    auth_service: AuthService = Depends(get_auth_service),
+    user_service: UserService = Depends(get_user_service),
 ):
-    await get_current_user(token=credentials.credentials, user_service=auth_service)
+    await get_current_user(token=credentials.credentials, user_service=user_service)
     return {"message": "Token verified"}
 
 
