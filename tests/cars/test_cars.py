@@ -1,6 +1,6 @@
 import pytest
 
-from src.cars.models import Cars
+from tests.cars.cars_helpers import create_mock_car
 
 
 @pytest.fixture
@@ -386,15 +386,10 @@ async def test_cars_get_my_cars_sorted(
 @pytest.mark.asyncio
 async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
     token = await get_access_token()
-    prep_response = await client.post(
-        "/api/v1/cars/",
-        json=mock_car,
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert prep_response.status_code == 201
-    car_uid = prep_response.json()["result"]["uid"]
+    created_car = await create_mock_car(client, token, mock_car)
 
     response = await client.get(
-        f"/api/v1/cars/{car_uid}", headers={"Authorization": f"Bearer {token}"}
+        f"/api/v1/cars/{created_car["uid"]}",
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
