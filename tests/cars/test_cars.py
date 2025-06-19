@@ -604,3 +604,34 @@ async def test_cars_delete_car_stranger_car(
     override_current_user(user_b)
     response = await client.delete(f"/api/v1/cars/{car_uid}")
     assert response.status_code == expected_status
+
+
+
+@pytest.mark.parametrize(
+    "role, expected_status",
+    [
+        (UserRole.ADMIN, 200),
+        (UserRole.USER, 403),
+    ],
+)
+async def test_cars_get_all_cars_filtered_access(client, mock_user_factory, role, expected_status, get_access_token, mock_cars,
+                                          override_current_user):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    for car in mock_cars:
+        response = await client.post("/api/v1/cars/", json=car)
+        assert response.status_code == 201
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.post("/api/v1/cars/all", json={
+          "page": 1,
+          "limit": 10,
+          "status": "FRESH",
+          "sort_by": "created_at",
+          "order_desc": "true"
+        })
+    assert response.status_code == expected_status
+    if role == UserRole.ADMIN:
+        assert len(response.json()["result"]["content"]) == 5
+

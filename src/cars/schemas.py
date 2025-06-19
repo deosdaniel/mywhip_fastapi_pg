@@ -3,7 +3,7 @@ from datetime import datetime, date
 import uuid
 from enum import Enum
 
-from typing import List
+from typing import List, Literal
 
 """Status choice"""
 
@@ -118,11 +118,11 @@ class ProdYear(BaseModel):
 
 
 class GetAllFilter(BaseModel):
-    page: int = 1
-    limit: int = 10
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=10, ge=1)
     make: str | None = None
     model: str | None = None
     prod_year: ProdYear | None = None
     status: CarStatusChoices | None = None
-    sort_by: str = "created_at"
+    sort_by: Literal["created_at", "updated_at", "year", "make", "model","price_purchased","price_listed", "price_sold",  "date_purchased","date_listed", "date_sold"] = "created_at"
     order_desc: bool = True
