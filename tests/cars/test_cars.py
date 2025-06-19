@@ -1,6 +1,7 @@
 import pytest
-
-from tests.cars.cars_helpers import create_mock_car
+from src.users.schemas import UserRole
+from tests.cars.cars_helpers import create_mock_car, create_five_mock_cars
+from tests.conftest import mock_user_factory, override_current_user
 
 
 @pytest.fixture
@@ -330,13 +331,7 @@ async def test_cars_get_my_cars_paginated(
     client, get_access_token, mock_cars, query, expected_status, expected_length
 ):
     token = await get_access_token()
-    for car in mock_cars:
-        response = await client.post(
-            "/api/v1/cars/",
-            json=car,
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert response.status_code == 201
+    await create_five_mock_cars(client, token, mock_cars)
     response = await client.get(
         f"/api/v1/cars/my_cars{query}", headers={"Authorization": f"Bearer {token}"}
     )
@@ -364,13 +359,7 @@ async def test_cars_get_my_cars_sorted(
     client, get_access_token, mock_cars, sort_by, order, expected_value
 ):
     token = await get_access_token()
-    for car in mock_cars:
-        response = await client.post(
-            "/api/v1/cars/",
-            json=car,
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert response.status_code == 201
+    await create_five_mock_cars(client, token, mock_cars)
     response = await client.get(
         f"/api/v1/cars/my_cars?page=1&limit=10&sort_by={sort_by}&order={order}",
         headers={"Authorization": f"Bearer {token}"},
@@ -398,18 +387,34 @@ async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
 
 
 @pytest.mark.asyncio
-async def test_cannot_access_someone_else_car(client, get_access_token, mock_car):
-    # 1. Пользователь A создаёт авто
-    token_a = await get_access_token(email="user_a@example.com")
-    created_car = await create_mock_car(client, token_a, mock_car)
-    car_uid = created_car["uid"]
+async def test_cars_get_car_by_uid_deny_access_to_strangers_car(
+    client, mock_car, mock_user_factory, override_current_user
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
 
-    # 2. Пользователь B пытается получить авто
-    token_b = await get_access_token(email="user_b@example.com")
-    response = await client.get(
-        f"/api/v1/cars/{car_uid}",
-        headers={"Authorization": f"Bearer {token_b}"},
-    )
+    user_b = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_b)
+    response = await client.get(f"/api/v1/cars/{car_uid}")
+    assert response.status_code == 403
+    assert "Access denied" in response.json()["detail"]
 
-    # 3. Проверка: доступ запрещён
-    assert response.status_code in (403, 404)
+
+@pytest.mark.asyncio
+async def test_cars_get_car_by_uid_admin_access_to_strangers_car(
+    client, mock_car, mock_user_factory, override_current_user
+):
+    user = mock_user_factory(role=UserRole.USER)
+    override_current_user(user)
+    response = await client.post("/api/v1/cars/", json=mock_car)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+
+    admin = mock_user_factory(role=UserRole.ADMIN)
+    override_current_user(admin)
+    response = await client.get(f"/api/v1/cars/{car_uid}")
+    assert response.status_code == 200
+    assert response.json()["result"]["uid"] == car_uid

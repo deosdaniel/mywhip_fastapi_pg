@@ -6,3 +6,16 @@ async def create_mock_car(client, token: str, car_data: dict) -> dict:
     )
     assert response.status_code == 201
     return response.json()["result"]
+
+
+async def create_five_mock_cars(client, token: str, cars_data: dict) -> dict:
+    created_cars = []
+    for car in cars_data:
+        response = await client.post(
+            "/api/v1/cars/",
+            json=car,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 201
+        created_cars.append(response.json()["result"])
+    return created_cars
