@@ -1,5 +1,3 @@
-from http.client import responses
-
 import pytest
 
 
@@ -52,7 +50,7 @@ car_list = [
     {
         "make": "Nissan",
         "model": "Juke",
-        "year": 2012,
+        "year": 2017,
         "vin": "JZX10012345678923",
         "pts_num": "55ХВ123123",
         "sts_num": "9955123123",
@@ -63,7 +61,7 @@ car_list = [
     {
         "make": "Opel",
         "model": "Astra",
-        "year": 2017,
+        "year": 2012,
         "vin": "JZX10012348678923",
         "pts_num": "55ХВ123123",
         "sts_num": "9955123123",
@@ -86,42 +84,30 @@ async def test_cars_create_car_success(client, get_access_token):
     assert data["result"]["vin"] == car_data["vin"]
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_make(client, get_access_token):
+@pytest.mark.parametrize("make, expected_status", [("TOTOYA", 404), ("", 422)])
+async def test_cars_create_car_invalid_make(
+    client, get_access_token, make, expected_status
+):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "make": "TOTOYA"},
+        json={**car_data, "make": make},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 404
-    assert "Sorry, requested Make does not exist" in response.json()["detail"]
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "make": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_model(client, get_access_token):
+@pytest.mark.parametrize("model, expected_status", [("Crola", 404), ("", 422)])
+async def test_cars_create_car_invalid_model(
+    client, get_access_token, model, expected_status
+):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "model": "Crola"},
+        json={**car_data, "model": model},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 404
-    assert "Sorry, requested Model does not exist" in response.json()["detail"]
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "model": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
 @pytest.mark.asyncio
@@ -136,198 +122,142 @@ async def test_cars_create_car_unreal_make_model(client, get_access_token):
     assert "Sorry, requested Model does not exist" in response.json()["detail"]
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_year(client, get_access_token):
+@pytest.mark.parametrize(
+    "year, expected_status", [("1950", 422), ("2077", 422), ("", 422)]
+)
+async def test_cars_create_car_invalid_year(
+    client, get_access_token, year, expected_status
+):
     token = await get_access_token()
-    response_past = await client.post(
+    response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "year": "1950"},
+        json={**car_data, "year": year},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_past.status_code == 422
-
-    response_future = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "year": "2035"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_future.status_code == 422
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "year": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_vin(client, get_access_token):
+@pytest.mark.parametrize(
+    "vin, expected_status",
+    [
+        ("ЭЮЯ12312312312312", 422),
+        ("ACB123", 422),
+        ("ACB123ACB123ACB123ACB123", 422),
+        ("", 422),
+    ],
+)
+async def test_cars_create_car_invalid_vin(
+    client, get_access_token, vin, expected_status
+):
     token = await get_access_token()
-    response_cyrillic = await client.post(
+    response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "vin": "ЭЮЯ12312312312312"},
+        json={**car_data, "vin": vin},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_cyrillic.status_code == 422
-
-    response_short = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "vin": "ACB123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_short.status_code == 422
-
-    response_long = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "vin": "ACB123ACB123ACB123ACB123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_long.status_code == 422
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "vin": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_pts(client, get_access_token):
+@pytest.mark.parametrize(
+    "pts_num, expected_status",
+    [
+        ("55WY123123123", 422),
+        ("55ХВ123123123", 422),
+        ("55ХВ123", 422),
+        ("", 422),
+    ],
+)
+async def test_cars_create_car_invalid_pts(
+    client, get_access_token, pts_num, expected_status
+):
     token = await get_access_token()
-    response_latin = await client.post(
+    response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "pts_num": "55WW123123"},
+        json={**car_data, "pts_num": pts_num},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_latin.status_code == 422
-
-    response_long = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "pts_num": "55ХВ123123123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_long.status_code == 422
-
-    response_short = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "pts_num": "55ХВ123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_short.status_code == 422
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "pts_num": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_sts(client, get_access_token):
+@pytest.mark.parametrize(
+    "sts_num, expected_status",
+    [
+        ("99AA123123", 422),
+        ("9955123123123", 422),
+        ("9955123", 422),
+        ("", 422),
+    ],
+)
+async def test_cars_create_car_invalid_sts(
+    client, get_access_token, sts_num, expected_status
+):
     token = await get_access_token()
-    response_letters = await client.post(
+    response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "sts_num": "99УЮ123123"},
+        json={**car_data, "sts_num": sts_num},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_letters.status_code == 422
-
-    response_long = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "sts_num": "9955123123123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_long.status_code == 422
-
-    response_short = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "sts_num": "9955123"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_short.status_code == 422
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "sts_num": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_date_purchased(client, get_access_token):
+@pytest.mark.parametrize(
+    "date_purchased, expected_status",
+    [
+        ("2026-06-18", 422),
+        ("2024-00-30", 422),
+        ("2024-03-55", 422),
+        ("20240355", 422),
+        ("", 422),
+    ],
+)
+async def test_cars_create_car_invalid_date_purchased(
+    client, get_access_token, date_purchased, expected_status
+):
     token = await get_access_token()
-    response_future = await client.post(
+    response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "date_purchased": "2026-06-18"},
+        json={**car_data, "date_purchased": date_purchased},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_future.status_code == 422
-
-    response_invalid_month = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "date_purchased": "2024-00-30"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_invalid_month.status_code == 422
-
-    response_invalid_day = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "date_purchased": "2024-03-55"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_invalid_day.status_code == 422
-
-    response_invalid_format = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "date_purchased": "20240355"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_invalid_format.status_code == 422
-
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "date_purchased": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_price_purchased(client, get_access_token):
+@pytest.mark.parametrize(
+    "price_purchased, expected_status",
+    [
+        ("150", 422),
+        ("", 422),
+    ],
+)
+async def test_cars_create_car_invalid_price_purchased(
+    client, get_access_token, price_purchased, expected_status
+):
     token = await get_access_token()
-    response_too_cheap = await client.post(
+    response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "price_purchased": "150"},
+        json={**car_data, "price_purchased": price_purchased},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_too_cheap.status_code == 422
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "price_purchased": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response.status_code == expected_status
 
 
-@pytest.mark.asyncio
-async def test_cars_create_car_invalid_status(client, get_access_token):
+@pytest.mark.parametrize(
+    "status, expected_status",
+    [
+        ("SOMETHING", 422),
+        ("", 422),
+    ],
+)
+async def test_cars_create_car_invalid_status(
+    client, get_access_token, status, expected_status
+):
     token = await get_access_token()
     response_invalid = await client.post(
         "api/v1/cars/",
-        json={**car_data, "status": "SOMETHING"},
+        json={**car_data, "status": status},
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response_invalid.status_code == 422
-    response_empty = await client.post(
-        "api/v1/cars/",
-        json={**car_data, "status": ""},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response_empty.status_code == 422
+    assert response_invalid.status_code == expected_status
 
 
 @pytest.mark.asyncio
@@ -391,3 +321,19 @@ async def test_cars_get_my_cars_success(client, get_access_token):
     )
     data = response.json()
     assert len(data["result"]["content"]) == 1
+
+    response = await client.get(
+        "/api/v1/cars/my_cars?page=2&limit=2&sort_by=year&order=desc",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    data = response.json()
+    assert data["result"]["content"][0]["year"] > data["result"]["content"][1]["year"]
+    assert len(data["result"]["content"]) == 2
+
+    response = await client.get(
+        "/api/v1/cars/my_cars?page=1&limit=3&sort_by=year&order=asc",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    data = response.json()
+    assert data["result"]["content"][0]["year"] < data["result"]["content"][1]["year"]
+    assert len(data["result"]["content"]) == 3

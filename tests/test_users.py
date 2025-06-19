@@ -1,6 +1,5 @@
 import uuid
 import pytest
-from httpx import AsyncClient
 from src.users.schemas import UserRole
 
 
@@ -132,7 +131,6 @@ async def test_create_explicit_admin_role_fail(client):
         (UserRole.USER, 403),
     ],
 )
-@pytest.mark.asyncio
 async def test_get_all_users_role(
     client, mock_user_factory, override_current_user, role, expected_status
 ):
@@ -201,7 +199,6 @@ async def test_get_all_users_pagination_sorted_by_username(
         (UserRole.USER, False, 403),
     ],
 )
-@pytest.mark.asyncio
 async def test_get_user_by_uid_role_and_ownership(
     client,
     mock_user_factory,
@@ -244,7 +241,6 @@ async def test_get_user_by_uid_role_and_ownership(
         (UserRole.USER, False, 403),
     ],
 )
-@pytest.mark.asyncio
 async def test_update_user_by_uid_role_and_ownership(
     client,
     mock_user_factory,
@@ -332,7 +328,6 @@ async def test_update_user_by_uid_nonexistent_uid(
         (UserRole.USER, False, 403),
     ],
 )
-@pytest.mark.asyncio
 async def test_delete_user_by_uid_role_and_ownership(
     client,
     mock_user_factory,
