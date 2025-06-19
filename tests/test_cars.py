@@ -386,12 +386,15 @@ async def test_cars_get_my_cars_sorted(
 @pytest.mark.asyncio
 async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
     token = await get_access_token()
-    response = await client.post(
+    prep_response = await client.post(
         "/api/v1/cars/",
-        json={"uid": mock_car},
+        json=mock_car,
         headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 201
-    # data =
-    #
-    # response = await client.get('/api/v1/cars/{}')
+    assert prep_response.status_code == 201
+    car_uid = prep_response.json()["result"]["uid"]
+
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
