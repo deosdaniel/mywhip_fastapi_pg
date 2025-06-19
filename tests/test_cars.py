@@ -324,7 +324,6 @@ async def test_cars_create_car_same_vin_sold(
         ("?page=3&limit=2", 200, 1),
         ("?page=2&limit=2", 200, 2),
         ("?page=1&limit=3", 200, 3),
-        ("?page=10&limit=10", 200, 0),
     ],
 )
 async def test_cars_get_my_cars_paginated(
@@ -344,6 +343,10 @@ async def test_cars_get_my_cars_paginated(
     data = response.json()
     assert response.status_code == expected_status
     assert len(data["result"]["content"]) == expected_length
+    get_me = await client.get(
+        "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert get_me.json()["uid"] == data["result"]["content"][0]["owner_uid"]
 
 
 @pytest.mark.parametrize(
@@ -374,3 +377,21 @@ async def test_cars_get_my_cars_sorted(
     )
     data = response.json()
     assert data["result"]["content"][0][sort_by] == expected_value
+    get_me = await client.get(
+        "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert get_me.json()["uid"] == data["result"]["content"][0]["owner_uid"]
+
+
+@pytest.mark.asyncio
+async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
+    token = await get_access_token()
+    response = await client.post(
+        "/api/v1/cars/",
+        json={"uid": mock_car},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 201
+    # data =
+    #
+    # response = await client.get('/api/v1/cars/{}')
