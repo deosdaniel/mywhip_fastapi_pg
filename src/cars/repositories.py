@@ -74,13 +74,13 @@ class CarsRepository(BaseRepository):
         if filter_schema.status:
             statement = statement.filter_by(status=filter_schema.status)
         # Sorting
-        direction = desc if filter_schema.order_desc else asc
+        direction = desc if (filter_schema.order_desc == "desc") else asc
         if filter_schema.sort_by:
             statement = statement.order_by(
                 direction(getattr(Cars, filter_schema.sort_by))
             )
 
-        statement = statement.offset(offset_page * filter_schema.limit).limit(
+        statement = statement.offset(offset_page).limit(
             filter_schema.limit
         )
         cars = await self.session.exec(statement)
@@ -97,10 +97,10 @@ class CarsRepository(BaseRepository):
                 statement = statement.filter(
                     Cars.year >= filter_schema.prod_year.year_from
                 )
-                if filter_schema.prod_year.year_to:
-                    statement = statement.filter(
-                        Cars.year <= filter_schema.prod_year.year_to
-                    )
+            if filter_schema.prod_year.year_to:
+                statement = statement.filter(
+                    Cars.year <= filter_schema.prod_year.year_to
+                )
         if filter_schema.status:
             statement = statement.filter_by(status=filter_schema.status)
 

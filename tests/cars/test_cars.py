@@ -629,9 +629,19 @@ async def test_cars_get_all_cars_filtered_access(client, mock_user_factory, role
           "limit": 10,
           "status": "FRESH",
           "sort_by": "created_at",
-          "order_desc": "true"
+          "order_desc": "desc"
         })
     assert response.status_code == expected_status
     if role == UserRole.ADMIN:
         assert len(response.json()["result"]["content"]) == 5
+        response = await client.post("/api/v1/cars/all", json={
+            "page": 2,
+            "limit": 3,
+            "sort_by": "year",
+            "order_desc": "asc"
+        })
+        assert response.status_code == 200
+        assert len(response.json()["result"]["content"]) == 2
+        assert response.json()["result"]["content"][1]["year"] == 2017
+
 

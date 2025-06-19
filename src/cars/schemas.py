@@ -125,4 +125,4 @@ class GetAllFilter(BaseModel):
     prod_year: ProdYear | None = None
     status: CarStatusChoices | None = None
     sort_by: Literal["created_at", "updated_at", "year", "make", "model","price_purchased","price_listed", "price_sold",  "date_purchased","date_listed", "date_sold"] = "created_at"
-    order_desc: bool = True
+    order_desc: Literal["desc", "asc"] = "desc"
