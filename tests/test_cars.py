@@ -1,19 +1,7 @@
 import pytest
 
 
-car_data = {
-    "make": "Toyota",
-    "model": "Corolla",
-    "year": 2005,
-    "vin": "JZX10012345678901",
-    "pts_num": "55ХВ123123",
-    "sts_num": "9955123123",
-    "date_purchased": "2025-06-18",
-    "price_purchased": 100500,
-    "status": "FRESH",
-}
-
-car_list = [
+mock_car_list = [
     {
         "make": "Toyota",
         "model": "Corolla",
@@ -71,17 +59,21 @@ car_list = [
     },
 ]
 
+mock_car = mock_car_list[0]
+
 
 @pytest.mark.asyncio
 async def test_cars_create_car_success(client, get_access_token):
     token = await get_access_token()
 
     response = await client.post(
-        "api/v1/cars/", json=car_data, headers={"Authorization": f"Bearer {token}"}
+        "api/v1/cars/",
+        json=mock_car,
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["result"]["vin"] == car_data["vin"]
+    assert data["result"]["vin"] == mock_car["vin"]
 
 
 @pytest.mark.parametrize("make, expected_status", [("TOTOYA", 404), ("", 422)])
@@ -91,7 +83,7 @@ async def test_cars_create_car_invalid_make(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "make": make},
+        json={**mock_car, "make": make},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -104,7 +96,7 @@ async def test_cars_create_car_invalid_model(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "model": model},
+        json={**mock_car, "model": model},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -115,7 +107,7 @@ async def test_cars_create_car_unreal_make_model(client, get_access_token):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "make": "Nissan", "model": "Camry"},
+        json={**mock_car, "make": "Nissan", "model": "Camry"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
@@ -131,7 +123,7 @@ async def test_cars_create_car_invalid_year(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "year": year},
+        json={**mock_car, "year": year},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -152,7 +144,7 @@ async def test_cars_create_car_invalid_vin(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "vin": vin},
+        json={**mock_car, "vin": vin},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -173,7 +165,7 @@ async def test_cars_create_car_invalid_pts(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "pts_num": pts_num},
+        json={**mock_car, "pts_num": pts_num},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -194,7 +186,7 @@ async def test_cars_create_car_invalid_sts(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "sts_num": sts_num},
+        json={**mock_car, "sts_num": sts_num},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -216,7 +208,7 @@ async def test_cars_create_car_invalid_date_purchased(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "date_purchased": date_purchased},
+        json={**mock_car, "date_purchased": date_purchased},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -235,7 +227,7 @@ async def test_cars_create_car_invalid_price_purchased(
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "price_purchased": price_purchased},
+        json={**mock_car, "price_purchased": price_purchased},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -254,7 +246,7 @@ async def test_cars_create_car_invalid_status(
     token = await get_access_token()
     response_invalid = await client.post(
         "api/v1/cars/",
-        json={**car_data, "status": status},
+        json={**mock_car, "status": status},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response_invalid.status_code == expected_status
@@ -264,12 +256,16 @@ async def test_cars_create_car_invalid_status(
 async def test_cars_create_car_same_vin_conflict(client, get_access_token):
     token = await get_access_token()
     prep_response = await client.post(
-        "api/v1/cars/", json=car_data, headers={"Authorization": f"Bearer {token}"}
+        "api/v1/cars/",
+        json=mock_car,
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert prep_response.status_code == 201
 
     response = await client.post(
-        "api/v1/cars/", json=car_data, headers={"Authorization": f"Bearer {token}"}
+        "api/v1/cars/",
+        json=mock_car,
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 409
 
@@ -279,22 +275,34 @@ async def test_cars_create_car_same_vin_sold(client, get_access_token):
     token = await get_access_token()
     prep_response = await client.post(
         "api/v1/cars/",
-        json={**car_data, "status": "SOLD"},
+        json={**mock_car, "status": "SOLD"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert prep_response.status_code == 201
     response = await client.post(
         "api/v1/cars/",
-        json=car_data,
+        json=mock_car,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 201
 
 
-@pytest.mark.asyncio
-async def test_cars_get_my_cars_success(client, get_access_token):
+@pytest.mark.parametrize(
+    "query, expected_status, expected_length",
+    [
+        ("", 200, 5),
+        ("?page=1&limit=2", 200, 2),
+        ("?page=3&limit=2", 200, 1),
+        ("?page=2&limit=2", 200, 2),
+        ("?page=1&limit=3", 200, 3),
+        ("?page=10&limit=10", 200, 0),
+    ],
+)
+async def test_cars_get_my_cars_paginated(
+    client, get_access_token, query, expected_status, expected_length
+):
     token = await get_access_token()
-    for car in car_list:
+    for car in mock_car_list:
         response = await client.post(
             "/api/v1/cars/",
             json=car,
@@ -302,38 +310,38 @@ async def test_cars_get_my_cars_success(client, get_access_token):
         )
         assert response.status_code == 201
     response = await client.get(
-        "/api/v1/cars/my_cars", headers={"Authorization": f"Bearer {token}"}
+        f"/api/v1/cars/my_cars{query}", headers={"Authorization": f"Bearer {token}"}
     )
     data = response.json()
-    assert response.status_code == 200
-    assert len(data["result"]["content"]) == 5
+    assert response.status_code == expected_status
+    assert len(data["result"]["content"]) == expected_length
 
+
+@pytest.mark.parametrize(
+    "sort_by, order, expected_value",
+    [
+        ("year", "desc", 2017),
+        ("year", "asc", 2002),
+        ("model", "desc", "Lancer"),
+        ("model", "asc", "Accord"),
+        ("make", "desc", "Toyota"),
+        ("make", "asc", "Honda"),
+    ],
+)
+async def test_cars_get_my_cars_sorted(
+    client, get_access_token, sort_by, order, expected_value
+):
+    token = await get_access_token()
+    for car in mock_car_list:
+        response = await client.post(
+            "/api/v1/cars/",
+            json=car,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 201
     response = await client.get(
-        "/api/v1/cars/my_cars?page=1&limit=2",
+        f"/api/v1/cars/my_cars?page=1&limit=10&sort_by={sort_by}&order={order}",
         headers={"Authorization": f"Bearer {token}"},
     )
     data = response.json()
-    assert len(data["result"]["content"]) == 2
-
-    response = await client.get(
-        "/api/v1/cars/my_cars?page=3&limit=2",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    data = response.json()
-    assert len(data["result"]["content"]) == 1
-
-    response = await client.get(
-        "/api/v1/cars/my_cars?page=2&limit=2&sort_by=year&order=desc",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    data = response.json()
-    assert data["result"]["content"][0]["year"] > data["result"]["content"][1]["year"]
-    assert len(data["result"]["content"]) == 2
-
-    response = await client.get(
-        "/api/v1/cars/my_cars?page=1&limit=3&sort_by=year&order=asc",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    data = response.json()
-    assert data["result"]["content"][0]["year"] < data["result"]["content"][1]["year"]
-    assert len(data["result"]["content"]) == 3
+    assert data["result"]["content"][0][sort_by] == expected_value
