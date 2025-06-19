@@ -1,3 +1,4 @@
+import copy
 from http.client import responses
 
 import pytest
@@ -90,11 +91,11 @@ def mock_car_update():
         "price_listed": 666444,
         "date_sold": "2025-06-19",
         "price_sold": 1234567,
-        "autoteka_link": "asd",
+        "autoteka_link": "https://autoteka.com/autoteka",
         "notes": "123",
-        "avito_link": "string",
-        "autoru_link": "string",
-        "drom_link": "string",
+        "avito_link": "https://avito.com/avito",
+        "autoru_link": "https://auto.ru/autoru",
+        "drom_link": "https://drom.com/drom",
         "status": "REPAIRING",
     }
 
@@ -476,4 +477,56 @@ async def test_cars_update_car_success(
         json=mock_car_update,
         headers={"Authorization": f"Bearer {token}"},
     )
+    data = response.json()
     assert response.status_code == 200
+    assert data["result"]["uid"] == car["uid"]
+
+
+@pytest.mark.parametrize(
+    "invalid_fields",
+    [
+        {
+            "status": "something",
+        },
+        {
+            "price_purchased": 1,
+        },
+        {
+            "date_listed": "2077-06-19",
+        },
+        {
+            "price_listed": "321asd",
+        },
+        {
+            "date_sold": "2077-06-19",
+        },
+        {
+            "price_sold": 3,
+        },
+        {
+            "autoteka_link": 1234,
+        },
+        {
+            "notes": 123465,
+        },
+        {
+            "avito_link": 1236572,
+        },
+        {
+            "autoru_link": 135785,
+        },
+    ],
+)
+async def test_cars_update_car_invalid_data(
+    client, get_access_token, mock_car, mock_car_update, invalid_fields
+):
+    token = await get_access_token()
+    car = await create_mock_car(client, token, mock_car)
+    car_uid = car["uid"]
+
+    response = await client.patch(
+        f"/api/v1/cars/{car_uid}",
+        json={**mock_car_update, **invalid_fields},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from datetime import datetime, date
 import uuid
 from enum import Enum
@@ -49,9 +49,9 @@ class CarCreateResponse(BaseModel):
 
 class CarUpdateSchema(BaseModel):
     price_purchased: int | None = Field(gt=50000)
-    date_listed: date | None = None
+    date_listed: date = Field(default=None, le=date.today())
     price_listed: int | None = Field(gt=50000)
-    date_sold: date | None = None
+    date_sold: date = Field(default=None, le=date.today())
     price_sold: int | None = Field(gt=50000)
     autoteka_link: str | None = None
     notes: str | None = Field(max_length=1000)
