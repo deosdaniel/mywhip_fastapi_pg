@@ -1,3 +1,5 @@
+from http.client import responses
+
 import pytest
 from src.users.schemas import UserRole
 from tests.cars.cars_helpers import create_mock_car, create_five_mock_cars
@@ -77,6 +79,23 @@ def mock_car():
         "date_purchased": "2025-06-18",
         "price_purchased": 250000,
         "status": "FRESH",
+    }
+
+
+@pytest.fixture()
+def mock_car_update():
+    return {
+        "price_purchased": 333555,
+        "date_listed": "2025-06-19",
+        "price_listed": 666444,
+        "date_sold": "2025-06-19",
+        "price_sold": 1234567,
+        "autoteka_link": "asd",
+        "notes": "123",
+        "avito_link": "string",
+        "autoru_link": "string",
+        "drom_link": "string",
+        "status": "REPAIRING",
     }
 
 
@@ -387,6 +406,31 @@ async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
 
 
 @pytest.mark.asyncio
+async def test_cars_get_car_by_uid_no_auth(client, get_access_token, mock_car):
+    token = await get_access_token()
+    mock_car = await create_mock_car(client, token, mock_car)
+
+    response = await client.get(
+        f"/api/v1/cars/{mock_car['uid']}",
+    )
+    assert response.status_code == 401
+    assert "Not authenticated" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_cars_get_car_by_uid_wrong_car_uid(client, get_access_token, mock_car):
+    token = await get_access_token()
+    await create_mock_car(client, token, mock_car)
+
+    response = await client.get(
+        f"/api/v1/cars/a8df7978-84b6-43eb-87d1-7f9e4ea24b51",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+    assert "Cars-uid does not exist" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_cars_get_car_by_uid_deny_access_to_strangers_car(
     client, mock_car, mock_user_factory, override_current_user
 ):
@@ -418,3 +462,18 @@ async def test_cars_get_car_by_uid_admin_access_to_strangers_car(
     response = await client.get(f"/api/v1/cars/{car_uid}")
     assert response.status_code == 200
     assert response.json()["result"]["uid"] == car_uid
+
+
+@pytest.mark.asyncio
+async def test_cars_update_car_success(
+    client, get_access_token, mock_car, mock_car_update
+):
+    token = await get_access_token()
+    car = await create_mock_car(client, token, mock_car)
+
+    response = await client.patch(
+        f"/api/v1/cars/{car["uid"]}",
+        json=mock_car_update,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
