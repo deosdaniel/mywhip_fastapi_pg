@@ -1,8 +1,72 @@
 import pytest
 
+from src.cars.models import Cars
 
-mock_car_list = [
-    {
+
+@pytest.fixture
+def mock_cars():
+    return [
+        {
+            "make": "Toyota",
+            "model": "Corolla",
+            "year": 2005,
+            "vin": "JZX10012345678901",
+            "pts_num": "55ХВ123123",
+            "sts_num": "9955123123",
+            "date_purchased": "2025-06-18",
+            "price_purchased": 250000,
+            "status": "FRESH",
+        },
+        {
+            "make": "Honda",
+            "model": "Accord",
+            "year": 2002,
+            "vin": "JZX10012345678902",
+            "pts_num": "55ХВ123123",
+            "sts_num": "9955123123",
+            "date_purchased": "2025-06-17",
+            "price_purchased": 750000,
+            "status": "FRESH",
+        },
+        {
+            "make": "Mitsubishi",
+            "model": "Lancer",
+            "year": 2007,
+            "vin": "JZX10012345678903",
+            "pts_num": "55ХВ123123",
+            "sts_num": "9955123123",
+            "date_purchased": "2025-06-14",
+            "price_purchased": 420000,
+            "status": "FRESH",
+        },
+        {
+            "make": "Nissan",
+            "model": "Juke",
+            "year": 2017,
+            "vin": "JZX10012345678923",
+            "pts_num": "55ХВ123123",
+            "sts_num": "9955123123",
+            "date_purchased": "2025-06-11",
+            "price_purchased": 67200,
+            "status": "FRESH",
+        },
+        {
+            "make": "Opel",
+            "model": "Astra",
+            "year": 2012,
+            "vin": "JZX10012348678923",
+            "pts_num": "55ХВ123123",
+            "sts_num": "9955123123",
+            "date_purchased": "2025-06-11",
+            "price_purchased": 524000,
+            "status": "FRESH",
+        },
+    ]
+
+
+@pytest.fixture()
+def mock_car():
+    return {
         "make": "Toyota",
         "model": "Corolla",
         "year": 2005,
@@ -12,58 +76,11 @@ mock_car_list = [
         "date_purchased": "2025-06-18",
         "price_purchased": 250000,
         "status": "FRESH",
-    },
-    {
-        "make": "Honda",
-        "model": "Accord",
-        "year": 2002,
-        "vin": "JZX10012345678902",
-        "pts_num": "55ХВ123123",
-        "sts_num": "9955123123",
-        "date_purchased": "2025-06-17",
-        "price_purchased": 750000,
-        "status": "FRESH",
-    },
-    {
-        "make": "Mitsubishi",
-        "model": "Lancer",
-        "year": 2007,
-        "vin": "JZX10012345678903",
-        "pts_num": "55ХВ123123",
-        "sts_num": "9955123123",
-        "date_purchased": "2025-06-14",
-        "price_purchased": 420000,
-        "status": "FRESH",
-    },
-    {
-        "make": "Nissan",
-        "model": "Juke",
-        "year": 2017,
-        "vin": "JZX10012345678923",
-        "pts_num": "55ХВ123123",
-        "sts_num": "9955123123",
-        "date_purchased": "2025-06-11",
-        "price_purchased": 67200,
-        "status": "FRESH",
-    },
-    {
-        "make": "Opel",
-        "model": "Astra",
-        "year": 2012,
-        "vin": "JZX10012348678923",
-        "pts_num": "55ХВ123123",
-        "sts_num": "9955123123",
-        "date_purchased": "2025-06-11",
-        "price_purchased": 524000,
-        "status": "FRESH",
-    },
-]
-
-mock_car = mock_car_list[0]
+    }
 
 
 @pytest.mark.asyncio
-async def test_cars_create_car_success(client, get_access_token):
+async def test_cars_create_car_success(client, mock_car, get_access_token):
     token = await get_access_token()
 
     response = await client.post(
@@ -78,7 +95,7 @@ async def test_cars_create_car_success(client, get_access_token):
 
 @pytest.mark.parametrize("make, expected_status", [("TOTOYA", 404), ("", 422)])
 async def test_cars_create_car_invalid_make(
-    client, get_access_token, make, expected_status
+    client, get_access_token, mock_car, make, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -91,7 +108,7 @@ async def test_cars_create_car_invalid_make(
 
 @pytest.mark.parametrize("model, expected_status", [("Crola", 404), ("", 422)])
 async def test_cars_create_car_invalid_model(
-    client, get_access_token, model, expected_status
+    client, get_access_token, mock_car, model, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -103,7 +120,11 @@ async def test_cars_create_car_invalid_model(
 
 
 @pytest.mark.asyncio
-async def test_cars_create_car_unreal_make_model(client, get_access_token):
+async def test_cars_create_car_unreal_make_model(
+    client,
+    get_access_token,
+    mock_car,
+):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
@@ -118,7 +139,7 @@ async def test_cars_create_car_unreal_make_model(client, get_access_token):
     "year, expected_status", [("1950", 422), ("2077", 422), ("", 422)]
 )
 async def test_cars_create_car_invalid_year(
-    client, get_access_token, year, expected_status
+    client, get_access_token, mock_car, year, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -139,7 +160,7 @@ async def test_cars_create_car_invalid_year(
     ],
 )
 async def test_cars_create_car_invalid_vin(
-    client, get_access_token, vin, expected_status
+    client, get_access_token, mock_car, vin, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -160,7 +181,7 @@ async def test_cars_create_car_invalid_vin(
     ],
 )
 async def test_cars_create_car_invalid_pts(
-    client, get_access_token, pts_num, expected_status
+    client, get_access_token, mock_car, pts_num, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -181,7 +202,7 @@ async def test_cars_create_car_invalid_pts(
     ],
 )
 async def test_cars_create_car_invalid_sts(
-    client, get_access_token, sts_num, expected_status
+    client, get_access_token, mock_car, sts_num, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -203,7 +224,7 @@ async def test_cars_create_car_invalid_sts(
     ],
 )
 async def test_cars_create_car_invalid_date_purchased(
-    client, get_access_token, date_purchased, expected_status
+    client, get_access_token, mock_car, date_purchased, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -222,7 +243,7 @@ async def test_cars_create_car_invalid_date_purchased(
     ],
 )
 async def test_cars_create_car_invalid_price_purchased(
-    client, get_access_token, price_purchased, expected_status
+    client, get_access_token, mock_car, price_purchased, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
@@ -241,7 +262,7 @@ async def test_cars_create_car_invalid_price_purchased(
     ],
 )
 async def test_cars_create_car_invalid_status(
-    client, get_access_token, status, expected_status
+    client, get_access_token, mock_car, status, expected_status
 ):
     token = await get_access_token()
     response_invalid = await client.post(
@@ -253,7 +274,11 @@ async def test_cars_create_car_invalid_status(
 
 
 @pytest.mark.asyncio
-async def test_cars_create_car_same_vin_conflict(client, get_access_token):
+async def test_cars_create_car_same_vin_conflict(
+    client,
+    get_access_token,
+    mock_car,
+):
     token = await get_access_token()
     prep_response = await client.post(
         "api/v1/cars/",
@@ -271,7 +296,11 @@ async def test_cars_create_car_same_vin_conflict(client, get_access_token):
 
 
 @pytest.mark.asyncio
-async def test_cars_create_car_same_vin_sold(client, get_access_token):
+async def test_cars_create_car_same_vin_sold(
+    client,
+    get_access_token,
+    mock_car,
+):
     token = await get_access_token()
     prep_response = await client.post(
         "api/v1/cars/",
@@ -299,10 +328,10 @@ async def test_cars_create_car_same_vin_sold(client, get_access_token):
     ],
 )
 async def test_cars_get_my_cars_paginated(
-    client, get_access_token, query, expected_status, expected_length
+    client, get_access_token, mock_cars, query, expected_status, expected_length
 ):
     token = await get_access_token()
-    for car in mock_car_list:
+    for car in mock_cars:
         response = await client.post(
             "/api/v1/cars/",
             json=car,
@@ -329,10 +358,10 @@ async def test_cars_get_my_cars_paginated(
     ],
 )
 async def test_cars_get_my_cars_sorted(
-    client, get_access_token, sort_by, order, expected_value
+    client, get_access_token, mock_cars, sort_by, order, expected_value
 ):
     token = await get_access_token()
-    for car in mock_car_list:
+    for car in mock_cars:
         response = await client.post(
             "/api/v1/cars/",
             json=car,
