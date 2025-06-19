@@ -63,7 +63,7 @@ class CarUpdateSchema(BaseModel):
 
 class CarSchema(BaseModel):
     uid: uuid.UUID
-    owner_uid: uuid.UUID | None = None
+    owner_uid: uuid.UUID
     make: str
     model: str
     year: int

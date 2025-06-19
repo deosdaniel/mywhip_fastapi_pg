@@ -386,10 +386,30 @@ async def test_cars_get_my_cars_sorted(
 @pytest.mark.asyncio
 async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
     token = await get_access_token()
-    created_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car)
 
     response = await client.get(
-        f"/api/v1/cars/{created_car["uid"]}",
+        f"/api/v1/cars/{mock_car["uid"]}",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
+    data = response.json()["result"]
+    assert data["uid"] == mock_car["uid"]
+
+
+@pytest.mark.asyncio
+async def test_cannot_access_someone_else_car(client, get_access_token, mock_car):
+    # 1. Пользователь A создаёт авто
+    token_a = await get_access_token(email="user_a@example.com")
+    created_car = await create_mock_car(client, token_a, mock_car)
+    car_uid = created_car["uid"]
+
+    # 2. Пользователь B пытается получить авто
+    token_b = await get_access_token(email="user_b@example.com")
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}",
+        headers={"Authorization": f"Bearer {token_b}"},
+    )
+
+    # 3. Проверка: доступ запрещён
+    assert response.status_code in (403, 404)

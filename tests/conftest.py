@@ -66,7 +66,7 @@ async def client(test_session):
 def create_user(
     client,
 ):  # для создания реального пользователя с токеном через /signup
-    async def _create(username, email, password="securepassword"):
+    async def _create(username: str, email: str, password="securepassword"):
         response = await client.post(
             "/api/v1/users/signup",
             json={
@@ -88,7 +88,8 @@ def get_access_token(
     client, create_user
 ):  # Создать пользователя функцией выше и залогиниться
     async def _get(email="authuser@example.com", password="securepassword"):
-        await create_user("authuser", email, password)
+        username = email.split("@")[0]
+        await create_user(username, email, password)
         response = await client.post(
             "/api/v1/auth/login",
             data={"username": email, "password": password},
