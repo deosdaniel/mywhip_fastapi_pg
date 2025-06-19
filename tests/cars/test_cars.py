@@ -530,3 +530,77 @@ async def test_cars_update_car_invalid_data(
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "role, expected_status",
+    [
+        (UserRole.ADMIN, 200),
+        (UserRole.USER, 403),
+    ],
+)
+async def test_cars_update_car_stranger_car(
+    client,
+    mock_car,
+    mock_user_factory,
+    override_current_user,
+    mock_car_update,
+    role,
+    expected_status,
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.patch(f"/api/v1/cars/{car_uid}", json=mock_car_update)
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_cars_delete_car_success(client, get_access_token, mock_car):
+    token = await get_access_token()
+    car = await create_mock_car(client, token, mock_car)
+    response = await client.delete(
+        f"/api/v1/cars/{car['uid']}", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_cars_delete_car_unauthorized(client, mock_car, get_access_token):
+    token = await get_access_token()
+    car = await create_mock_car(client, token, mock_car)
+    response = await client.delete(f"/api/v1/cars/{car['uid']}")
+
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "role, expected_status",
+    [
+        (UserRole.ADMIN, 204),
+        (UserRole.USER, 403),
+    ],
+)
+async def test_cars_delete_car_stranger_car(
+    client,
+    mock_car,
+    mock_user_factory,
+    override_current_user,
+    role,
+    expected_status,
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.delete(f"/api/v1/cars/{car_uid}")
+    assert response.status_code == expected_status
