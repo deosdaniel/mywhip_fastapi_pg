@@ -24,13 +24,13 @@ class BaseRepository:
         await self.session.commit()
         return entity
 
-    async def get_by_uid(self, table: SQLModel, uid: str) -> SQLModel:
+    async def get_by_uid(self, table: SQLModel, uid: UUID) -> SQLModel:
         fixed_uid = UUID(uid)
         result = await self.session.exec(select(table).where(table.uid == fixed_uid))
         return result.one_or_none()
 
     async def update_by_uid(
-        self, table: SQLModel, uid: str, update_dict: dict
+        self, table: SQLModel, uid: UUID, update_dict: dict
     ) -> Optional[SQLModel]:
         updatable = await self.get_by_uid(table, uid)
         if not updatable:
@@ -43,7 +43,7 @@ class BaseRepository:
         await self.session.refresh(updatable)
         return updatable
 
-    async def delete_by_uid(self, table: SQLModel, uid: str) -> SQLModel:
+    async def delete_by_uid(self, table: SQLModel, uid: UUID) -> SQLModel:
         deletable = await self.get_by_uid(table, uid)
         if not deletable:
             return False
@@ -87,7 +87,7 @@ class BaseService(Generic[R]):
     def __init__(self, repository: R):
         self.repository: R = repository
 
-    async def get_by_uid(self, table: SQLModel, uid: str) -> SQLModel:
+    async def get_by_uid(self, table: SQLModel, uid: UUID) -> SQLModel:
         result = await self.repository.get_by_uid(table, uid)
         if result:
             return result
@@ -95,7 +95,7 @@ class BaseService(Generic[R]):
             raise EntityNotFoundException(f"{table.__name__}-uid")
 
     async def update_by_uid(
-        self, table: SQLModel, uid: str, update_dict: BaseModel
+        self, table: SQLModel, uid: UUID, update_dict: BaseModel
     ) -> SQLModel:
         update_dict = update_dict.model_dump(exclude_unset=True)
         if not update_dict:

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
@@ -11,6 +11,10 @@ from .schemas import CarStatusChoices
 
 if TYPE_CHECKING:
     from ..users.models import Users
+
+from ..config import IS_TEST_ENV
+
+UUIDColumn = String if IS_TEST_ENV else pg.UUID
 
 
 class Cars(SQLModel, table=True):
@@ -76,7 +80,7 @@ class Expenses(SQLModel, table=True):
     )
     car_uid: UUID = Field(
         sa_column=Column(
-            pg.UUID,
+            UUIDColumn,
             ForeignKey("cars.uid", ondelete="CASCADE"),
             nullable=False,
             index=True,

@@ -3,11 +3,12 @@ import pytest
 from sqlmodel import select
 from src.db.core import get_session
 from src.directories.models import MakesDirectory, ModelsDirectory
+from tests.conftest import TestSession
 
 
 @pytest.mark.asyncio
 async def test_directories_loaded(test_session):
-    async for session in get_session():
+    async with TestSession() as session:
         makes = await session.exec(select(MakesDirectory))
         makes = makes.all()
         assert makes, "Таблица makesdir пустая"
