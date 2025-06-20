@@ -3,7 +3,11 @@ from uuid import UUID, uuid4
 import pytest
 
 from src.users.schemas import UserRole
-from tests.cars.cars_helpers import create_mock_car, create_mock_expense
+from tests.cars.cars_helpers import (
+    create_mock_car,
+    create_mock_expense,
+    create_mock_car_w_exp,
+)
 from tests.cars.test_cars import mock_car
 
 exp_dict = {"name": "Some Expense", "exp_summ": 5000}
@@ -65,6 +69,7 @@ async def test_expenses_create_expense_nonexistent_car(
         ("ExpenseName", 0, 422),
         ("ExpenseName", -1000, 422),
         ("ExpenseName", "randomstring", 422),
+        ("", "", 422),
     ],
 )
 async def test_expenses_create_expense_invalid_data(
@@ -122,8 +127,7 @@ async def test_expenses_get_single_exp_invalid_exp(client, get_access_token, moc
     mock_car = await create_mock_car(client, token, mock_car)
     car_uid = mock_car["uid"]
 
-    mock_exp = await create_mock_expense(client, car_uid, token)
-    exp_uid = mock_exp["uid"]
+    await create_mock_expense(client, car_uid, token)
 
     response = await client.get(
         f"/api/v1/cars/{car_uid}/expenses/{uuid4()}",
@@ -153,3 +157,22 @@ async def test_expenses_get_single_exp_strangers_car(
     assert response.status_code == expected_status
     if role == UserRole.USER:
         assert "Access denied" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_expenses_update_single_exp_success(client, get_access_token, mock_car):
+    token = await get_access_token()
+
+    car = await create_mock_car_w_exp(client, token, mock_car)
+    car_uid = car["car_uid"]
+    exp_uid = car["exp_uid"]
+
+    response = await client.patch(
+        f"/api/v1/cars/{car_uid}/expenses/{exp_uid}",
+        json={"name": "Updated Expense", "exp_summ": 2050},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()["result"]
+    assert data["name"] == "Updated Expense"
+    assert data["exp_summ"] == 2050

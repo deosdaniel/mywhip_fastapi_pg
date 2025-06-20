@@ -32,9 +32,12 @@ async def create_mock_car_w_exp(client, token: str, car_data: dict) -> dict:
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 201
-    response = await client.get(f"/api/v1/cars/{car_uid}")
+    exp_uid = response.json()["result"]["uid"]
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}", headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 200
-    return response.json()["result"]
+    return {"car_uid": car_uid, "exp_uid": exp_uid}
 
 
 async def create_five_mock_cars(client, token: str, cars_data: dict) -> dict:
