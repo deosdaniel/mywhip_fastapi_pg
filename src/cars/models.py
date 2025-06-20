@@ -13,14 +13,15 @@ if TYPE_CHECKING:
     from ..users.models import Users
 
 from ..config import IS_TEST_ENV
+from src.utils.db_types import UUIDString
 
-UUIDColumn = String if IS_TEST_ENV else pg.UUID
+UUIDColumn = UUIDString if IS_TEST_ENV else pg.UUID
 
 
 class Cars(SQLModel, table=True):
     __tablename__ = "cars"
     uid: UUID = Field(
-        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid4)
+        sa_column=Column(UUIDColumn, nullable=False, primary_key=True, default=uuid4)
     )
     status: str = Field(
         sa_column=Column(ENUM(CarStatusChoices), default="FRESH", nullable=False)
@@ -51,7 +52,7 @@ class Cars(SQLModel, table=True):
     )
     owner_uid: UUID = Field(
         sa_column=Column(
-            pg.UUID,
+            UUIDColumn,
             ForeignKey("users.uid", ondelete="CASCADE"),
             nullable=True,  # Temporary nullable for tests
             index=True,
@@ -71,7 +72,7 @@ class Cars(SQLModel, table=True):
 class Expenses(SQLModel, table=True):
     __tablename__ = "expenses"
     uid: UUID = Field(
-        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid4)
+        sa_column=Column(UUIDColumn, nullable=False, primary_key=True, default=uuid4)
     )
     name: str
     exp_summ: int
