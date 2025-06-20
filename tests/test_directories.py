@@ -7,7 +7,7 @@ from tests.conftest import TestSession
 
 
 @pytest.mark.asyncio
-async def test_directories_loaded(test_session):
+async def test_directories_loaded():
     async with TestSession() as session:
         makes = await session.exec(select(MakesDirectory))
         makes = makes.all()
