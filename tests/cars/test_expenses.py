@@ -82,7 +82,7 @@ async def test_expenses_create_expense_invalid_data(
 
 
 @pytest.mark.asyncio
-async def test_expenses_get_by_uid(client, get_access_token, mock_car):
+async def test_expenses_get_single_exp_success(client, get_access_token, mock_car):
     token = await get_access_token()
 
     mock_car = await create_mock_car(client, token, mock_car)
@@ -96,3 +96,60 @@ async def test_expenses_get_by_uid(client, get_access_token, mock_car):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_expenses_get_single_exp_invalid_car(client, get_access_token, mock_car):
+    token = await get_access_token()
+
+    mock_car = await create_mock_car(client, token, mock_car)
+    car_uid = mock_car["uid"]
+
+    mock_exp = await create_mock_expense(client, car_uid, token)
+    exp_uid = mock_exp["uid"]
+
+    response = await client.get(
+        f"/api/v1/cars/{uuid4()}/expenses/{exp_uid}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_expenses_get_single_exp_invalid_exp(client, get_access_token, mock_car):
+    token = await get_access_token()
+
+    mock_car = await create_mock_car(client, token, mock_car)
+    car_uid = mock_car["uid"]
+
+    mock_exp = await create_mock_expense(client, car_uid, token)
+    exp_uid = mock_exp["uid"]
+
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}/expenses/{uuid4()}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "role, expected_status", [(UserRole.ADMIN, 200), (UserRole.USER, 403)]
+)
+async def test_expenses_get_single_exp_strangers_car(
+    client, mock_car, mock_user_factory, override_current_user, role, expected_status
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+    response = await client.post(f"/api/v1/cars/{car_uid}", json=exp_dict)
+    assert response.status_code == 201
+    exp_uid = response.json()["result"]["uid"]
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.get(f"/api/v1/cars/{car_uid}/expenses/{exp_uid}")
+    assert response.status_code == expected_status
+    if role == UserRole.USER:
+        assert "Access denied" in response.json()["detail"]
