@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import func, desc, asc
@@ -25,7 +26,7 @@ class CarsRepository(BaseRepository):
         self,
         offset_page: int,
         limit: int,
-        owner_uid: str,
+        owner_uid: UUID,
         sort_by: Optional[str] = None,
         order: str = "desc",
     ):
@@ -48,7 +49,7 @@ class CarsRepository(BaseRepository):
 
         return await self.session.exec(statement)
 
-    async def count_my_cars(self, owner_uid: str):
+    async def count_my_cars(self, owner_uid: UUID):
         result = await self.session.exec(
             select(func.count(Cars.uid)).where(Cars.owner_uid == owner_uid)
         )
@@ -109,14 +110,15 @@ class CarsRepository(BaseRepository):
 
 
 class ExpensesRepository(BaseRepository):
-    async def create_expense(self, car_uid: str, exp_data_dict: dict) -> Expenses:
+    async def create_expense(self, car_uid: UUID, exp_data_dict: dict) -> Expenses:
+
         new_exp = Expenses(**exp_data_dict)
         new_exp.car_uid = car_uid
         self.session.add(new_exp)
         await self.session.commit()
         return new_exp
 
-    async def get_single_exp(self, car_uid: str, expense_uid: str) -> Expenses:
+    async def get_single_exp(self, car_uid: UUID, expense_uid: str) -> Expenses:
         statement = (
             select(Expenses)
             .where(Expenses.car_uid == car_uid)
@@ -126,7 +128,7 @@ class ExpensesRepository(BaseRepository):
         return result.one_or_none()
 
     async def get_exp_by_car_uid(
-        self, car_uid: str, offset_page: int, limit: int
+        self, car_uid: UUID, offset_page: int, limit: int
     ) -> list[Expenses]:
         statement = (
             select(Expenses)
@@ -137,7 +139,7 @@ class ExpensesRepository(BaseRepository):
         )
         return await self.session.exec(statement)
 
-    async def count_exp_by_car_uid(self, car_uid: str) -> int:
+    async def count_exp_by_car_uid(self, car_uid: UUID) -> int:
         count_statement = (
             select(func.count(1))
             .select_from(Expenses)
@@ -147,7 +149,7 @@ class ExpensesRepository(BaseRepository):
         return result.one()
 
     async def update_single_exp(
-        self, car_uid: str, expense_uid: str, update_data_dict: dict
+        self, car_uid: UUID, expense_uid: UUID, update_data_dict: dict
     ) -> Expenses:
         exp = await self.get_single_exp(car_uid, expense_uid)
         await self.session.exec(
@@ -160,7 +162,7 @@ class ExpensesRepository(BaseRepository):
         await self.session.refresh(exp)
         return exp
 
-    async def delete_single_exp(self, car_uid: str, expense_uid: str) -> bool:
+    async def delete_single_exp(self, car_uid: UUID, expense_uid: UUID) -> bool:
         exp_to_delete = await self.get_single_exp(car_uid, expense_uid)
         if exp_to_delete:
             await self.session.delete(exp_to_delete)
@@ -169,7 +171,7 @@ class ExpensesRepository(BaseRepository):
         else:
             return False
 
-    async def delete_exp_by_car_uid(self, car_uid: str) -> bool:
+    async def delete_exp_by_car_uid(self, car_uid: UUID) -> bool:
         result = await self.session.exec(
             select(Expenses).where(Expenses.car_uid == car_uid)
         )

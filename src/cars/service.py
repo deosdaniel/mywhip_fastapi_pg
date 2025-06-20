@@ -89,12 +89,12 @@ class CarService(BaseService[CarsRepository]):
         return car
 
     async def update_car(
-        self, car_uid: str, car_data: CarUpdateSchema, current_user: UserSchema
+        self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema
     ) -> Cars:
         await self.get_car_with_owner_check(car_uid, current_user)
         return await self.update_by_uid(Cars, car_uid, car_data)
 
-    async def delete_car(self, car_uid: str, current_user: UserSchema) -> None:
+    async def delete_car(self, car_uid: UUID, current_user: UserSchema) -> None:
         await self.get_car_with_owner_check(car_uid, current_user)
         return await self.delete_by_uid(Cars, car_uid)
 
@@ -128,7 +128,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Create an expense
     async def create_expense(
-        self, car_uid: str, exp_data: ExpensesCreateSchema, current_user: UserSchema
+        self, car_uid: UUID, exp_data: ExpensesCreateSchema, current_user: UserSchema
     ) -> Expenses:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp_data_dict = exp_data.model_dump()
@@ -137,7 +137,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Get single expense
     async def get_single_expense(
-        self, car_uid: str, exp_uid: str, current_user: UserSchema
+        self, car_uid: UUID, exp_uid: str, current_user: UserSchema
     ) -> Expenses:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
@@ -148,8 +148,8 @@ class ExpensesService(BaseService[ExpensesRepository]):
     # Update single expense
     async def update_single_expense(
         self,
-        car_uid: str,
-        exp_uid: str,
+        car_uid: UUID,
+        exp_uid: UUID,
         exp_update_data: ExpensesCreateSchema,
         current_user: UserSchema,
     ) -> Expenses:
@@ -163,8 +163,8 @@ class ExpensesService(BaseService[ExpensesRepository]):
     # Delete single expense
     async def delete_single_expense(
         self,
-        car_uid: str,
-        exp_uid: str,
+        car_uid: UUID,
+        exp_uid: UUID,
         current_user: UserSchema,
     ):
         await self.get_single_expense(car_uid, exp_uid, current_user)
@@ -177,7 +177,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
         self,
-        car_uid: str,
+        car_uid: UUID,
         current_user: UserSchema,
         page: int = 1,
         limit: int = 10,
@@ -201,7 +201,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Delete all expenses for a single car
     async def delete_all_expenses_by_car_uid(
-        self, car_uid: str, current_user: UserSchema
+        self, car_uid: UUID, current_user: UserSchema
     ) -> None:
         await self.get_expenses_by_car_uid(car_uid, current_user)
         await self.repository.delete_exp_by_car_uid(car_uid)
