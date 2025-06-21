@@ -1,14 +1,14 @@
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
 from src.users.schemas import UserRole
-from tests.cars.cars_helpers import (
+from tests.api.cars.cars_helpers import (
     create_mock_car,
     create_mock_expense,
     create_mock_car_w_exp,
 )
-from tests.cars.test_cars import mock_car_single
+from tests.api.cars.test_cars import mock_car_single
 
 
 @pytest.fixture

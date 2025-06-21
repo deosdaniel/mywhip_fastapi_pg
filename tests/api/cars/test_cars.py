@@ -1,6 +1,6 @@
 import pytest
 from src.users.schemas import UserRole
-from tests.cars.cars_helpers import create_mock_car, create_five_mock_cars
+from tests.api.cars.cars_helpers import create_mock_car, create_five_mock_cars
 from tests.conftest import mock_user_factory, override_current_user
 
 

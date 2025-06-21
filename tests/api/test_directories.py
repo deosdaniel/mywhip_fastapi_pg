@@ -1,7 +1,6 @@
 import uuid
 import pytest
 from sqlmodel import select
-from src.db.core import get_session
 from src.directories.models import MakesDirectory, ModelsDirectory
 from tests.conftest import TestSession
 

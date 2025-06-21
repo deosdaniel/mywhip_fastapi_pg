@@ -1,5 +1,7 @@
 import os
 import uuid
+from pathlib import Path
+
 import pytest
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -13,6 +15,8 @@ from src.db.core import get_session
 from src.users.schemas import UserSchema, UserRole
 from src.auth.dependencies import get_current_user
 
+PROJECT_ROOT = Path(__file__).parent.parent
+DATASET_PATH = PROJECT_ROOT / "src" / "directories" / "make_model_dataset.csv"
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine_test = create_async_engine(DATABASE_URL, echo=False)
@@ -130,8 +134,7 @@ def override_current_user():
 # справочники
 @pytest.fixture(scope="session", autouse=True)
 async def load_directories(prepare_database):
-    BASE_DIR = os.path.dirname(__file__)
-    csv_path = os.path.join(BASE_DIR, "../src/directories/make_model_dataset.csv")
+    csv_path = DATASET_PATH
     df = pd.read_csv(csv_path)
     df_makes = (
         df.drop("model", axis=1).drop_duplicates(subset="make").reset_index(drop=True)
