@@ -2,7 +2,7 @@ import {useState, useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 import api from '../services/api.js';
 
-export default function EditProfile() {
+export default function ProfileEdit() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: '',
@@ -42,7 +42,7 @@ export default function EditProfile() {
     }, []);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setFormData(prev => ({...prev, [name]: value}));
     };
 
@@ -94,14 +94,16 @@ export default function EditProfile() {
         return (
             <div className="flex flex-col items-center">
                 <div className="text-red-500 mb-8">{error}</div>
-                <button onClick={() => window.location.reload()} className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer">
+                <button onClick={() => window.location.reload()}
+                        className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer">
                     Попробовать снова
                 </button>
             </div>
         );
     }
     return (
-        <div className='flex flex-col items-center w-full max-w-md bg-[#222] rounded-xl shadow-md py-8 px-8 mx-auto mt-10'>
+        <div
+            className='flex flex-col items-center w-full max-w-md bg-[#222] rounded-xl shadow-md py-8 px-8 mx-auto mt-10'>
             <h2 className='text-[28px] text-white font-bold mb-6 text-center'>
                 Изменить данные профиля
             </h2>

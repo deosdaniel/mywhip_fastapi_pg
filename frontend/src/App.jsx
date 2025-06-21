@@ -1,10 +1,14 @@
-import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
+import {BrowserRouter as Router, Routes, Route, Navigate} from "react-router-dom";
 import Login from './pages/Login';
-import Me from "./pages/Me.jsx";
-import EditProfile from "./pages/EditProfile.jsx";
+import Me from "./pages/Profile.jsx";
+import ProfileEdit from "./pages/ProfileEdit.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Signup from "./pages/Signup";
 import Home from "./pages/Home.jsx";
+import AppLayout from "./pages/AppLayout.jsx";
+import CarsList from "./pages/CarList.jsx";
+import CarCard from "./components/CarCard.jsx";
+import Profile from "./pages/Profile.jsx";
 
 function App() {
     return (
@@ -14,9 +18,14 @@ function App() {
                     <Route path="/" element={<Home/>}/>
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/signup" element={<Signup/>}/>
-                    <Route path="/me" element={<ProtectedRoute><Me/></ProtectedRoute>}/>
-                    <Route path="/me/edit" element={<ProtectedRoute><EditProfile/></ProtectedRoute>}/>
 
+                    <Route path="/app" element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>
+                        <Route index element={<Navigate to="cars"/>}/>
+                        <Route path="cars" element={<CarsList/>}/>
+                        <Route path="cars/:id" element={<CarCard/>}/>
+                        <Route path="profile" element={<Profile/>}/>
+                        <Route path="profile/edit" element={<ProfileEdit/>}/>
+                    </Route>
                 </Routes>
             </Router>
         </div>

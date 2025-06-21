@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {login} from "../services/api";
 
@@ -13,11 +13,11 @@ function Login() {
     const [serverError, setServerError] = useState(null);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const {name, value} = e.target;
+        setFormData(prev => ({...prev, [name]: value}));
         // Очищаем ошибку при изменении поля
         if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: "" }));
+            setErrors(prev => ({...prev, [name]: ""}));
         }
     };
 
@@ -52,7 +52,7 @@ function Login() {
             const response = await login(formData.email, formData.password);
             console.log("Успешный вход: ", response);
             localStorage.setItem("token", response.access_token);
-            navigate("/me");
+            navigate("/app");
         } catch (error) {
             console.error("Ошибка входа: ", error);
             setServerError(
