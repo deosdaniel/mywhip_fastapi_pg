@@ -8,56 +8,82 @@ from tests.cars.cars_helpers import (
     create_mock_expense,
     create_mock_car_w_exp,
 )
-from tests.cars.test_cars import mock_car
+from tests.cars.test_cars import mock_car_single
 
-exp_dict = {"name": "Some Expense", "exp_summ": 5000}
+
+@pytest.fixture
+def mock_expense_single():
+    return {"name": "Some Expense", "exp_summ": 5000}
+
+
+@pytest.fixture
+def mock_expenses():
+    return [
+        {"name": "Expense #1", "exp_summ": 1000},
+        {"name": "Expense #2", "exp_summ": 2000},
+        {"name": "Expense #3", "exp_summ": 3000},
+        {"name": "Expense #4", "exp_summ": 4000},
+        {"name": "Expense #5", "exp_summ": 5000},
+    ]
 
 
 @pytest.mark.asyncio
-async def test_expenses_create_expense_success(client, get_access_token, mock_car):
+async def test_expenses_create_expense_success(
+    client, get_access_token, mock_car_single, mock_expense_single
+):
     token = await get_access_token()
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car_single)
     car_uid = mock_car["uid"]
     response = await client.post(
         f"api/v1/cars/{car_uid}",
-        json=exp_dict,
+        json=mock_expense_single,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 201
 
 
 @pytest.mark.asyncio
-async def test_expenses_create_expense_no_auth(client, get_access_token, mock_car):
+async def test_expenses_create_expense_no_auth(
+    client, get_access_token, mock_car_single, mock_expense_single
+):
     token = await get_access_token()
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car_single)
     car_uid = mock_car["uid"]
-    response = await client.post(f"api/v1/cars/{car_uid}", json=exp_dict)
+    response = await client.post(f"api/v1/cars/{car_uid}", json=mock_expense_single)
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_expenses_create_expense_strangers_car(
-    client, mock_car, mock_user_factory, override_current_user
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    mock_expense_single,
 ):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
-    response = await client.post("/api/v1/cars/", json=mock_car)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
     assert response.status_code == 201
     car_uid = response.json()["result"]["uid"]
 
     user_b = mock_user_factory(role=UserRole.USER)
     override_current_user(user_b)
-    response = await client.post(f"api/v1/cars/{car_uid}", json=exp_dict)
+    response = await client.post(f"api/v1/cars/{car_uid}", json=mock_expense_single)
     assert response.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_expenses_create_expense_nonexistent_car(
-    client, mock_car, mock_user_factory, override_current_user
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    mock_expense_single,
 ):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
-    response = await client.post(f"api/v1/cars/{uuid4()}", json=exp_dict)
+    response = await client.post(f"api/v1/cars/{uuid4()}", json=mock_expense_single)
     assert response.status_code == 404
 
 
@@ -73,10 +99,10 @@ async def test_expenses_create_expense_nonexistent_car(
     ],
 )
 async def test_expenses_create_expense_invalid_data(
-    client, get_access_token, mock_car, exp_name, summ, expected_status
+    client, get_access_token, mock_car_single, exp_name, summ, expected_status
 ):
     token = await get_access_token()
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car_single)
     car_uid = mock_car["uid"]
     response = await client.post(
         f"api/v1/cars/{car_uid}",
@@ -87,10 +113,12 @@ async def test_expenses_create_expense_invalid_data(
 
 
 @pytest.mark.asyncio
-async def test_expenses_get_single_exp_success(client, get_access_token, mock_car):
+async def test_expenses_get_single_exp_success(
+    client, get_access_token, mock_car_single
+):
     token = await get_access_token()
 
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car_single)
     car_uid = mock_car["uid"]
 
     mock_exp = await create_mock_expense(client, car_uid, token)
@@ -104,10 +132,12 @@ async def test_expenses_get_single_exp_success(client, get_access_token, mock_ca
 
 
 @pytest.mark.asyncio
-async def test_expenses_get_single_exp_invalid_car(client, get_access_token, mock_car):
+async def test_expenses_get_single_exp_invalid_car(
+    client, get_access_token, mock_car_single
+):
     token = await get_access_token()
 
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car_single)
     car_uid = mock_car["uid"]
 
     mock_exp = await create_mock_expense(client, car_uid, token)
@@ -121,10 +151,12 @@ async def test_expenses_get_single_exp_invalid_car(client, get_access_token, moc
 
 
 @pytest.mark.asyncio
-async def test_expenses_get_single_exp_invalid_exp(client, get_access_token, mock_car):
+async def test_expenses_get_single_exp_invalid_exp(
+    client, get_access_token, mock_car_single
+):
     token = await get_access_token()
 
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car = await create_mock_car(client, token, mock_car_single)
     car_uid = mock_car["uid"]
 
     await create_mock_expense(client, car_uid, token)
@@ -140,14 +172,20 @@ async def test_expenses_get_single_exp_invalid_exp(client, get_access_token, moc
     "role, expected_status", [(UserRole.ADMIN, 200), (UserRole.USER, 403)]
 )
 async def test_expenses_get_single_exp_strangers_car(
-    client, mock_car, mock_user_factory, override_current_user, role, expected_status
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    role,
+    expected_status,
+    mock_expense_single,
 ):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
-    response = await client.post("/api/v1/cars/", json=mock_car)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
     assert response.status_code == 201
     car_uid = response.json()["result"]["uid"]
-    response = await client.post(f"/api/v1/cars/{car_uid}", json=exp_dict)
+    response = await client.post(f"/api/v1/cars/{car_uid}", json=mock_expense_single)
     assert response.status_code == 201
     exp_uid = response.json()["result"]["uid"]
 
@@ -160,10 +198,12 @@ async def test_expenses_get_single_exp_strangers_car(
 
 
 @pytest.mark.asyncio
-async def test_expenses_update_single_exp_success(client, get_access_token, mock_car):
+async def test_expenses_update_single_exp_success(
+    client, get_access_token, mock_car_single
+):
     token = await get_access_token()
 
-    car = await create_mock_car_w_exp(client, token, mock_car)
+    car = await create_mock_car_w_exp(client, token, mock_car_single)
     car_uid = car["car_uid"]
     exp_uid = car["exp_uid"]
 

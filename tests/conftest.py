@@ -113,8 +113,6 @@ def mock_user_factory():  # для подмены в защищенных энд
             last_name="User",
             is_verified=True,
             password_hash="",
-            created_at=None,
-            updated_at=None,
         )
 
     return _create

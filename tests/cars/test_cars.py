@@ -1,10 +1,22 @@
-import copy
-from http.client import responses
-
 import pytest
 from src.users.schemas import UserRole
 from tests.cars.cars_helpers import create_mock_car, create_five_mock_cars
 from tests.conftest import mock_user_factory, override_current_user
+
+
+@pytest.fixture()
+def mock_car_single():
+    return {
+        "make": "Toyota",
+        "model": "Corolla",
+        "year": 2005,
+        "vin": "JZX10012345678901",
+        "pts_num": "55ХВ123123",
+        "sts_num": "9955123123",
+        "date_purchased": "2025-06-18",
+        "price_purchased": 250000,
+        "status": "FRESH",
+    }
 
 
 @pytest.fixture
@@ -69,21 +81,6 @@ def mock_cars():
 
 
 @pytest.fixture()
-def mock_car():
-    return {
-        "make": "Toyota",
-        "model": "Corolla",
-        "year": 2005,
-        "vin": "JZX10012345678901",
-        "pts_num": "55ХВ123123",
-        "sts_num": "9955123123",
-        "date_purchased": "2025-06-18",
-        "price_purchased": 250000,
-        "status": "FRESH",
-    }
-
-
-@pytest.fixture()
 def mock_car_update():
     return {
         "price_purchased": 333555,
@@ -101,27 +98,27 @@ def mock_car_update():
 
 
 @pytest.mark.asyncio
-async def test_cars_create_car_success(client, mock_car, get_access_token):
+async def test_cars_create_car_success(client, mock_car_single, get_access_token):
     token = await get_access_token()
 
     response = await client.post(
         "api/v1/cars/",
-        json=mock_car,
+        json=mock_car_single,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["result"]["vin"] == mock_car["vin"]
+    assert data["result"]["vin"] == mock_car_single["vin"]
 
 
 @pytest.mark.parametrize("make, expected_status", [("TOTOYA", 404), ("", 422)])
 async def test_cars_create_car_invalid_make(
-    client, get_access_token, mock_car, make, expected_status
+    client, get_access_token, mock_car_single, make, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "make": make},
+        json={**mock_car_single, "make": make},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -129,12 +126,12 @@ async def test_cars_create_car_invalid_make(
 
 @pytest.mark.parametrize("model, expected_status", [("Crola", 404), ("", 422)])
 async def test_cars_create_car_invalid_model(
-    client, get_access_token, mock_car, model, expected_status
+    client, get_access_token, mock_car_single, model, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "model": model},
+        json={**mock_car_single, "model": model},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -144,12 +141,12 @@ async def test_cars_create_car_invalid_model(
 async def test_cars_create_car_unreal_make_model(
     client,
     get_access_token,
-    mock_car,
+    mock_car_single,
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "make": "Nissan", "model": "Camry"},
+        json={**mock_car_single, "make": "Nissan", "model": "Camry"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 404
@@ -160,12 +157,12 @@ async def test_cars_create_car_unreal_make_model(
     "year, expected_status", [("1950", 422), ("2077", 422), ("", 422)]
 )
 async def test_cars_create_car_invalid_year(
-    client, get_access_token, mock_car, year, expected_status
+    client, get_access_token, mock_car_single, year, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "year": year},
+        json={**mock_car_single, "year": year},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -181,12 +178,12 @@ async def test_cars_create_car_invalid_year(
     ],
 )
 async def test_cars_create_car_invalid_vin(
-    client, get_access_token, mock_car, vin, expected_status
+    client, get_access_token, mock_car_single, vin, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "vin": vin},
+        json={**mock_car_single, "vin": vin},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -202,12 +199,12 @@ async def test_cars_create_car_invalid_vin(
     ],
 )
 async def test_cars_create_car_invalid_pts(
-    client, get_access_token, mock_car, pts_num, expected_status
+    client, get_access_token, mock_car_single, pts_num, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "pts_num": pts_num},
+        json={**mock_car_single, "pts_num": pts_num},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -223,12 +220,12 @@ async def test_cars_create_car_invalid_pts(
     ],
 )
 async def test_cars_create_car_invalid_sts(
-    client, get_access_token, mock_car, sts_num, expected_status
+    client, get_access_token, mock_car_single, sts_num, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "sts_num": sts_num},
+        json={**mock_car_single, "sts_num": sts_num},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -245,12 +242,12 @@ async def test_cars_create_car_invalid_sts(
     ],
 )
 async def test_cars_create_car_invalid_date_purchased(
-    client, get_access_token, mock_car, date_purchased, expected_status
+    client, get_access_token, mock_car_single, date_purchased, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "date_purchased": date_purchased},
+        json={**mock_car_single, "date_purchased": date_purchased},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -264,12 +261,12 @@ async def test_cars_create_car_invalid_date_purchased(
     ],
 )
 async def test_cars_create_car_invalid_price_purchased(
-    client, get_access_token, mock_car, price_purchased, expected_status
+    client, get_access_token, mock_car_single, price_purchased, expected_status
 ):
     token = await get_access_token()
     response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "price_purchased": price_purchased},
+        json={**mock_car_single, "price_purchased": price_purchased},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == expected_status
@@ -283,12 +280,12 @@ async def test_cars_create_car_invalid_price_purchased(
     ],
 )
 async def test_cars_create_car_invalid_status(
-    client, get_access_token, mock_car, status, expected_status
+    client, get_access_token, mock_car_single, status, expected_status
 ):
     token = await get_access_token()
     response_invalid = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "status": status},
+        json={**mock_car_single, "status": status},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response_invalid.status_code == expected_status
@@ -298,19 +295,19 @@ async def test_cars_create_car_invalid_status(
 async def test_cars_create_car_same_vin_conflict(
     client,
     get_access_token,
-    mock_car,
+    mock_car_single,
 ):
     token = await get_access_token()
     prep_response = await client.post(
         "api/v1/cars/",
-        json=mock_car,
+        json=mock_car_single,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert prep_response.status_code == 201
 
     response = await client.post(
         "api/v1/cars/",
-        json=mock_car,
+        json=mock_car_single,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 409
@@ -320,18 +317,18 @@ async def test_cars_create_car_same_vin_conflict(
 async def test_cars_create_car_same_vin_sold(
     client,
     get_access_token,
-    mock_car,
+    mock_car_single,
 ):
     token = await get_access_token()
     prep_response = await client.post(
         "api/v1/cars/",
-        json={**mock_car, "status": "SOLD"},
+        json={**mock_car_single, "status": "SOLD"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert prep_response.status_code == 201
     response = await client.post(
         "api/v1/cars/",
-        json=mock_car,
+        json=mock_car_single,
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 201
@@ -393,35 +390,37 @@ async def test_cars_get_my_cars_sorted(
 
 
 @pytest.mark.asyncio
-async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car):
+async def test_cars_get_car_by_uid_success(client, get_access_token, mock_car_single):
     token = await get_access_token()
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car_single = await create_mock_car(client, token, mock_car_single)
 
     response = await client.get(
-        f"/api/v1/cars/{mock_car["uid"]}",
+        f"/api/v1/cars/{mock_car_single["uid"]}",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
     data = response.json()["result"]
-    assert data["uid"] == mock_car["uid"]
+    assert data["uid"] == mock_car_single["uid"]
 
 
 @pytest.mark.asyncio
-async def test_cars_get_car_by_uid_no_auth(client, get_access_token, mock_car):
+async def test_cars_get_car_by_uid_no_auth(client, get_access_token, mock_car_single):
     token = await get_access_token()
-    mock_car = await create_mock_car(client, token, mock_car)
+    mock_car_single = await create_mock_car(client, token, mock_car_single)
 
     response = await client.get(
-        f"/api/v1/cars/{mock_car['uid']}",
+        f"/api/v1/cars/{mock_car_single['uid']}",
     )
     assert response.status_code == 401
     assert "Not authenticated" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
-async def test_cars_get_car_by_uid_wrong_car_uid(client, get_access_token, mock_car):
+async def test_cars_get_car_by_uid_wrong_car_uid(
+    client, get_access_token, mock_car_single
+):
     token = await get_access_token()
-    await create_mock_car(client, token, mock_car)
+    await create_mock_car(client, token, mock_car_single)
 
     response = await client.get(
         f"/api/v1/cars/a8df7978-84b6-43eb-87d1-7f9e4ea24b51",
@@ -433,11 +432,11 @@ async def test_cars_get_car_by_uid_wrong_car_uid(client, get_access_token, mock_
 
 @pytest.mark.asyncio
 async def test_cars_get_car_by_uid_deny_access_to_strangers_car(
-    client, mock_car, mock_user_factory, override_current_user
+    client, mock_car_single, mock_user_factory, override_current_user
 ):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
-    response = await client.post("/api/v1/cars/", json=mock_car)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
     assert response.status_code == 201
     car_uid = response.json()["result"]["uid"]
 
@@ -450,11 +449,11 @@ async def test_cars_get_car_by_uid_deny_access_to_strangers_car(
 
 @pytest.mark.asyncio
 async def test_cars_get_car_by_uid_admin_access_to_strangers_car(
-    client, mock_car, mock_user_factory, override_current_user
+    client, mock_car_single, mock_user_factory, override_current_user
 ):
     user = mock_user_factory(role=UserRole.USER)
     override_current_user(user)
-    response = await client.post("/api/v1/cars/", json=mock_car)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
     assert response.status_code == 201
     car_uid = response.json()["result"]["uid"]
 
@@ -467,10 +466,10 @@ async def test_cars_get_car_by_uid_admin_access_to_strangers_car(
 
 @pytest.mark.asyncio
 async def test_cars_update_car_success(
-    client, get_access_token, mock_car, mock_car_update
+    client, get_access_token, mock_car_single, mock_car_update
 ):
     token = await get_access_token()
-    car = await create_mock_car(client, token, mock_car)
+    car = await create_mock_car(client, token, mock_car_single)
 
     response = await client.patch(
         f"/api/v1/cars/{car["uid"]}",
@@ -518,10 +517,10 @@ async def test_cars_update_car_success(
     ],
 )
 async def test_cars_update_car_invalid_data(
-    client, get_access_token, mock_car, mock_car_update, invalid_fields
+    client, get_access_token, mock_car_single, mock_car_update, invalid_fields
 ):
     token = await get_access_token()
-    car = await create_mock_car(client, token, mock_car)
+    car = await create_mock_car(client, token, mock_car_single)
     car_uid = car["uid"]
 
     response = await client.patch(
@@ -541,7 +540,7 @@ async def test_cars_update_car_invalid_data(
 )
 async def test_cars_update_car_stranger_car(
     client,
-    mock_car,
+    mock_car_single,
     mock_user_factory,
     override_current_user,
     mock_car_update,
@@ -550,7 +549,7 @@ async def test_cars_update_car_stranger_car(
 ):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
-    response = await client.post("/api/v1/cars/", json=mock_car)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
     assert response.status_code == 201
     car_uid = response.json()["result"]["uid"]
 
@@ -561,9 +560,9 @@ async def test_cars_update_car_stranger_car(
 
 
 @pytest.mark.asyncio
-async def test_cars_delete_car_success(client, get_access_token, mock_car):
+async def test_cars_delete_car_success(client, get_access_token, mock_car_single):
     token = await get_access_token()
-    car = await create_mock_car(client, token, mock_car)
+    car = await create_mock_car(client, token, mock_car_single)
     response = await client.delete(
         f"/api/v1/cars/{car['uid']}", headers={"Authorization": f"Bearer {token}"}
     )
@@ -571,9 +570,9 @@ async def test_cars_delete_car_success(client, get_access_token, mock_car):
 
 
 @pytest.mark.asyncio
-async def test_cars_delete_car_unauthorized(client, mock_car, get_access_token):
+async def test_cars_delete_car_unauthorized(client, mock_car_single, get_access_token):
     token = await get_access_token()
-    car = await create_mock_car(client, token, mock_car)
+    car = await create_mock_car(client, token, mock_car_single)
     response = await client.delete(f"/api/v1/cars/{car['uid']}")
 
     assert response.status_code == 401
@@ -588,7 +587,7 @@ async def test_cars_delete_car_unauthorized(client, mock_car, get_access_token):
 )
 async def test_cars_delete_car_stranger_car(
     client,
-    mock_car,
+    mock_car_single,
     mock_user_factory,
     override_current_user,
     role,
@@ -596,7 +595,7 @@ async def test_cars_delete_car_stranger_car(
 ):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
-    response = await client.post("/api/v1/cars/", json=mock_car)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
     assert response.status_code == 201
     car_uid = response.json()["result"]["uid"]
 
@@ -606,7 +605,6 @@ async def test_cars_delete_car_stranger_car(
     assert response.status_code == expected_status
 
 
-
 @pytest.mark.parametrize(
     "role, expected_status",
     [
@@ -614,8 +612,15 @@ async def test_cars_delete_car_stranger_car(
         (UserRole.USER, 403),
     ],
 )
-async def test_cars_get_all_cars_filtered_access(client, mock_user_factory, role, expected_status, get_access_token, mock_cars,
-                                          override_current_user):
+async def test_cars_get_all_cars_filtered_access(
+    client,
+    mock_user_factory,
+    role,
+    expected_status,
+    get_access_token,
+    mock_cars,
+    override_current_user,
+):
     user_a = mock_user_factory(role=UserRole.USER)
     override_current_user(user_a)
     for car in mock_cars:
@@ -624,24 +629,23 @@ async def test_cars_get_all_cars_filtered_access(client, mock_user_factory, role
 
     user_b = mock_user_factory(role=role)
     override_current_user(user_b)
-    response = await client.post("/api/v1/cars/all", json={
-          "page": 1,
-          "limit": 10,
-          "status": "FRESH",
-          "sort_by": "created_at",
-          "order_desc": "desc"
-        })
+    response = await client.post(
+        "/api/v1/cars/all",
+        json={
+            "page": 1,
+            "limit": 10,
+            "status": "FRESH",
+            "sort_by": "created_at",
+            "order_desc": "desc",
+        },
+    )
     assert response.status_code == expected_status
     if role == UserRole.ADMIN:
         assert len(response.json()["result"]["content"]) == 5
-        response = await client.post("/api/v1/cars/all", json={
-            "page": 2,
-            "limit": 3,
-            "sort_by": "year",
-            "order_desc": "asc"
-        })
+        response = await client.post(
+            "/api/v1/cars/all",
+            json={"page": 2, "limit": 3, "sort_by": "year", "order_desc": "asc"},
+        )
         assert response.status_code == 200
         assert len(response.json()["result"]["content"]) == 2
         assert response.json()["result"]["content"][1]["year"] == 2017
-
-
