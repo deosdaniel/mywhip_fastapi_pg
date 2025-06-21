@@ -19,7 +19,7 @@ export default function Profile() {
                 const response = await api.get('/auth/me');
                 setUserData(response.data);
             } catch (err) {
-                setError(err.response?.data?.detail || "Failed to fetch user data");
+                setError(err.response?.data?.detail || "Не удалось загрузить данные о пользователе");
             } finally {
                 setLoading(false);
             }

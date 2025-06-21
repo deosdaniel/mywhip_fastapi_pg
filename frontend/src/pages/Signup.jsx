@@ -57,9 +57,9 @@ const Signup = () => {
             };
             const response = await api.post('/users/signup', payload);
             console.log('User created successfully', response.data);
+            alert("Поздравляем, вы успешно зарегистрированы!")
             navigate('/login');
         } catch (error) {
-            console.error('Registration error', error);
             setServerError(
                 error.response?.data?.detail ||
                 error.response?.data?.message ||
