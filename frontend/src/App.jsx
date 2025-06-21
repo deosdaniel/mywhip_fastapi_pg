@@ -7,7 +7,7 @@ import Signup from "./pages/Signup";
 import Home from "./pages/Home.jsx";
 import AppLayout from "./pages/AppLayout.jsx";
 import CarsList from "./pages/CarList.jsx";
-import Car from "./components/CarCard.jsx";
+import Car from "./pages/Car.jsx";
 import Profile from "./pages/Profile.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
@@ -23,7 +23,7 @@ function App() {
                     <Route path="/app" element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>
                         <Route index element={<Navigate to="cars"/>}/>
                         <Route path="cars" element={<CarsList/>}/>
-                        <Route path="cars/:id" element={<Car/>}/>
+                        <Route path="cars/:uid" element={<Car/>}/>
                         <Route path="profile" element={<Profile/>}/>
                         <Route path="profile/edit" element={<ProfileEdit/>}/>
                     </Route>

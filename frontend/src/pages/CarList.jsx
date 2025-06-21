@@ -5,7 +5,7 @@ import carImg from "../assets/car_poster.jpg"
 export default function CarsList() {
     const cars = [
         {
-            id: 1,
+            uid: 1,
             make: "Toyota",
             model: "Camry",
             year: 2015,
@@ -13,7 +13,7 @@ export default function CarsList() {
             image: carImg
         },
         {
-            id: 2,
+            uid: 2,
             make: "BMW",
             model: "X5",
             year: 2018,
@@ -31,7 +31,7 @@ export default function CarsList() {
             </div>
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
                 {cars.map((car) => (
-                    <CarCard key={car.id} car={car}/>
+                    <CarCard key={car.uid} car={car}/>
                 ))}
             </div>
         </div>

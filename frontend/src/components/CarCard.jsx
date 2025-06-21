@@ -3,7 +3,7 @@ import {Link} from "react-router-dom";
 export default function CarCard({car}) {
     return (
         <Link
-            to={`/app/cars/${car.id}`}
+            to={`/app/cars/${car.uid}`}
             className="block bg-white rounded-xl shadow hover:shadow-md transition overflow-hidden"
         >
             <img src={car.image} alt={`${car.make} ${car.model}`} className="w-full h-40 object-cover"/>
