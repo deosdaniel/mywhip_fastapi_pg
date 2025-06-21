@@ -28,6 +28,8 @@ export default function NewCarForm() {
 
             });
             console.log("Карточка автомобиля создана");
+            alert("Автомобиль успешно создан!");
+            navigate("/app/cars");
         } catch (error) {
             console.error("Error while creating car", error);
             alert("При попытке создания карточки автомобиля произошла ошибка.");
