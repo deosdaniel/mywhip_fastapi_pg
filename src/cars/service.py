@@ -181,7 +181,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
         current_user: UserSchema,
         page: int = 1,
         limit: int = 10,
-        sort_by: str = "create_at",
+        sort_by: str = "created_at",
         allowed_sort_fields: Optional[list[str]] = None,
         order: str = "desc",
     ) -> list[Expenses]:

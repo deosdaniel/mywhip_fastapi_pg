@@ -357,6 +357,8 @@ async def test_expenses_get_all_exp(
     response = await client.get(f"/api/v1/cars/{car_uid}/expenses")
     assert response.status_code == 200
     assert len(response.json()["result"]["content"]) == 5
+    response = await client.get(f"/api/v1/cars/{uuid4()}/expenses")
+    assert response.status_code == 404
     response = await client.get(
         f"/api/v1/cars/{car_uid}/expenses?page=2&limit=2&sort_by=created_at&order=desc"
     )
@@ -376,3 +378,93 @@ async def test_expenses_get_all_exp(
         f"/api/v1/cars/{car_uid}/expenses?sort_by=exp_summ&order=invalid"
     )
     assert response.status_code == 422
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}/expenses?sort_by=invalid&order=asc"
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "role, expected_status",
+    [
+        (UserRole.ADMIN, 200),
+        (UserRole.USER, 403),
+    ],
+)
+async def test_expenses_get_all_exp_strangers_car(
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    mock_expenses,
+    role,
+    expected_status,
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+    for exp in mock_expenses:
+        response = await client.post(f"/api/v1/cars/{car_uid}", json=exp)
+        assert response.status_code == 201
+
+    response = await client.get(f"/api/v1/cars/{car_uid}/expenses")
+    assert response.status_code == 200
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.get(f"/api/v1/cars/{car_uid}/expenses")
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_expenses_delete_all_exp(
+    client, mock_car_single, mock_user_factory, override_current_user, mock_expenses
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+
+    for exp in mock_expenses:
+        response = await client.post(f"/api/v1/cars/{car_uid}", json=exp)
+        assert response.status_code == 201
+    response = await client.delete(f"/api/v1/cars/{uuid4()}/expenses")
+    assert response.status_code == 404
+    response = await client.delete(f"/api/v1/cars/{car_uid}/expenses")
+    assert response.status_code == 204
+    response = await client.delete(f"/api/v1/cars/{car_uid}/expenses")
+    assert response.status_code == 204
+
+
+@pytest.mark.parametrize(
+    "role, expected_status",
+    [
+        (UserRole.ADMIN, 204),
+        (UserRole.USER, 403),
+    ],
+)
+async def test_expenses_delete_all_exp_strangers_car(
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    mock_expenses,
+    role,
+    expected_status,
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+    for exp in mock_expenses:
+        response = await client.post(f"/api/v1/cars/{car_uid}", json=exp)
+        assert response.status_code == 201
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.delete(f"/api/v1/cars/{car_uid}/expenses")
+    assert response.status_code == expected_status
