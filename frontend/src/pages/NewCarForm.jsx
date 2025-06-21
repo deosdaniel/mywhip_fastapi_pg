@@ -27,8 +27,9 @@ export default function NewCarForm() {
                 headers: {Authorization: `Bearer ${token}`}
 
             });
-            console.log("Карточка автомобиля создана");
-            alert("Автомобиль успешно создан!");
+            console.log("Car created successfully");
+
+            alert(`Карточка автомобиля успешно создана! Ваш ${form.make} ${form.model} уже ждет личном кабинете! :)`);
             navigate("/app/cars");
         } catch (error) {
             console.error("Error while creating car", error);
