@@ -26,6 +26,7 @@ TestSession = sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=Fa
 # ✅ Создание и удаление таблиц один раз за сессию
 @pytest.fixture(scope="session", autouse=True)
 async def prepare_database():
+    """ "Создание всех таблиц"""
     async with engine_test.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     yield
@@ -36,7 +37,7 @@ async def prepare_database():
 # ✅ Очистка данных после каждого теста
 @pytest.fixture(scope="function", autouse=True)
 async def clean_database():
-    # После каждого теста удаляем все записи из всех таблиц
+    """Очистить все таблицы кроме справочников"""
     yield
     async with engine_test.begin() as conn:
         for table in reversed(SQLModel.metadata.sorted_tables):
@@ -46,6 +47,8 @@ async def clean_database():
 
 @pytest.fixture(scope="function", autouse=True)
 async def test_session():
+    """Генератор сессий"""
+
     async def override_get_session():
         async with TestSession() as session:
             yield session
@@ -57,19 +60,17 @@ async def test_session():
 
 @pytest.fixture(scope="function", autouse=True)
 async def client(test_session):
+    """Генератор клиента"""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
 
 
-# --- Новые общие фикстуры: ---
-
-
 # auth router
 @pytest.fixture
-def create_user(
-    client,
-):  # для создания реального пользователя с токеном через /signup
+def create_user(client):
+    """Зарегистрировать нового пользователя через эндпоинт"""
+
     async def _create(username: str, email: str, password="securepassword"):
         response = await client.post(
             "/api/v1/users/signup",
@@ -88,9 +89,9 @@ def create_user(
 
 
 @pytest.fixture
-def get_access_token(
-    client, create_user
-):  # Создать пользователя функцией выше и залогиниться
+def get_access_token(client, create_user):
+    """Создать пользователя с помощью функции create_user и выполнить вход, получив JWT токен"""
+
     async def _get(email="authuser@example.com", password="securepassword"):
         username = email.split("@")[0]
         await create_user(username, email, password)
@@ -106,7 +107,9 @@ def get_access_token(
 
 # user-router
 @pytest.fixture
-def mock_user_factory():  # для подмены в защищенных эндпоинтах
+def mock_user_factory():
+    """Фабрика мок-пользователей"""
+
     def _create(role: UserRole, uid: uuid.UUID = None) -> UserSchema:
         return UserSchema(
             uid=uid or uuid.uuid4(),
@@ -124,6 +127,8 @@ def mock_user_factory():  # для подмены в защищенных энд
 
 @pytest.fixture
 def override_current_user():
+    """Переопределить текущего пользователя (получить его токен)"""
+
     def _override(user: UserSchema):
         app.dependency_overrides[get_current_user] = lambda: user
 
@@ -134,6 +139,7 @@ def override_current_user():
 # справочники
 @pytest.fixture(scope="session", autouse=True)
 async def load_directories(prepare_database):
+    """Наполнить справочники марок и моделей"""
     csv_path = DATASET_PATH
     df = pd.read_csv(csv_path)
     df_makes = (
