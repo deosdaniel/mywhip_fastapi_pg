@@ -36,7 +36,7 @@ export default function CarsList() {
                 <h1 className='text-2xl font-bold'>Мои автомобили</h1>
                 <Link to='new'
                       className="inline-block mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                    + Добавить автомобиль
+                    + Добавить
                 </Link>
             </div>
             {cars.length === 0 ? (
