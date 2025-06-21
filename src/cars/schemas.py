@@ -3,7 +3,7 @@ from datetime import datetime, date
 import uuid
 from enum import Enum
 
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 """Status choice"""
 
@@ -48,17 +48,17 @@ class CarCreateResponse(BaseModel):
 
 
 class CarUpdateSchema(BaseModel):
-    price_purchased: int | None = Field(gt=50000)
-    date_listed: date = Field(default=None, le=date.today())
-    price_listed: int | None = Field(gt=50000)
-    date_sold: date = Field(default=None, le=date.today())
-    price_sold: int | None = Field(gt=50000)
-    autoteka_link: str | None = None
-    notes: str | None = Field(max_length=1000)
-    avito_link: str | None
-    autoru_link: str | None = None
-    drom_link: str | None = None
-    status: CarStatusChoices | None = None
+    price_purchased: Optional[int] = Field(default=None, gt=50000)
+    date_listed: Optional[date] = Field(default=None, le=date.today())
+    price_listed: Optional[int] = Field(default=None, gt=50000)
+    date_sold: Optional[date] = Field(default=None, le=date.today())
+    price_sold: Optional[int] = Field(default=None, gt=50000)
+    autoteka_link: Optional[str] = None
+    notes: Optional[str] = Field(default=None, max_length=1000)
+    avito_link: Optional[str] = None
+    autoru_link: Optional[str] = None
+    drom_link: Optional[str] = None
+    status: Optional[CarStatusChoices] = None
 
 
 class CarSchema(BaseModel):
@@ -124,5 +124,17 @@ class GetAllFilter(BaseModel):
     model: str | None = None
     prod_year: ProdYear | None = None
     status: CarStatusChoices | None = None
-    sort_by: Literal["created_at", "updated_at", "year", "make", "model","price_purchased","price_listed", "price_sold",  "date_purchased","date_listed", "date_sold"] = "created_at"
+    sort_by: Literal[
+        "created_at",
+        "updated_at",
+        "year",
+        "make",
+        "model",
+        "price_purchased",
+        "price_listed",
+        "price_sold",
+        "date_purchased",
+        "date_listed",
+        "date_sold",
+    ] = "created_at"
     order_desc: Literal["desc", "asc"] = "desc"
