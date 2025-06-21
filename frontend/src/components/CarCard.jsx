@@ -1,5 +1,5 @@
 import {Link} from "react-router-dom";
-import carImg from "../assets/car_poster.jpg";
+import carImg from "../assets/car_photo.jpg";
 
 export default function CarCard({car}) {
     const image = car.image || carImg;

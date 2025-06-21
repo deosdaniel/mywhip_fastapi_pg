@@ -25,7 +25,7 @@ function App() {
                         <Route index element={<Navigate to="cars"/>}/>
                         <Route path="cars" element={<CarsList/>}/>
                         <Route path="cars/new" element={<NewCarForm/>}/>
-                        <Route path="cars/:uid" element={<Car/>}/>
+                        <Route path="cars/:car_uid" element={<Car/>}/>
                         <Route path="profile" element={<Profile/>}/>
                         <Route path="profile/edit" element={<ProfileEdit/>}/>
                     </Route>
