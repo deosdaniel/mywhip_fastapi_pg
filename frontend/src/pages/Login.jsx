@@ -84,7 +84,7 @@ function Login() {
 
                     <form className='flex flex-col' onSubmit={handleSubmit}>
                         {/* Поле email с ошибкой */}
-                        <div className='mb-2'>
+                        <div className='mb-4'>
                             <input
                                 name="email"
                                 className={`bg-gray-600 text-white border-0 rounded-md p-2 w-full
