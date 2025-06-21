@@ -372,3 +372,7 @@ async def test_expenses_get_all_exp(
     )
     assert response.status_code == 200
     assert response.json()["result"]["content"][0]["exp_summ"] == 1000
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}/expenses?sort_by=exp_summ&order=invalid"
+    )
+    assert response.status_code == 422

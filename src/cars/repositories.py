@@ -40,7 +40,7 @@ class CarsRepository(BaseRepository):
             sort_column = getattr(Cars, sort_by, None)
             if sort_column is None:
                 raise HTTPException(
-                    status_code=400, detail=f"Invalid sort field: {sort_by}"
+                    status_code=422, detail=f"Invalid sort field: {sort_by}"
                 )
             if order == "desc":
                 statement = statement.order_by(desc(sort_column))
@@ -143,7 +143,7 @@ class ExpensesRepository(BaseRepository):
             sort_column = getattr(Expenses, sort_by, None)
             if sort_column is None:
                 raise HTTPException(
-                    status_code=400, detail=f"Invalid sort field: {sort_by}"
+                    status_code=422, detail=f"Invalid sort field: {sort_by}"
                 )
             if order == "desc":
                 statement = statement.order_by(desc(sort_column))

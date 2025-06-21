@@ -69,7 +69,7 @@ class BaseRepository:
             sort_column = getattr(table, sort_by, None)
             if sort_column is None:
                 raise HTTPException(
-                    status_code=400, detail=f"Invalid sort field: {sort_by}"
+                    status_code=422, detail=f"Invalid sort field: {sort_by}"
                 )
             if order == "desc":
                 statement = statement.order_by(desc(sort_column))
@@ -125,7 +125,7 @@ class BaseService(Generic[R]):
 
         if allowed_sort_fields and sort_by not in allowed_sort_fields:
             raise HTTPException(
-                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+                status_code=422, detail=f"Sorting by '{sort_by}' is not allowed."
             )
 
         records = await self.repository.get_all_records(
