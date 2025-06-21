@@ -1,6 +1,7 @@
-import {useState} from 'react'
+import React, {useState} from 'react'
 import {Link, useNavigate} from "react-router-dom";
 import api from '../services/api.js'
+import MyWhipLogo from "../components/MyWhipLogo.jsx";
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -65,27 +66,27 @@ const Signup = () => {
                 'Error occurred while creating new user'
             );
         } finally {
-                setIsSubmitting(false);
+            setIsSubmitting(false);
 
         }
     };
-
 
 
     return (
         <div>
             <div className='flex flex-col items-center
             justify-center h-screen '>
+                <MyWhipLogo/>
                 <div className='w-full max-w-md bg-[#222] rounded-xl
                  shadow-md py-8 px-8'>
                     <h2 className='text-[28px] text-white font-bold mb-6
                      text-center'>Регистрация</h2>
-                    {serverError &&(
+                    {serverError && (
                         <div className='mb-4 p-2 bg-red-100 text-red-700 rounded'>
                             {serverError}
                         </div>
                     )}
-                    <form onSubmit={handleSubmit} className='flex flex-col' >
+                    <form onSubmit={handleSubmit} className='flex flex-col'>
                         <div className='flex space-x-4 mb-4'>
                             <div className='w-1/2'>
                                 <input

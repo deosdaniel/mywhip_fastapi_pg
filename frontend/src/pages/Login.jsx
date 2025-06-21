@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {login} from "../services/api";
+import MyWhipLogo from "../components/MyWhipLogo.jsx";
 
 function Login() {
     const navigate = useNavigate();
@@ -67,8 +68,11 @@ function Login() {
 
     return (
         <div>
+
             <div className='flex flex-col items-center justify-center h-screen'>
+                <MyWhipLogo/>
                 <div className='w-full max-w-md bg-[#222] rounded-xl shadow-md py-8 px-8'>
+
                     <h2 className='text-[28px] text-white font-bold mb-6 text-center'>Вход</h2>
 
                     {/* Блок для отображения серверных ошибок */}
@@ -80,7 +84,7 @@ function Login() {
 
                     <form className='flex flex-col' onSubmit={handleSubmit}>
                         {/* Поле email с ошибкой */}
-                        <div className='mb-1'>
+                        <div className='mb-2'>
                             <input
                                 name="email"
                                 className={`bg-gray-600 text-white border-0 rounded-md p-2 w-full
