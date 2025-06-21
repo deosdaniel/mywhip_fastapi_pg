@@ -32,7 +32,14 @@ export default function NewCarForm() {
             navigate("/app/cars");
         } catch (error) {
             console.error("Error while creating car", error);
-            alert("При попытке создания карточки автомобиля произошла ошибка.");
+            const details = error.response?.data?.detail;
+
+            if (Array.isArray(details)) {
+                const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join('\n');
+                alert(`Ошибки валидации:\n${messages}`);
+            } else {
+                alert(`Произошла ошибка: ${details || 'Неизвестная ошибка'}`);
+            }
         }
     };
     return (
