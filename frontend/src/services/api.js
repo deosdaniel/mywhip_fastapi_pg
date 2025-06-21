@@ -7,7 +7,7 @@ const api = axios.create({
     },
 });
 
-api.interceptors.request.use((config) =>{
+api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -20,6 +20,7 @@ api.interceptors.response.use(
     error => {
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }
@@ -32,7 +33,7 @@ export const login = async (email, password) => {
     formData.append('username', email);
     formData.append('password', password);
     const response = await api.post('/auth/login', formData, {
-        headers:{
+        headers: {
             "Content-Type": "application/x-www-form-urlencoded",
         },
     });

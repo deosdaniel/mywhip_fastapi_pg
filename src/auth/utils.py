@@ -5,7 +5,7 @@ import logging
 import bcrypt
 from src.config import Config
 
-ACCESS_TOKEN_EXPIRY = 900
+ACCESS_TOKEN_EXPIRY = 30
 
 
 def gen_pwd_hash(password: str) -> str:

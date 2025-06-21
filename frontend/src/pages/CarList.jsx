@@ -25,7 +25,8 @@ export default function CarsList() {
         <div className='p-4'>
             <div className='flex justify-between items-center mb-4'>
                 <h1 className='text-2xl font-bold'>Мои автомобили</h1>
-                <Link to='app/cars/new ' className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                <Link to='new'
+                      className="inline-block mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                     + Добавить автомобиль
                 </Link>
             </div>
