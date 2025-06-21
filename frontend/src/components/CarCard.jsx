@@ -1,26 +1,17 @@
+import {Link} from "react-router-dom";
 
-import car_poster from '../assets/car_poster.jpg'
-
-
-function CarCard({car}) {
-    function onFavoriteClick(){
-        alert("clicked")
-    }
-
-    return <div className="car-card">
-        <div className="car-poster">
-            <img src={car_poster} alt={car.model} />
-            <div className="car-overlay">
-                <button className="favorite-btn" onClick={onFavoriteClick}>
-                    BTN
-                </button>
+export default function CarCard({car}) {
+    return (
+        <Link
+            to={`/app/cars/${car.id}`}
+            className="block bg-white rounded-xl shadow hover:shadow-md transition overflow-hidden"
+        >
+            <img src={car.image} alt={`${car.make} ${car.model}`} className="w-full h-40 object-cover"/>
+            <div className="p-4">
+                <h2 className="text-xl font-semibold">{car.make} {car.model}</h2>
+                <p className="text-gray-600">Год: {car.year}</p>
+                <p className="text-sm text-blue-600">Статус: {car.status}</p>
             </div>
-        </div>
-        <div className="car-info">
-            <h3>{car.make} {car.model}</h3>
-            <p>{car.year}</p>
-        </div>
-    </div>
+        </Link>
+    );
 }
-
-export default CarCard
