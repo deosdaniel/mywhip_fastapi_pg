@@ -181,12 +181,25 @@ class ExpensesService(BaseService[ExpensesRepository]):
         current_user: UserSchema,
         page: int = 1,
         limit: int = 10,
+        sort_by: str = "create_at",
+        allowed_sort_fields: Optional[list[str]] = None,
+        order: str = "desc",
     ) -> list[Expenses]:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
 
         offset_page = (page - 1) * limit
 
-        expenses = await self.repository.get_exp_by_car_uid(car_uid, offset_page, limit)
+        if allowed_sort_fields and sort_by not in allowed_sort_fields:
+            raise HTTPException(
+                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+            )
+        expenses = await self.repository.get_exp_by_car_uid(
+            car_uid=car_uid,
+            offset_page=offset_page,
+            limit=limit,
+            sort_by=sort_by,
+            order=order,
+        )
 
         total_records = await self.repository.count_exp_by_car_uid(car_uid)
         total_pages = math.ceil(total_records / limit)

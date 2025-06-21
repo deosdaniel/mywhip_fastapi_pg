@@ -81,9 +81,7 @@ class CarsRepository(BaseRepository):
                 direction(getattr(Cars, filter_schema.sort_by))
             )
 
-        statement = statement.offset(offset_page).limit(
-            filter_schema.limit
-        )
+        statement = statement.offset(offset_page).limit(filter_schema.limit)
         cars = await self.session.exec(statement)
         return cars
 
@@ -128,15 +126,29 @@ class ExpensesRepository(BaseRepository):
         return result.one_or_none()
 
     async def get_exp_by_car_uid(
-        self, car_uid: UUID, offset_page: int, limit: int
+        self,
+        car_uid: UUID,
+        offset_page: int,
+        limit: int,
+        sort_by: Optional[str] = None,
+        order: str = "desc",
     ) -> list[Expenses]:
         statement = (
             select(Expenses)
             .where(Expenses.car_uid == car_uid)
             .offset(offset_page)
             .limit(limit)
-            .order_by(desc(Expenses.created_at))
         )
+        if sort_by:
+            sort_column = getattr(Expenses, sort_by, None)
+            if sort_column is None:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid sort field: {sort_by}"
+                )
+            if order == "desc":
+                statement = statement.order_by(desc(sort_column))
+            else:
+                statement = statement.order_by(asc(sort_column))
         return await self.session.exec(statement)
 
     async def count_exp_by_car_uid(self, car_uid: UUID) -> int:

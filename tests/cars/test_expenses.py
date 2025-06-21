@@ -19,11 +19,11 @@ def mock_expense_single():
 @pytest.fixture
 def mock_expenses():
     return [
-        {"name": "Expense #1", "exp_summ": 1000},
-        {"name": "Expense #2", "exp_summ": 2000},
+        {"name": "Expense #1", "exp_summ": 5000},
+        {"name": "Expense #2", "exp_summ": 4000},
         {"name": "Expense #3", "exp_summ": 3000},
-        {"name": "Expense #4", "exp_summ": 4000},
-        {"name": "Expense #5", "exp_summ": 5000},
+        {"name": "Expense #4", "exp_summ": 2000},
+        {"name": "Expense #5", "exp_summ": 1000},
     ]
 
 
@@ -216,3 +216,159 @@ async def test_expenses_update_single_exp_success(
     data = response.json()["result"]
     assert data["name"] == "Updated Expense"
     assert data["exp_summ"] == 2050
+
+
+@pytest.mark.parametrize(
+    "exp_name, summ, expected_status",
+    [
+        ("", 5000, 422),
+        (1337, 5000, 422),
+        ("ExpenseName", 0, 422),
+        ("ExpenseName", -1000, 422),
+        ("ExpenseName", "randomstring", 422),
+        ("", "", 422),
+    ],
+)
+async def test_expenses_update_expense_invalid_data(
+    client, get_access_token, mock_car_single, exp_name, summ, expected_status
+):
+    token = await get_access_token()
+    car = await create_mock_car_w_exp(client, token, mock_car_single)
+    car_uid = car["car_uid"]
+    exp_uid = car["exp_uid"]
+
+    response = await client.patch(
+        f"api/v1/cars/{car_uid}/expenses/{exp_uid}",
+        json={"name": exp_name, "exp_summ": summ},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_expenses_update_single_exp_no_auth(
+    client, get_access_token, mock_car_single
+):
+    token = await get_access_token()
+
+    car = await create_mock_car_w_exp(client, token, mock_car_single)
+    car_uid = car["car_uid"]
+    exp_uid = car["exp_uid"]
+
+    response = await client.patch(
+        f"/api/v1/cars/{car_uid}/expenses/{exp_uid}",
+        json={"name": "Updated Expense", "exp_summ": 2050},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "role, expected_status", [(UserRole.ADMIN, 200), (UserRole.USER, 403)]
+)
+async def test_expenses_update_single_exp_strangers_car(
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    role,
+    expected_status,
+    mock_expense_single,
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+    response = await client.post(f"/api/v1/cars/{car_uid}", json=mock_expense_single)
+    assert response.status_code == 201
+    exp_uid = response.json()["result"]["uid"]
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.patch(
+        f"/api/v1/cars/{car_uid}/expenses/{exp_uid}",
+        json={"name": "Updated Expense", "exp_summ": 2050},
+    )
+    assert response.status_code == expected_status
+    if role == UserRole.USER:
+        assert "Access denied" in response.json()["detail"]
+    if role == UserRole.ADMIN:
+        assert response.json()["result"]["name"] == "Updated Expense"
+
+
+@pytest.mark.asyncio
+async def test_expenses_delete_single_exp(client, get_access_token, mock_car_single):
+    token = await get_access_token()
+    car = await create_mock_car_w_exp(client, token, mock_car_single)
+    car_uid = car["car_uid"]
+    exp_uid = car["exp_uid"]
+    response = await client.delete(
+        f"/api/v1/cars/{car_uid}/expenses/{exp_uid}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 204
+    response = await client.delete(
+        f"/api/v1/cars/{car_uid}/expenses/{exp_uid}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "role, expected_status", [(UserRole.ADMIN, 204), (UserRole.USER, 403)]
+)
+async def test_expenses_update_single_exp_strangers_car(
+    client,
+    mock_car_single,
+    mock_user_factory,
+    override_current_user,
+    role,
+    expected_status,
+    mock_expense_single,
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+    response = await client.post(f"/api/v1/cars/{car_uid}", json=mock_expense_single)
+    assert response.status_code == 201
+    exp_uid = response.json()["result"]["uid"]
+
+    user_b = mock_user_factory(role=role)
+    override_current_user(user_b)
+    response = await client.delete(f"/api/v1/cars/{car_uid}/expenses/{exp_uid}")
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_expenses_get_all_exp(
+    client, mock_car_single, mock_user_factory, override_current_user, mock_expenses
+):
+    user_a = mock_user_factory(role=UserRole.USER)
+    override_current_user(user_a)
+    response = await client.post("/api/v1/cars/", json=mock_car_single)
+    assert response.status_code == 201
+    car_uid = response.json()["result"]["uid"]
+    for exp in mock_expenses:
+        response = await client.post(f"/api/v1/cars/{car_uid}", json=exp)
+        assert response.status_code == 201
+
+    response = await client.get(f"/api/v1/cars/{car_uid}/expenses")
+    assert response.status_code == 200
+    assert len(response.json()["result"]["content"]) == 5
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}/expenses?page=2&limit=2&sort_by=created_at&order=desc"
+    )
+    assert response.status_code == 200
+    assert len(response.json()["result"]["content"]) == 2
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}/expenses?page=3&limit=2&sort_by=created_at&order=desc"
+    )
+    assert response.status_code == 200
+    assert len(response.json()["result"]["content"]) == 1
+    response = await client.get(
+        f"/api/v1/cars/{car_uid}/expenses?sort_by=exp_summ&order=asc"
+    )
+    assert response.status_code == 200
+    assert response.json()["result"]["content"][0]["exp_summ"] == 1000

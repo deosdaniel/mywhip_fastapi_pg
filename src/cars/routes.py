@@ -204,11 +204,21 @@ async def get_expenses_by_car_uid(
     car_uid: str = Path(min_length=32, max_length=36),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
+    sort_by: str = Query(default="created_at", description="Поле сортировки"),
+    order: str = Query(
+        default="desc", pattern="^(asc|desc)$", description="Порядок сортировки"
+    ),
     expenses_service: ExpensesService = Depends(get_exp_service),
     current_user: UserSchema = Depends(get_current_user),
 ):
     result = await expenses_service.get_expenses_by_car_uid(
-        car_uid=car_uid, page=page, limit=limit, current_user=current_user
+        car_uid=car_uid,
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        order=order,
+        allowed_sort_fields=["created_at", "exp_summ", "name"],
+        current_user=current_user,
     )
     return ResponseSchema(detail="Success", result=result)
 
