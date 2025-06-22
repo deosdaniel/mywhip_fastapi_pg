@@ -115,11 +115,13 @@ class ExpensesRepository(BaseRepository):
         new_exp.car_uid = car_uid
         self.session.add(new_exp)
         await self.session.commit()
+        await self.session.refresh(new_exp, attribute_names=["user"])
         return new_exp
 
     async def get_single_exp(self, car_uid: UUID, expense_uid: str) -> Expenses:
         statement = (
             select(Expenses)
+            .options(selectinload(Expenses.user))
             .where(Expenses.car_uid == car_uid)
             .where(Expenses.uid == expense_uid)
         )
@@ -136,6 +138,7 @@ class ExpensesRepository(BaseRepository):
     ) -> list[Expenses]:
         statement = (
             select(Expenses)
+            .options(selectinload(Expenses.user))
             .where(Expenses.car_uid == car_uid)
             .offset(offset_page)
             .limit(limit)

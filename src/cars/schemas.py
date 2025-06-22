@@ -97,13 +97,19 @@ class ExpensesCreateSchema(BaseModel):
     exp_summ: int = Field(gt=0)
 
 
+class UserShortSchema(BaseModel):
+    uid: uuid.UUID
+    email: str
+    username: str
+
+
 class ExpensesSchema(BaseModel):
     uid: uuid.UUID
     created_at: datetime | None = None
     name: str
     exp_summ: int
     car_uid: uuid.UUID
-    user_uid: uuid.UUID
+    user: Optional[UserShortSchema]
 
 
 """Filter schemas"""
