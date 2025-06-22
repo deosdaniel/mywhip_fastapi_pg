@@ -322,12 +322,7 @@ export default function Car() {
                     </>
                 ) : (
                     <>
-                        <button
-                            onClick={() => setEditMode(true)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                            Редактировать
-                        </button>
+
                         {/* Текущий вывод данных - оставим как есть */}
                         <p className="text-gray-600 mb-1"><strong>Статус:</strong> {car.status}</p>
                         <p className="text-gray-600 mb-1"><strong>VIN:</strong> {car.vin}</p>
@@ -394,6 +389,12 @@ export default function Car() {
                                 </div>
                             )}
                         </div>
+                        <button
+                            onClick={() => setEditMode(true)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                            Редактировать
+                        </button>
                         <div className="mt-8">
                             <h2 className="text-xl font-bold mb-2">Расходы</h2>
                             <button
