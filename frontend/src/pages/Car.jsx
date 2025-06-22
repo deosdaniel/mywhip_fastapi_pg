@@ -23,6 +23,11 @@ export default function Car() {
     const [expenses, setExpenses] = useState([]);
     const [expensesLoading, setExpensesLoading] = useState(true);
     const [expensesError, setExpensesError] = useState(null);
+    const [showExpenseModal, setShowExpenseModal] = useState(false);
+    const [newExpense, setNewExpense] = useState({
+        name: "",
+        exp_summ: "",
+    });
 
     useEffect(() => {
         const fetchCar = async () => {
@@ -99,6 +104,37 @@ export default function Car() {
         } catch (error) {
             console.error("Error while updating car", error);
             const details = error.response?.data?.detail;
+            if (Array.isArray(details)) {
+                const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join('\n');
+                alert(`Ошибки валидации:\n${messages}`);
+            } else {
+                alert(`Ошибка валидации: ${details || 'Неизвестная ошибка'}`);
+            }
+        }
+    };
+    const handleAddExpense = async () => {
+        if (!newExpense.name || !newExpense.exp_summ) {
+            alert("Заполните все поля!");
+            return;
+        }
+
+        try {
+            await api.post(`/cars/${car_uid}`, {
+                name: newExpense.name,
+                exp_summ: Number(newExpense.exp_summ),
+            });
+
+            setShowExpenseModal(false);
+            setNewExpense({name: "", exp_summ: ""});
+
+            // Перезагрузим список расходов
+            const res = await api.get(`/cars/${car_uid}/expenses`, {
+                params: {page: 1, limit: 100, sort_by: "created_at", order: "desc"}
+            });
+            setExpenses(res.data.result.content || []);
+        } catch (err) {
+            console.error("Ошибка при добавлении расхода:", err);
+            const details = err.response?.data?.detail;
             if (Array.isArray(details)) {
                 const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join('\n');
                 alert(`Ошибки валидации:\n${messages}`);
@@ -274,6 +310,12 @@ export default function Car() {
                     </>
                 ) : (
                     <>
+                        <button
+                            onClick={() => setEditMode(true)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                            Редактировать
+                        </button>
                         {/* Текущий вывод данных - оставим как есть */}
                         <p className="text-gray-600 mb-1"><strong>Статус:</strong> {car.status}</p>
                         <p className="text-gray-600 mb-1"><strong>VIN:</strong> {car.vin}</p>
@@ -342,7 +384,12 @@ export default function Car() {
                         </div>
                         <div className="mt-8">
                             <h2 className="text-xl font-bold mb-2">Расходы</h2>
-
+                            <button
+                                onClick={() => setShowExpenseModal(true)}
+                                className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                                + Добавить расход
+                            </button>
                             {expensesLoading ? (
                                 <p>Загрузка расходов...</p>
                             ) : expenses.length === 0 ? (
@@ -375,18 +422,59 @@ export default function Car() {
                                         ))}
                                         </tbody>
                                     </table>
+
                                 </div>
                             )}
                         </div>
-                        <button
-                            onClick={() => setEditMode(true)}
-                            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                            Редактировать
-                        </button>
+
                     </>
                 )}
             </div>
+            {showExpenseModal && (
+                <div className="fixed inset-0 flex justify-center items-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-black shadow-2xl w-full max-w-md relative">
+                        <h2 className="text-xl font-bold mb-4">Новый расход</h2>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-1">Название:</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={newExpense.name}
+                                onChange={(e) => setNewExpense({...newExpense, name: e.target.value})}
+                                className="w-full border rounded px-3 py-2"
+                            />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-1">Сумма (₽):</label>
+                            <input
+                                type="number"
+                                name="exp_summ"
+                                value={newExpense.exp_summ}
+                                onChange={(e) => setNewExpense({...newExpense, exp_summ: e.target.value})}
+                                className="w-full border rounded px-3 py-2"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setShowExpenseModal(false)}
+                                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleAddExpense}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                                Добавить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+
     );
 }
