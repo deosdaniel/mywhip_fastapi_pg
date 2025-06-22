@@ -20,6 +20,10 @@ export default function Car() {
     const [editMode, setEditMode] = useState(false);
     const [formData, setFormData] = useState({});
 
+    const [expenses, setExpenses] = useState([]);
+    const [expensesLoading, setExpensesLoading] = useState(true);
+    const [expensesError, setExpensesError] = useState(null);
+
     useEffect(() => {
         const fetchCar = async () => {
             try {
@@ -35,6 +39,22 @@ export default function Car() {
         };
         fetchCar();
     }, [car_uid]);
+
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            try {
+                const res = await api.get(`/cars/${car_uid}/expenses`);
+                setExpenses(res.data.result.content || []);
+            } catch (err) {
+                console.error("Ошибка при загрузке расходов:", err);
+                setExpensesError("Не удалось загрузить расходы.");
+            } finally {
+                setExpensesLoading(false);
+            }
+        };
+        fetchExpenses();
+    }, [car_uid]);
+
 
     // Универсальная обработка изменений формы
     const handleChange = (e) => {
@@ -318,7 +338,31 @@ export default function Car() {
                                 </div>
                             )}
                         </div>
+                        <div className="mt-6">
+                            <h2 className="text-lg font-bold mb-2">Расходы</h2>
 
+                            {expensesLoading ? (
+                                <p>Загрузка расходов...</p>
+                            ) : expensesError ? (
+                                <p className="text-red-600">{expensesError}</p>
+                            ) : expenses.length === 0 ? (
+                                <p className="text-gray-600">Пока нет расходов</p>
+                            ) : (
+                                <ul className="space-y-2">
+                                    {expenses.map((exp) => (
+                                        <li key={exp.uid} className="p-2 border rounded bg-gray-50">
+                                            <div className="font-semibold">{exp.name}</div>
+                                            <div className="text-sm text-gray-600">
+                                                Сумма: {exp.exp_summ?.toLocaleString()} ₽
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                Дата: {new Date(exp.created_at).toLocaleDateString()}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                         <button
                             onClick={() => setEditMode(true)}
                             className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
