@@ -50,20 +50,24 @@ export default function Car() {
     };
 
     const handleSave = async () => {
+        if (formData.price_purchased === "" || formData.price_purchased === undefined || isNaN(formData.price_purchased)) {
+            alert("Пожалуйста, укажите цену покупки");
+            return;
+        }
         try {
             // Подготовим данные — уберём пустые строки, преобразуем числа
             const payload = {
-                price_purchased: formData.price_purchased ? +formData.price_purchased : undefined,
-                date_listed: formData.date_listed || undefined,
-                price_listed: formData.price_listed ? +formData.price_listed : undefined,
-                date_sold: formData.date_sold || undefined,
-                price_sold: formData.price_sold ? +formData.price_sold : undefined,
-                autoteka_link: formData.autoteka_link || undefined,
-                notes: formData.notes || undefined,
-                avito_link: formData.avito_link || undefined,
-                autoru_link: formData.autoru_link || undefined,
-                drom_link: formData.drom_link || undefined,
-                status: formData.status || undefined,
+                price_purchased: formData.price_purchased,
+                date_listed: formData.date_listed === "" ? null : formData.date_listed,
+                price_listed: formData.price_listed === "" ? null : +formData.price_listed,
+                date_sold: formData.date_sold === "" ? null : formData.date_sold,
+                price_sold: formData.price_sold === "" ? null : +formData.price_sold,
+                autoteka_link: formData.autoteka_link === "" ? null : formData.autoteka_link,
+                notes: formData.notes === "" ? null : formData.notes,
+                avito_link: formData.avito_link === "" ? null : formData.avito_link,
+                autoru_link: formData.autoru_link === "" ? null : formData.autoru_link,
+                drom_link: formData.drom_link === "" ? null : formData.drom_link,
+                status: formData.status === "" ? null : formData.status,
             };
 
             const res = await api.patch(`/cars/${car_uid}`, payload);
