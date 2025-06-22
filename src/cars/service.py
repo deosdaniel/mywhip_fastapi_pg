@@ -2,6 +2,7 @@ import math
 from typing import Optional
 from uuid import UUID
 
+from alembic.command import current
 from fastapi import HTTPException, status
 from src.utils.schemas_common import PageResponse
 from .models import Cars, Expenses
@@ -132,6 +133,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     ) -> Expenses:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp_data_dict = exp_data.model_dump()
+        exp_data_dict["user_uid"] = current_user.uid
         new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
         return new_exp
 

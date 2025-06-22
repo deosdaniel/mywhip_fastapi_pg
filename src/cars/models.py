@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import ENUM
@@ -87,8 +87,16 @@ class Expenses(SQLModel, table=True):
             index=True,
         )
     )
-
+    user_uid: UUID = Field(
+        sa_column=Column(
+            UUIDColumn,
+            ForeignKey("users.uid", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
     car: "Cars" = Relationship(back_populates="expenses")
+    user: Optional["Users"] = Relationship(back_populates="expenses")
 
     def __repr__(self):
         return f"<Expense {self.name}>"

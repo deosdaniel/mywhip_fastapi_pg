@@ -84,7 +84,7 @@ class CarSchema(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = created_at
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
-    expenses: List["ExpensesDTO"] | None = None
+    expenses: List["ExpensesSchema"] | None = None
 
 
 """Expenses"""
@@ -101,6 +101,7 @@ class ExpensesSchema(BaseModel):
     name: str
     exp_summ: int
     car_uid: uuid.UUID
+    user_uid: uuid.UUID
 
 
 class ExpensesDTO(BaseModel):

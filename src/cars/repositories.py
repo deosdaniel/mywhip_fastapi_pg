@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import func, desc, asc
+from sqlalchemy.orm import selectinload
 from sqlmodel import select, update
 from src.cars.models import Cars, Expenses
 from src.cars.schemas import GetAllFilter
@@ -136,6 +137,7 @@ class ExpensesRepository(BaseRepository):
         statement = (
             select(Expenses)
             .where(Expenses.car_uid == car_uid)
+            .options(selectinload(Expenses.user))
             .offset(offset_page)
             .limit(limit)
         )
