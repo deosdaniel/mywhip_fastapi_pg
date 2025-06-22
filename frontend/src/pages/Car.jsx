@@ -369,7 +369,7 @@ export default function Car() {
                                                     {new Date(exp.created_at).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-3 py-2 border text-center">
-                                                    {exp.username || "-"}
+                                                    {exp.user_uid || "-"}
                                                 </td>
                                             </tr>
                                         ))}

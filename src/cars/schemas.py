@@ -5,6 +5,8 @@ from enum import Enum
 
 from typing import List, Literal, Optional
 
+from src.utils.db_types import UUIDString
+
 """Status choice"""
 
 
@@ -102,12 +104,6 @@ class ExpensesSchema(BaseModel):
     exp_summ: int
     car_uid: uuid.UUID
     user_uid: uuid.UUID
-
-
-class ExpensesDTO(BaseModel):
-    name: str
-    exp_summ: int
-    created_at: datetime
 
 
 """Filter schemas"""

@@ -137,7 +137,6 @@ class ExpensesRepository(BaseRepository):
         statement = (
             select(Expenses)
             .where(Expenses.car_uid == car_uid)
-            .options(selectinload(Expenses.user))
             .offset(offset_page)
             .limit(limit)
         )
