@@ -7,7 +7,6 @@ import IconAutoru from "../assets/icons/autoru.webp"
 import IconDrom from "../assets/icons/drom.png"
 import IconAutoteka from "../assets/icons/autoteka.png"
 
-// Статусы, аналог enum CarStatusChoices на фронте (пример)
 const statuses = ["FRESH", "REPAIRING", "DETAILING", "LISTED", "SOLD"];
 
 export default function Car() {
@@ -36,7 +35,7 @@ export default function Car() {
                 setCar(res.data.result);
                 setFormData(res.data.result);
             } catch (err) {
-                console.error("Ошибка при загрузке машины:", err);
+                console.error("Error while fetching car data:", err);
                 setError("Не удалось загрузить данные машины.");
             } finally {
                 setLoading(false);
@@ -53,7 +52,7 @@ export default function Car() {
                 });
                 setExpenses(res.data.result.content || []);
             } catch (err) {
-                console.error("Ошибка при загрузке расходов:", err);
+                console.error("Error while fetching expenses data:", err);
                 setExpensesError("Не удалось загрузить расходы.");
             } finally {
                 setExpensesLoading(false);
@@ -108,7 +107,7 @@ export default function Car() {
                 const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join('\n');
                 alert(`Ошибки валидации:\n${messages}`);
             } else {
-                alert(`Ошибка валидации: ${details || 'Неизвестная ошибка'}`);
+                alert(`Ошибка: ${details || 'Неизвестная ошибка'}`);
             }
         }
     };
@@ -405,8 +404,6 @@ export default function Car() {
                             </button>
                             {expensesLoading ? (
                                 <p>Загрузка расходов...</p>
-                            ) : expenses.length === 0 ? (
-                                <p className="text-gray-500">Расходов пока нет.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full bg-white border border-gray-300 text-sm">
