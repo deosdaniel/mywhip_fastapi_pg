@@ -43,7 +43,9 @@ export default function Car() {
     useEffect(() => {
         const fetchExpenses = async () => {
             try {
-                const res = await api.get(`/cars/${car_uid}/expenses`);
+                const res = await api.get(`/cars/${car_uid}/expenses`, {
+                    params: {page: 1, limit: 100, sort_by: "created_at", order: "desc"}
+                });
                 setExpenses(res.data.result.content || []);
             } catch (err) {
                 console.error("Ошибка при загрузке расходов:", err);
@@ -338,29 +340,42 @@ export default function Car() {
                                 </div>
                             )}
                         </div>
-                        <div className="mt-6">
-                            <h2 className="text-lg font-bold mb-2">Расходы</h2>
+                        <div className="mt-8">
+                            <h2 className="text-xl font-bold mb-2">Расходы</h2>
 
                             {expensesLoading ? (
                                 <p>Загрузка расходов...</p>
-                            ) : expensesError ? (
-                                <p className="text-red-600">{expensesError}</p>
                             ) : expenses.length === 0 ? (
-                                <p className="text-gray-600">Пока нет расходов</p>
+                                <p className="text-gray-500">Расходов пока нет.</p>
                             ) : (
-                                <ul className="space-y-2">
-                                    {expenses.map((exp) => (
-                                        <li key={exp.uid} className="p-2 border rounded bg-gray-50">
-                                            <div className="font-semibold">{exp.name}</div>
-                                            <div className="text-sm text-gray-600">
-                                                Сумма: {exp.exp_summ?.toLocaleString()} ₽
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                Дата: {new Date(exp.created_at).toLocaleDateString()}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full bg-white border border-gray-300 text-sm">
+                                        <thead className="bg-gray-100">
+                                        <tr>
+                                            <th className="px-3 py-2 border">№</th>
+                                            <th className="px-3 py-2 border text-left">Название</th>
+                                            <th className="px-3 py-2 border text-right">Сумма</th>
+                                            <th className="px-3 py-2 border">Дата</th>
+                                            <th className="px-3 py-2 border">Пользователь</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {expenses.map((exp, idx) => (
+                                            <tr key={exp.uid} className="hover:bg-gray-50">
+                                                <td className="px-3 py-2 border text-center">{idx + 1}</td>
+                                                <td className="px-3 py-2 border">{exp.name}</td>
+                                                <td className="px-3 py-2 border text-right">{exp.exp_summ.toLocaleString()} ₽</td>
+                                                <td className="px-3 py-2 border text-center">
+                                                    {new Date(exp.created_at).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-3 py-2 border text-center">
+                                                    {exp.username || "-"}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             )}
                         </div>
                         <button
