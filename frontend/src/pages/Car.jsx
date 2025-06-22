@@ -133,7 +133,7 @@ export default function Car() {
             });
             setExpenses(res.data.result.content || []);
         } catch (err) {
-            console.error("Ошибка при добавлении расхода:", err);
+            console.error("Error while adding expense:", err);
             const details = err.response?.data?.detail;
             if (Array.isArray(details)) {
                 const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join('\n');
@@ -141,6 +141,19 @@ export default function Car() {
             } else {
                 alert(`Ошибка валидации: ${details || 'Неизвестная ошибка'}`);
             }
+        }
+    };
+
+    const handleDeleteExpense = async (expense_uid) => {
+        if (!window.confirm("Вы уверены, что хотите удалить это вложение?")) return;
+
+        try {
+            await api.delete(`/cars/${car_uid}/expenses/${expense_uid}`);
+            setExpenses(prev => prev.filter(exp => exp.uid !== expense_uid));
+        } catch (err) {
+            console.error("Error while deleting expense:", err);
+            const details = err.response?.data?.detail;
+            alert(`Не удалось удалить расход: ${details}`);
         }
     };
 
@@ -404,6 +417,7 @@ export default function Car() {
                                             <th className="px-3 py-2 border text-right">Сумма</th>
                                             <th className="px-3 py-2 border">Дата</th>
                                             <th className="px-3 py-2 border">Пользователь</th>
+                                            <th className="px-2 py-2 border text-center">Удалить</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -417,6 +431,15 @@ export default function Car() {
                                                 </td>
                                                 <td className="px-3 py-2 border text-center">
                                                     {exp.user.email || "-"}
+                                                </td>
+                                                <td className="px-2 py-2 border text-center">
+                                                    <button
+                                                        onClick={() => handleDeleteExpense(exp.uid)}
+                                                        className="text-red-600 hover:text-red-800"
+                                                        title="Удалить расход"
+                                                    >
+                                                        ❌
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
