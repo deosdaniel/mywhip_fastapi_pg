@@ -4,6 +4,8 @@ import {login} from "../services/api";
 import MyWhipLogo from "../components/MyWhipLogo.jsx";
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input.jsx"
+import {Label} from "@/components/ui/label";
+import {Loader2} from "lucide-react";
 
 function Login() {
     const navigate = useNavigate();
@@ -69,70 +71,64 @@ function Login() {
     };
 
     return (
-        <div>
+        <div className='flex flex-col items-center
+            justify-center h-screen p-8'>
+            <div className="fixed top-8 left-1/2 transform -translate-x-1/2"><MyWhipLogo/></div>
+            <div className='w-full max-w-md bg-white rounded-xl shadow-md p-6'>
 
-            <div className='flex flex-col items-center justify-center h-screen'>
-                <MyWhipLogo/>
-                <div className='w-full max-w-md bg-white rounded-xl shadow-md py-8 px-8'>
-
-                    <h2 className='text-[28px] font-bold mb-2 text-center'>Вход</h2>
-
-                    {/* Блок для отображения серверных ошибок */}
-                    {serverError && (
-                        <div className='mb-4 p-2 bg-red-100 text-red-700 rounded'>
-                            {serverError}
-                        </div>
-                    )}
-
-                    <form className='flex flex-col' onSubmit={handleSubmit}>
-                        {/* Поле email с ошибкой */}
-                        <div className='mb-4'>
-                            <Input
-                                name="email"
-                                className=""
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="Email"
-                            />
-                            {errors.email && (
-                                <p className="text-red-500 text-sm py-1">{errors.email}</p>
-                            )}
-                        </div>
-
-                        {/* Поле пароля с ошибкой */}
-                        <div className='mb-4'>
-                            <Input
-                                name="password"
-                                className=""
-                                type="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Пароль"
-                            />
-                            {errors.password && (
-                                <p className="text-red-500 text-sm py-1">{errors.password}</p>
-                            )}
-                        </div>
-
-                        {/* Кнопка с состоянием загрузки */}
-                        <Button
-                            className="btn"
-                            type="submit"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Вход...' : 'Войти'}
-                        </Button>
-
-                        <p className='mt-4 text-center'>
-                            Нет аккаунта?
-                            <Link to='/signup' className='text-blue-400 hover:underline px-1'>
-                                Зарегистрироваться
-                            </Link>
-                        </p>
-                    </form>
-
-                </div>
+                <h2 className='text-3xl font-bold mb-4 text-center'>Вход</h2>
+                {serverError && (
+                    <div className='mb-4 p-2 bg-red-100 text-red-700 rounded'>
+                        {serverError}
+                    </div>
+                )}
+                <form className='flex flex-col' onSubmit={handleSubmit}>
+                    <div className='mb-4'>
+                        <Label htmlFor="email"></Label>
+                        <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="your@mail.com"
+                            className={errors.email ? "border-red-500" : ""}
+                            value={formData.email}
+                            onChange={handleChange}
+                        />
+                        {errors.email && (
+                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                        )}
+                    </div>
+                    <div className='mb-4'>
+                        <Label htmlFor="password"></Label>
+                        <Input
+                            id="password"
+                            name="password"
+                            type="password"
+                            placeholder="Пароль"
+                            className={errors.password ? "border-red-500" : ""}
+                            value={formData.password}
+                            onChange={handleChange}
+                        />
+                        {errors.password && (
+                            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                        )}
+                    </div>
+                    <Button
+                        className=""
+                        variant="default"
+                        type="submit"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        {isSubmitting ? 'Вход...' : 'Войти'}
+                    </Button>
+                    <p className='mt-4 text-center'>
+                        Нет аккаунта?
+                        <Link to='/signup' className='text-blue-400 hover:underline px-1'>
+                            Зарегистрироваться
+                        </Link>
+                    </p>
+                </form>
             </div>
         </div>
     );
