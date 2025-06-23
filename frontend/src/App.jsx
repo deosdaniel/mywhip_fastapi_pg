@@ -14,7 +14,7 @@ import NewCarForm from "./pages/NewCarForm.jsx";
 
 function App() {
     return (
-        <div className="App">
+        <div className="App bg">
             <Router>
                 <Routes>
                     <Route path="/" element={<PublicRoute><Home/></PublicRoute>}/>

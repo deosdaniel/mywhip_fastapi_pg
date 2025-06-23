@@ -10,7 +10,7 @@ export default function AppLayout() {
 
     return (
         <div className="min-h-screen ">
-            <nav className="flex  flex-wrap items-center justify-between px-4 py-2 bg-[#222] text-white mb-4">
+            <nav className="flex  flex-wrap items-center justify-between px-4 py-2 bg-secondary text-text mb-4">
                 <Link to="/" className="flex items-center gap-2">
                     <img src={logo} alt="my_whip_logo" className="h-10 w-auto object-contain"/>
                     <div className="flex flex-col leading-none">

@@ -71,9 +71,9 @@ function Login() {
 
             <div className='flex flex-col items-center justify-center h-screen'>
                 <MyWhipLogo/>
-                <div className='w-full max-w-md bg-[#222] rounded-xl shadow-md py-8 px-8'>
+                <div className='w-full max-w-md bg-white rounded-xl shadow-md py-8 px-8'>
 
-                    <h2 className='text-[28px] text-white font-bold mb-6 text-center'>Вход</h2>
+                    <h2 className='text-[28px] text-primary font-bold mb-6 text-center'>Вход</h2>
 
                     {/* Блок для отображения серверных ошибок */}
                     {serverError && (
@@ -87,41 +87,35 @@ function Login() {
                         <div className='mb-4'>
                             <input
                                 name="email"
-                                className={`bg-gray-600 text-white border-0 rounded-md p-2 w-full
-                                focus:bg-gray-400 focus:outline-none transition duration-150
-                                placeholder-gray-300 ${errors.email ? 'border-red-500' : ''}`}
+                                className={`input ${errors.email}`}
                                 type="email"
                                 value={formData.email}
                                 onChange={handleChange}
                                 placeholder="Email"
                             />
                             {errors.email && (
-                                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                                <p className="text-red-500 text-sm py-1">{errors.email}</p>
                             )}
                         </div>
 
                         {/* Поле пароля с ошибкой */}
-                        <div className='mb-1'>
+                        <div className='mb-4'>
                             <input
                                 name="password"
-                                className={`bg-gray-600 text-white border-0 rounded-md p-2 w-full
-                                focus:bg-gray-400 focus:outline-none transition duration-150
-                                placeholder-gray-300 ${errors.password ? 'border-red-500' : ''}`}
+                                className={`input ${errors.password}`}
                                 type="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 placeholder="Пароль"
                             />
                             {errors.password && (
-                                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                                <p className="text-red-500 text-sm py-1">{errors.password}</p>
                             )}
                         </div>
 
                         {/* Кнопка с состоянием загрузки */}
                         <button
-                            className={`bg-gradient-to-r from-indigo-500 to-blue-500 text-white 
-                            font-bold py-2 px-4 rounded-md mt-4 hover:bg-indigo-600 transition 
-                            duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`btn btn-primary ${isSubmitting ? 'cursor-not-allowed' : ''}`}
                             type="submit"
                             disabled={isSubmitting}
                         >
@@ -135,6 +129,7 @@ function Login() {
                             </Link>
                         </p>
                     </form>
+
                 </div>
             </div>
         </div>

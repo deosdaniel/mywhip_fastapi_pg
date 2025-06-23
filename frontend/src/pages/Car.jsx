@@ -122,14 +122,14 @@ export default function Car() {
 
     return (
         <div className="p-4">
-            <h1 className="text-white text-2xl font-bold mb-4">Карточка автомобиля</h1>
-            <div className="p-4 max-w-2xl mx-auto bg-white shadow-md rounded-lg ">
-                <button onClick={() => navigate(-1)} className="mb-4 text-blue-600 hover:underline">
+            <h1 className="text-text text-2xl font-bold mb-4">Карточка автомобиля</h1>
+            <div className="p-4 w-full bg-white shadow-md rounded-lg ">
+                <button onClick={() => navigate(-1)} className="mb-4 text-primary hover:underline">
                     ← Назад
                 </button>
-                <img src={car_photo} alt="car" className="w-full mb-4 rounded"/>
+                <img src={car_photo} alt="car" className="w-auto mb-4 rounded object-contain"/>
 
-                <h2 className="text-2xl font-bold mb-2">
+                <h2 className="text-2xl text-text font-bold mb-2">
                     {car.make} {car.model} ({car.year})
                 </h2>
 
