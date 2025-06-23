@@ -2,6 +2,8 @@ import React, {useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {login} from "../services/api";
 import MyWhipLogo from "../components/MyWhipLogo.jsx";
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input.jsx"
 
 function Login() {
     const navigate = useNavigate();
@@ -73,7 +75,7 @@ function Login() {
                 <MyWhipLogo/>
                 <div className='w-full max-w-md bg-white rounded-xl shadow-md py-8 px-8'>
 
-                    <h2 className='text-[28px] text-primary font-bold mb-6 text-center'>Вход</h2>
+                    <h2 className='text-[28px] font-bold mb-6 text-center'>Вход</h2>
 
                     {/* Блок для отображения серверных ошибок */}
                     {serverError && (
@@ -85,7 +87,7 @@ function Login() {
                     <form className='flex flex-col' onSubmit={handleSubmit}>
                         {/* Поле email с ошибкой */}
                         <div className='mb-4'>
-                            <input
+                            <Input
                                 name="email"
                                 className={`input ${errors.email}`}
                                 type="email"
@@ -100,7 +102,7 @@ function Login() {
 
                         {/* Поле пароля с ошибкой */}
                         <div className='mb-4'>
-                            <input
+                            <Input
                                 name="password"
                                 className={`input ${errors.password}`}
                                 type="password"
@@ -114,15 +116,15 @@ function Login() {
                         </div>
 
                         {/* Кнопка с состоянием загрузки */}
-                        <button
-                            className={`btn btn-primary ${isSubmitting ? 'cursor-not-allowed' : ''}`}
+                        <Button
+                            className={`btn ${isSubmitting ? 'cursor-not-allowed' : ''}`}
                             type="submit"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Вход...' : 'Войти'}
-                        </button>
+                        </Button>
 
-                        <p className='text-white mt-4 text-center'>
+                        <p className='mt-4 text-center'>
                             Нет аккаунта?
                             <Link to='/signup' className='text-blue-400 hover:underline px-1'>
                                 Зарегистрироваться
