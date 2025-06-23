@@ -75,7 +75,7 @@ function Login() {
                 <MyWhipLogo/>
                 <div className='w-full max-w-md bg-white rounded-xl shadow-md py-8 px-8'>
 
-                    <h2 className='text-[28px] font-bold mb-6 text-center'>Вход</h2>
+                    <h2 className='text-[28px] font-bold mb-2 text-center'>Вход</h2>
 
                     {/* Блок для отображения серверных ошибок */}
                     {serverError && (
@@ -89,7 +89,7 @@ function Login() {
                         <div className='mb-4'>
                             <Input
                                 name="email"
-                                className={`input ${errors.email}`}
+                                className=""
                                 type="email"
                                 value={formData.email}
                                 onChange={handleChange}
@@ -104,7 +104,7 @@ function Login() {
                         <div className='mb-4'>
                             <Input
                                 name="password"
-                                className={`input ${errors.password}`}
+                                className=""
                                 type="password"
                                 value={formData.password}
                                 onChange={handleChange}
@@ -117,7 +117,7 @@ function Login() {
 
                         {/* Кнопка с состоянием загрузки */}
                         <Button
-                            className={`btn ${isSubmitting ? 'cursor-not-allowed' : ''}`}
+                            className="btn"
                             type="submit"
                             disabled={isSubmitting}
                         >
