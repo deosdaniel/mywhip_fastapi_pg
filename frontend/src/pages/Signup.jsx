@@ -31,13 +31,13 @@ const Signup = () => {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.username.trim()) newErrors.username = 'Требуется имя пользователя';
-        if (!formData.email.trim()) newErrors.email = 'Требуется email';
+        if (!formData.username.trim()) newErrors.username = 'Введите имя пользователя';
+        if (!formData.email.trim()) newErrors.email = 'Введите email';
         else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Некорректный email';
-        if (!formData.first_name.trim()) newErrors.first_name = 'Требуется имя';
-        if (!formData.last_name.trim()) newErrors.last_name = 'Требуется фамилия';
-        if (!formData.password) newErrors.password = 'Требуется пароль';
-        else if (formData.password.length < 8) newErrors.password = 'Пароль должен быть не короче 8 символов';
+        if (!formData.first_name.trim()) newErrors.first_name = 'Введите имя';
+        if (!formData.last_name.trim()) newErrors.last_name = 'Введите фамилию';
+        if (!formData.password) newErrors.password = 'Введите пароль';
+        else if (formData.password.length < 8) newErrors.password = 'Слишком короткий пароль';
         if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Пароли не совпадают';
 
         setErrors(newErrors);
@@ -88,31 +88,41 @@ const Signup = () => {
                     </div>
                 )}
                 <form className='flex flex-col' onSubmit={handleSubmit}>
-                    <div className='flex space-x-4 mb-4'>
+                    <div className='flex space-x-4 space-y-1'>
                         <div className='w-1/2'>
                             <Input
                                 name='first_name'
-                                placeholder='Имя'
+                                placeholder='Имя*'
                                 className={errors.first_name ? "border-red-500" : ""}
                                 type='text'
                                 value={formData.first_name}
                                 onChange={handleChange}
                             />
-                            {errors.first_name && <p className='text-red-500 text-sm mt-1'>{errors.first_name}</p>}
+                            <div className="min-h-[20px]">
+                                <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.first_name ? 'opacity-100' : 'opacity-0'}`}>
+                                    {errors.first_name}
+                                </p>
+                            </div>
                         </div>
                         <div className='w-1/2'>
                             <Input
                                 name='last_name'
-                                placeholder='Фамилия'
+                                placeholder='Фамилия*'
                                 className={errors.last_name ? 'border-red-500' : ''}
                                 type='text'
                                 value={formData.last_name}
                                 onChange={handleChange}
                             />
-                            {errors.last_name && <p className='text-red-500 text-sm mt-1'>{errors.last_name}</p>}
+                            <div className="min-h-[20px]">
+                                <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.last_name ? 'opacity-100' : 'opacity-0'}`}>
+                                    {errors.last_name}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div className='mb-4'>
+                    <div className='min-h-5'>
                         <Label htmlFor="username"></Label>
                         <Input
                             name='username'
@@ -122,10 +132,15 @@ const Signup = () => {
                             value={formData.username}
                             onChange={handleChange}
                         />
-                        {errors.username && <p className='text-red-500 text-sm mt-1'>{errors.username}</p>}
+                        <div className="min-h-5">
+                            <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.username ? 'opacity-100' : 'opacity-0'}`}>
+                                {errors.username}
+                            </p>
+                        </div>
                     </div>
 
-                    <div className='mb-4'>
+                    <div className='space-y-1'>
                         <Label htmlFor="email"></Label>
                         <Input
                             name='email'
@@ -135,10 +150,15 @@ const Signup = () => {
                             value={formData.email}
                             onChange={handleChange}
                         />
-                        {errors.email && <p className='text-red-500 text-sm mt-1'>{errors.email}</p>}
+                        <div className="min-h-5">
+                            <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.email ? 'opacity-100' : 'opacity-0'}`}>
+                                {errors.email}
+                            </p>
+                        </div>
                     </div>
 
-                    <div className='mb-4'>
+                    <div className='space-y-1'>
                         <Label htmlFor="password"></Label>
                         <Input
                             name='password'
@@ -148,9 +168,14 @@ const Signup = () => {
                             value={formData.password}
                             onChange={handleChange}
                         />
-                        {errors.password && <p className='text-red-500 text-sm mt-1'>{errors.password}</p>}
+                        <div className="min-h-5">
+                            <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.password ? 'opacity-100' : 'opacity-0'}`}>
+                                {errors.password}
+                            </p>
+                        </div>
                     </div>
-                    <div className='mb-4'>
+                    <div className='space-y-1'>
                         <Label htmlFor="confirmPassword"></Label>
                         <Input
                             name='confirmPassword'
@@ -160,10 +185,15 @@ const Signup = () => {
                             value={formData.confirmPassword}
                             onChange={handleChange}
                         />
-                        {errors.confirmPassword &&
-                            <p className='text-red-500 text-sm mt-1'>{errors.confirmPassword}</p>}
+                        <div className="min-h-5">
+                            <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.confirmPassword ? 'opacity-100' : 'opacity-0'}`}>
+                                {errors.confirmPassword}
+                            </p>
+                        </div>
                     </div>
                     <Button
+                        className="mt-2"
                         variant="default"
                         type="submit"
                         disabled={isSubmitting}

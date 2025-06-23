@@ -24,6 +24,17 @@ body {
     background-color: var(--color-colorBg);
 }
 
+.error-message {
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.2s ease;
+    height: auto;
+}
+
+.error-message.show {
+    transform: scaleY(1);
+}
+
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);

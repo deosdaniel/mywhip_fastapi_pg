@@ -30,15 +30,15 @@ function Login() {
         const newErrors = {};
 
         if (!formData.email.trim()) {
-            newErrors.email = 'Требуется email';
+            newErrors.email = 'Введите email';
         } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
             newErrors.email = 'Некорректный формат email';
         }
 
         if (!formData.password) {
-            newErrors.password = 'Требуется пароль';
+            newErrors.password = 'Введите пароль';
         } else if (formData.password.length < 8) {
-            newErrors.password = 'Пароль должен быть не короче 8 символов';
+            newErrors.password = 'Слишком короткий пароль';
         }
 
         setErrors(newErrors);
@@ -83,7 +83,7 @@ function Login() {
                     </div>
                 )}
                 <form className='flex flex-col' onSubmit={handleSubmit}>
-                    <div className='mb-4'>
+                    <div className=''>
                         <Label htmlFor="email"></Label>
                         <Input
                             id="email"
@@ -94,11 +94,14 @@ function Login() {
                             value={formData.email}
                             onChange={handleChange}
                         />
-                        {errors.email && (
-                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                        )}
+                        <div className="min-h-5">
+                            <p className={`text-red-500 text-sm transition-all duration-200 ${errors.email ? 'opacity-100' : 'opacity-0'}`}>
+                                {errors.email}
+                            </p>
+                        </div>
+
                     </div>
-                    <div className='mb-4'>
+                    <div className=''>
                         <Label htmlFor="password"></Label>
                         <Input
                             id="password"
@@ -109,12 +112,15 @@ function Login() {
                             value={formData.password}
                             onChange={handleChange}
                         />
-                        {errors.password && (
-                            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-                        )}
+                        <div className="min-h-5">
+                            <p className={`text-red-500 text-sm transition-all duration-200 
+                            ${errors.password ? 'opacity-100' : 'opacity-0'}`}>
+                                {errors.password}
+                            </p>
+                        </div>
                     </div>
                     <Button
-                        className=""
+                        className="mt-2"
                         variant="default"
                         type="submit"
                         disabled={isSubmitting}
