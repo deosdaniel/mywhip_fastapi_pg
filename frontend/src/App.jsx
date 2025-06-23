@@ -1,9 +1,7 @@
 import {BrowserRouter as Router, Routes, Route, Navigate} from "react-router-dom";
-import Login from './pages/Login';
 import ProfileEdit from "./pages/ProfileEdit.jsx";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute.jsx";
-import Signup from "./pages/Signup";
 import Home from "./pages/Home.jsx";
 import AppLayout from "./pages/AppLayout.jsx";
 import CarsList from "./pages/CarList.jsx";
@@ -11,6 +9,8 @@ import Car from "./pages/Car.jsx";
 import Profile from "./pages/Profile.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import NewCarForm from "./pages/NewCarForm.jsx";
+import LoginPage from "./pages/Login.jsx";
+import SignUpPage from "@/pages/Signup.jsx";
 
 function App() {
     return (
@@ -18,9 +18,8 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<PublicRoute><Home/></PublicRoute>}/>
-                    <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}/>
-                    <Route path="/signup" element={<PublicRoute><Signup/></PublicRoute>}/>
-
+                    <Route path="/login" element={<PublicRoute><LoginPage/></PublicRoute>}/>
+                    <Route path="/signup" element={<PublicRoute><SignUpPage/></PublicRoute>}/>
                     <Route path="/app" element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>
                         <Route index element={<Navigate to="cars"/>}/>
                         <Route path="cars" element={<CarsList/>}/>
