@@ -6,6 +6,8 @@ import CarEditForm from "../components/CarEditForm";
 import CarDetails from "../components/CarDetails";
 import ExpenseTable from "../components/ExpenseTable";
 import NewExpenseModal from "../components/NewExpenseModal";
+import {Button} from "@/components/ui/button.jsx";
+import {ChevronLeftIcon} from "lucide-react";
 
 const statuses = ["FRESH", "REPAIRING", "DETAILING", "LISTED", "SOLD"];
 
@@ -124,22 +126,24 @@ export default function Car() {
     if (error) return <div className="p-4 text-red-600">{error}</div>;
     if (!car) return null;
     return (
-        <div className="px-12 md:px-36">
-            <h1 className="text-text text-2xl font-bold py-4">Карточка автомобиля</h1>
-
-            <div className="p-4 md:p-8 w-full bg-white shadow-md rounded-lg ">
-                <button onClick={() => navigate(-1)} className="mb-4 text-primary hover:underline">
-                    ← Назад
-                </button>
-                <h2 className="text-2xl text-text font-bold mb-2">
+        <div className="px-6 md:px-36">
+            <div className="flex items-center  py-4 gap-4">
+                <Button variant="secondary" size="icon" className="cursor-pointer size-8" onClick={() => navigate(-1)}>
+                    <ChevronLeftIcon/>
+                </Button>
+                <h2 className="text-2xl text-text font-bold">
                     {car.make} {car.model} ({car.year})
                 </h2>
+            </div>
+            <div className="md:p-8 w-full bg-white shadow-md rounded-lg overflow-hidden">
+                <img
+                    src={car_photo}
+                    alt="car"
+                    className="w-full md:w-1/2 object-contain"
+                />
+
                 <div className="flex flex-col items-start  md:flex-row gap-x-4">
-                    <img
-                        src={car_photo}
-                        alt="car"
-                        className="w-full md:w-1/2 mb-4 rounded object-contain"
-                    />
+
 
                     {editMode ? (
                         <CarEditForm

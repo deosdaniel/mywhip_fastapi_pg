@@ -2,6 +2,7 @@ import {NavLink, useNavigate} from "react-router-dom";
 import {Button} from "@/components/ui/button.jsx";
 import MyWhipLogo from "@/components/MyWhipLogo.jsx";
 import {useState} from "react";
+import {Menu} from "lucide-react"
 
 export default function NavBar() {
     const navigate = useNavigate();
@@ -42,11 +43,9 @@ export default function NavBar() {
                     Exit
                 </Button>
             </div>
-            <div className="md:hidden flex items-center">
-                <i
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className=" bx bx-menu cursor-pointer  text-3xl block  "
-                ></i>
+            <div
+                className={`md:hidden flex items-center cursor-pointer hover:bg-accent p-2 rounded-md ${isMenuOpen ? "bg-accent" : ""}`}>
+                <Menu onClick={() => setIsMenuOpen(!isMenuOpen)}/>
             </div>
             <div
                 className={`absolute md:hidden top-14 left-0 w-full bg-background flex flex-col items-center

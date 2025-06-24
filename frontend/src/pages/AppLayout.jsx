@@ -11,7 +11,7 @@ export default function AppLayout() {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen m-0 p-0">
             <NavBar/>
             <main className="pt-16">
                 <Outlet/>
