@@ -68,7 +68,9 @@ export default function Car() {
             console.error("Error while updating car data:", error);
             const details = error.response?.data?.detail;
             if (Array.isArray(details)) {
-                const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join("\n");
+                const messages = details
+                    .map((err, idx) => `${idx + 1}) ${err.msg}`)
+                    .join("\n");
                 alert(`Ошибки валидации:\n${messages}`);
             } else {
                 alert(`Ошибка валидации: ${details || "Неизвестная ошибка"}`);
@@ -105,10 +107,12 @@ export default function Car() {
             });
             setExpenses(res.data.result.content || []);
         } catch (err) {
-            console.error("Error while creating expense:", err)
+            console.error("Error while creating expense:", err);
             const details = err.response?.data?.detail;
             if (Array.isArray(details)) {
-                const messages = details.map((err, idx) => `${idx + 1}) ${err.msg}`).join("\n");
+                const messages = details
+                    .map((err, idx) => `${idx + 1}) ${err.msg}`)
+                    .join("\n");
                 alert(`Ошибки валидации:\n${messages}`);
             } else {
                 alert(`Ошибка валидации: ${details || "Неизвестная ошибка"}`);
@@ -119,32 +123,36 @@ export default function Car() {
     if (loading) return <div className="p-4">Загрузка...</div>;
     if (error) return <div className="p-4 text-red-600">{error}</div>;
     if (!car) return null;
-
     return (
-        <div className="p-4">
-            <h1 className="text-text text-2xl font-bold mb-4">Карточка автомобиля</h1>
-            <div className="p-4 w-full bg-white shadow-md rounded-lg ">
-                <button onClick={() => navigate(-1)} className="mb-4 text-primary hover:underline">
+        <div className="px-12 md:px-36">
+            <h1 className="text-text text-2xl font-bold py-4">Карточка автомобиля</h1>
+
+            <div className="p-4 md:p-8 w-full bg-white shadow-md rounded-lg ">
+                <button onClick={() => navigate(-1)} className="mb-4 text-primary hover:underline relative">
                     ← Назад
                 </button>
-                <img src={car_photo} alt="car" className="w-auto mb-4 rounded object-contain"/>
-
                 <h2 className="text-2xl text-text font-bold mb-2">
                     {car.make} {car.model} ({car.year})
                 </h2>
-
-                {editMode ? (
-                    <CarEditForm
-                        formData={formData}
-                        setFormData={setFormData}
-                        onSave={handleUpdate}
-                        onCancel={() => setEditMode(false)}
-                        statuses={statuses}
+                <div className="flex flex-col items-start  md:flex-row gap-x-4">
+                    <img
+                        src={car_photo}
+                        alt="car"
+                        className="w-full md:w-1/2 mb-4 rounded object-contain"
                     />
-                ) : (
-                    <CarDetails car={car} onEdit={() => setEditMode(true)}/>
-                )}
 
+                    {editMode ? (
+                        <CarEditForm
+                            formData={formData}
+                            setFormData={setFormData}
+                            onSave={handleUpdate}
+                            onCancel={() => setEditMode(false)}
+                            statuses={statuses}
+                        />
+                    ) : (
+                        <CarDetails car={car} onEdit={() => setEditMode(true)}/>
+                    )}
+                </div>
                 <div className="mt-8">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-xl font-bold">Расходы</h2>
