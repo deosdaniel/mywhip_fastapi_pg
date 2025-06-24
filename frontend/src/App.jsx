@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound.jsx";
 import NewCarForm from "./pages/NewCarForm.jsx";
 import LoginPage from "./pages/Login.jsx";
 import SignUpPage from "@/pages/Signup.jsx";
+import NavBar from "./components/NavBar.jsx"
 
 function App() {
     return (
@@ -18,6 +19,8 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<PublicRoute><Home/></PublicRoute>}/>
+                    <Route path="/nav" element={<PublicRoute><NavBar/></PublicRoute>}/>
+
                     <Route path="/login" element={<PublicRoute><LoginPage/></PublicRoute>}/>
                     <Route path="/signup" element={<PublicRoute><SignUpPage/></PublicRoute>}/>
                     <Route path="/app" element={<ProtectedRoute><AppLayout/></ProtectedRoute>}>

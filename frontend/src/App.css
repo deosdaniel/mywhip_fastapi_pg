@@ -4,8 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@plugin "daisyui";
-
 @theme {
     --color-colorBg: #dadada;
     --color-color1: #3B82F6;
@@ -17,8 +15,6 @@
 }
 
 body {
-    display: flex;
-    justify-content: center;
     min-height: 100vh;
     font-family: 'Poppins', sans-serif;
     background-color: var(--color-colorBg);
