@@ -9,11 +9,9 @@ export default function CarCard({car}) {
             className="flex flex-col bg-card hover:bg-accent rounded-md shadow-sm hover:shadow-md transition h-60 overflow-hidden"
         >
             <div className='h-full w-full overflow-hidden'>
-                <div className="relative h-full flex">
+                <div className=" h-full flex ">
                     <img src={image} alt={`${car.make} ${car.model}`}
                          className="w-full object-cover object-center"/>
-                    <div
-                        className="absolute inset-0 w-full bg-gradient-to-tr from-accent/20 to-transparent"></div>
                 </div>
             </div>
             <div className="p-4 flex-1 flex-col justify-between">

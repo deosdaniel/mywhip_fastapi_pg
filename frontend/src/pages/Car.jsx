@@ -128,7 +128,7 @@ export default function Car() {
             <h1 className="text-text text-2xl font-bold py-4">Карточка автомобиля</h1>
 
             <div className="p-4 md:p-8 w-full bg-white shadow-md rounded-lg ">
-                <button onClick={() => navigate(-1)} className="mb-4 text-primary hover:underline relative">
+                <button onClick={() => navigate(-1)} className="mb-4 text-primary hover:underline">
                     ← Назад
                 </button>
                 <h2 className="text-2xl text-text font-bold mb-2">
