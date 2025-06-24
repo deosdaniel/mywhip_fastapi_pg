@@ -13,7 +13,7 @@ export default function NavBar() {
 
     return (
         <div
-            className="fixed top-0 left-0 right-0 flex justify-between items-center
+            className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center
       py-2 px-12 bg-white shadow
       md:px-36"
         >
