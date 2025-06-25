@@ -12,6 +12,9 @@ import CarInfo from "@/components/CarInfo.jsx";
 import CarStats from "@/components/CarStats.jsx";
 import CarAds from "@/components/CarAds.jsx";
 import CarNotes from "@/components/CarNotes.jsx";
+import {SquarePen} from "lucide-react"
+import EditCarModal from "@/components/EditCarModal.jsx";
+
 
 const statuses = ["FRESH", "REPAIRING", "DETAILING", "LISTED", "SOLD"];
 
@@ -130,17 +133,22 @@ export default function Car() {
     if (error) return <div className="p-4 text-red-600">{error}</div>;
     if (!car) return null;
     return (
-        <div className="px-6 md:px-36">
-            <div className="flex items-center  py-4 gap-4">
+        <div className="px-6 md:px-28 flex-col justify-center">
+            <div className="flex items-center py-4 gap-4">
                 <Button variant="secondary" size="icon" className="cursor-pointer size-8" onClick={() => navigate(-1)}>
                     <ChevronLeftIcon/>
                 </Button>
                 <h2 className="text-2xl text-text font-bold">
                     {car.make} {car.model} ({car.year})
                 </h2>
+
             </div>
             <div className="w-full bg-white shadow-md rounded-lg overflow-hidden relative">
                 <p className="absolute top-4 left-4 text-primary bg-green-200 py-1 px-4 rounded-md shadow">{car.status}</p>
+                <Button variant="secondary" className="absolute top-4 right-4 cursor-pointer"
+                        onClick={() => setEditMode(true)}>
+                    <SquarePen className=""/>
+                </Button>
                 <img
                     src={car_photo}
                     alt="car"
@@ -149,39 +157,32 @@ export default function Car() {
             </div>
 
             <div>
-                {editMode ? (
-                    <CarEditForm
-                        formData={formData}
-                        setFormData={setFormData}
-                        onSave={handleUpdate}
-                        onCancel={() => setEditMode(false)}
-                        statuses={statuses}
-                    />
-                ) : (<div className="flex flex-col gap-2">
-                        <CarDetails car={car} onEdit={() => setEditMode(true)}/>
-                        <CarInfo car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarInfo>
-                        <CarStats car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarStats>
-                        <CarAds car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarAds>
-                        <CarNotes car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarNotes>
+                <div className="flex flex-col gap-2 py-2">
+
+                    <CarInfo car={car} className="w-full grid md:grid-cols-2 bg-white shadow-md rounded-lg p-4"/>
+                    <CarStats car={car} className="w-full grid md:grid-cols-2 bg-white shadow-md rounded-lg p-4"/>
+                    <CarAds car={car} className="w-full bg-white shadow-md rounded-lg p-4"/>
+                    <CarNotes car={car} className="w-full bg-white shadow-md rounded-lg p-4"/>
+                    <div className="w-full bg-white shadow-md rounded-lg p-4">
+                        <div className="flex flex-row justify-between items-center mb-2">
+                            <h2 className="text-xl font-bold">Расходы</h2>
+                            <button
+                                onClick={() => setShowExpenseModal(true)}
+                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            >
+                                + Добавить расход
+                            </button>
+                        </div>
+                        <ExpenseTable
+                            expenses={expenses}
+                            loading={expensesLoading}
+                            error={expensesError}
+                            onDelete={handleDeleteExpense}
+                            className="overflow-x-auto"
+                        />
                     </div>
-                )}
-                <div className="mt-8">
-                    <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-xl font-bold">Расходы</h2>
-                        <button
-                            onClick={() => setShowExpenseModal(true)}
-                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                        >
-                            + Добавить расход
-                        </button>
-                    </div>
-                    <ExpenseTable
-                        expenses={expenses}
-                        loading={expensesLoading}
-                        error={expensesError}
-                        onDelete={handleDeleteExpense}
-                    />
                 </div>
+
             </div>
             {showExpenseModal && (
                 <NewExpenseModal
@@ -189,6 +190,15 @@ export default function Car() {
                     setNewExpense={setNewExpense}
                     onClose={() => setShowExpenseModal(false)}
                     onSubmit={handleAddExpense}
+                />
+            )}
+            {editMode && (
+                <EditCarModal
+                    formData={formData}
+                    setFormData={setFormData}
+                    onSave={handleUpdate}
+                    onClose={() => setEditMode(false)}
+                    statuses={statuses}
                 />
             )}
         </div>

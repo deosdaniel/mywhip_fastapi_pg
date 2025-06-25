@@ -1,9 +1,25 @@
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
+
 export default function CarEditForm({formData, setFormData, onSave, onCancel, statuses}) {
     const handleChange = (e) => {
         const {name, value, type} = e.target;
         let val = value;
         if (type === "number") val = value === "" ? "" : Number(value);
         setFormData(prev => ({...prev, [name]: val}));
+    };
+
+    const handleSelectChange = (value) => {
+        setFormData(prev => ({...prev, status: value}));
     };
 
     const handleSubmit = () => {
@@ -30,54 +46,74 @@ export default function CarEditForm({formData, setFormData, onSave, onCancel, st
     };
 
     return (
-        <div>
-            <div className="mb-2">
-                <label className="block text-sm font-semibold">Статус:</label>
-                <select name="status" value={formData.status || ""} onChange={handleChange}
-                        className="w-full border rounded px-2 py-1">
-                    <option value="" disabled>Выберите статус</option>
-                    {statuses.map(status => <option key={status} value={status}>{status}</option>)}
-                </select>
+        <div className="space-y-4">
+            <div>
+                <Label>Статус</Label>
+                <Select value={formData.status || ""} onValueChange={handleSelectChange}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Выберите статус"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {statuses.map(status => (
+                            <SelectItem key={status} value={status}>
+                                {status}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
-            <div className="mb-2">
-                <label className="block text-sm font-semibold">Цена покупки:</label>
-                <input type="number" name="price_purchased" value={formData.price_purchased || ""}
-                       onChange={handleChange} className="w-full border rounded px-2 py-1"/>
+            <div>
+                <Label>Цена покупки</Label>
+                <Input
+                    type="number"
+                    name="price_purchased"
+                    value={formData.price_purchased || ""}
+                    onChange={handleChange}
+                />
             </div>
 
-            {["date_listed", "price_listed", "date_sold", "price_sold"].map(field => (
-                <div key={field} className="mb-2">
-                    <label className="block text-sm font-semibold">{field.replace("_", " ")}:</label>
-                    <input type={field.includes("date") ? "date" : "number"}
-                           name={field}
-                           value={formData[field] || ""}
-                           onChange={handleChange}
-                           className="w-full border rounded px-2 py-1"/>
+            {["date_listed", "price_listed", "date_sold", "price_sold"].map((field) => (
+                <div key={field}>
+                    <Label>{field.replace("_", " ")}</Label>
+                    <Input
+                        type={field.includes("date") ? "date" : "number"}
+                        name={field}
+                        value={formData[field] || ""}
+                        onChange={handleChange}
+                    />
                 </div>
             ))}
 
-            {["autoteka_link", "avito_link", "autoru_link", "drom_link"].map(field => (
-                <div key={field} className="mb-2">
-                    <label className="block text-sm font-semibold">{field.replace("_", " ")}:</label>
-                    <input type="text" name={field} value={formData[field] || ""} onChange={handleChange}
-                           className="w-full border rounded px-2 py-1"/>
+            {["autoteka_link", "avito_link", "autoru_link", "drom_link"].map((field) => (
+                <div key={field}>
+                    <Label>{field.replace("_", " ")}</Label>
+                    <Input
+                        type="text"
+                        name={field}
+                        value={formData[field] || ""}
+                        onChange={handleChange}
+                    />
                 </div>
             ))}
 
-            <div className="mb-2">
-                <label className="block text-sm font-semibold">Заметки:</label>
-                <textarea name="notes" value={formData.notes || ""} onChange={handleChange}
-                          className="w-full border rounded px-2 py-1" rows={4}/>
+            <div>
+                <Label>Заметки</Label>
+                <Textarea
+                    name="notes"
+                    value={formData.notes || ""}
+                    onChange={handleChange}
+                    rows={4}
+                />
             </div>
 
-            <div className="flex gap-2 mt-4">
-                <button onClick={handleSubmit} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                    Сохранить
-                </button>
-                <button onClick={onCancel} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+            <div className="flex justify-end gap-2 pt-2">
+                <Button variant="secondary" onClick={onCancel}>
                     Отмена
-                </button>
+                </Button>
+                <Button onClick={handleSubmit}>
+                    Сохранить
+                </Button>
             </div>
         </div>
     );

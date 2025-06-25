@@ -1,5 +1,4 @@
 import {SquarePen} from "lucide-react"
-import CarInfo from "@/components/CarInfo.jsx";
 
 export default function CarDetails({car, onEdit}) {
     return (

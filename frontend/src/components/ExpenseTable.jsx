@@ -1,4 +1,4 @@
-export default function ExpenseTable({expenses, loading, error, onDelete}) {
+export default function ExpenseTable({expenses, loading, error, onDelete, className}) {
     if (loading) return <p>Загрузка расходов...</p>;
     if (error) return <p className="text-red-600">{error}</p>;
 
@@ -7,7 +7,8 @@ export default function ExpenseTable({expenses, loading, error, onDelete}) {
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className={className}>
+            
             <table className="min-w-full bg-white border border-gray-300 text-sm">
                 <thead className="bg-gray-200">
                 <tr>
