@@ -18,7 +18,7 @@ export default function CarCard({car}) {
                     <h2 className="text-xl sm:text-xl font-semibold text-primary">{car.make} {car.model}</h2>
                     <p className="text-gray-600 text-sm">{car.year}</p>
                 </div>
-                <p className="text-primary bg-green-100 py-1 px-4 rounded-md border-white">{car.status}</p>
+                <p className="text-primary bg-green-200 py-1 px-4 rounded-md border-white">{car.status}</p>
 
             </div>
         </Link>

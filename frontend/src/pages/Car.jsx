@@ -8,6 +8,10 @@ import ExpenseTable from "../components/ExpenseTable";
 import NewExpenseModal from "../components/NewExpenseModal";
 import {Button} from "@/components/ui/button.jsx";
 import {ChevronLeftIcon} from "lucide-react";
+import CarInfo from "@/components/CarInfo.jsx";
+import CarStats from "@/components/CarStats.jsx";
+import CarAds from "@/components/CarAds.jsx";
+import CarNotes from "@/components/CarNotes.jsx";
 
 const statuses = ["FRESH", "REPAIRING", "DETAILING", "LISTED", "SOLD"];
 
@@ -135,28 +139,32 @@ export default function Car() {
                     {car.make} {car.model} ({car.year})
                 </h2>
             </div>
-            <div className="md:p-8 w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <div className="w-full bg-white shadow-md rounded-lg overflow-hidden relative">
+                <p className="absolute top-4 left-4 text-primary bg-green-200 py-1 px-4 rounded-md shadow">{car.status}</p>
                 <img
                     src={car_photo}
                     alt="car"
-                    className="w-full md:w-1/2 object-contain"
+                    className="w-full object-contain"
                 />
+            </div>
 
-                <div className="flex flex-col items-start  md:flex-row gap-x-4">
-
-
-                    {editMode ? (
-                        <CarEditForm
-                            formData={formData}
-                            setFormData={setFormData}
-                            onSave={handleUpdate}
-                            onCancel={() => setEditMode(false)}
-                            statuses={statuses}
-                        />
-                    ) : (
+            <div>
+                {editMode ? (
+                    <CarEditForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        onSave={handleUpdate}
+                        onCancel={() => setEditMode(false)}
+                        statuses={statuses}
+                    />
+                ) : (<div className="flex flex-col gap-2">
                         <CarDetails car={car} onEdit={() => setEditMode(true)}/>
-                    )}
-                </div>
+                        <CarInfo car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarInfo>
+                        <CarStats car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarStats>
+                        <CarAds car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarAds>
+                        <CarNotes car={car} className="w-full bg-white shadow-md rounded-lg p-4"></CarNotes>
+                    </div>
+                )}
                 <div className="mt-8">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-xl font-bold">Расходы</h2>
