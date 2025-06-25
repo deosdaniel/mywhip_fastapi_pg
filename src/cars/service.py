@@ -2,7 +2,6 @@ import math
 from typing import Optional
 from uuid import UUID
 
-from alembic.command import current
 from fastapi import HTTPException, status
 from src.utils.schemas_common import PageResponse
 from .models import Cars, Expenses
@@ -18,6 +17,7 @@ from src.utils.exceptions import VinBusyException, EntityNotFoundException
 from src.directories.service import DirectoryService
 from ..users.schemas import UserSchema, UserRole
 from ..utils.base_service_repo import BaseService
+from ..utils.normalize_make_model import normalize_make_model
 
 
 # Cars
@@ -39,8 +39,8 @@ class CarService(BaseService[CarsRepository]):
         await self.dir_service.validate_make_model(car_data.make, car_data.model)
 
         new_car_dict = car_data.model_dump()
-        new_car_dict["make"] = car_data.make.lower().capitalize()
-        new_car_dict["model"] = car_data.model.lower().capitalize()
+        new_car_dict["make"] = normalize_make_model(car_data.make)
+        new_car_dict["model"] = normalize_make_model(car_data.model)
         new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
