@@ -1,3 +1,14 @@
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell, TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {X} from "lucide-react"
+
 export default function ExpenseTable({expenses, loading, error, onDelete, className}) {
     if (loading) return <p>Загрузка расходов...</p>;
     if (error) return <p className="text-red-600">{error}</p>;
@@ -8,43 +19,48 @@ export default function ExpenseTable({expenses, loading, error, onDelete, classN
 
     return (
         <div className={className}>
-            
-            <table className="min-w-full bg-white border border-gray-300 text-sm">
-                <thead className="bg-gray-200">
-                <tr>
-                    <th className="px-3 py-2 border">№</th>
-                    <th className="px-3 py-2 border text-left">Название</th>
-                    <th className="px-3 py-2 border text-right">Сумма</th>
-                    <th className="px-3 py-2 border">Дата</th>
-                    <th className="px-3 py-2 border">Пользователь</th>
-                    <th className="px-3 py-2 border text-center">Удалить</th>
-                </tr>
-                </thead>
-                <tbody>
-                {expenses.map((exp, idx) => (
-                    <tr key={exp.uid} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 border text-center">{idx + 1}</td>
-                        <td className="px-3 py-2 border">{exp.name}</td>
-                        <td className="px-3 py-2 border text-right">{exp.exp_summ.toLocaleString()} ₽</td>
-                        <td className="px-3 py-2 border text-center">
-                            {new Date(exp.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-3 py-2 border text-center">
-                            {exp.user?.email || "-"}
-                        </td>
-                        <td className="px-3 py-2 border text-center">
-                            <button
-                                onClick={() => onDelete(exp.uid)}
-                                className="text-red-600 hover:text-red-800"
-                                title="Удалить расход"
-                            >
-                                ❌
-                            </button>
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
+            <Table>
+                <TableHeader className="bg-accent">
+                    <TableRow>
+                        <TableHead className="font-bold">№</TableHead>
+                        <TableHead className="font-bold">Название</TableHead>
+                        <TableHead className="font-bold">Сумма</TableHead>
+                        <TableHead className="font-bold">Дата</TableHead>
+                        {/*<TableHead className="">Пользователь</TableHead>*/}
+                        <TableHead className=""></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {expenses.map((exp, idx) => (
+                        <TableRow key={exp.uid} className="">
+                            <TableCell className="">{idx + 1}</TableCell>
+                            <TableCell className="">{exp.name}</TableCell>
+                            <TableCell
+                                className="">{exp.exp_summ.toLocaleString()} ₽</TableCell>
+                            <TableCell className="">
+                                {new Date(exp.created_at).toLocaleDateString()}
+                            </TableCell>
+                            {/*<TableCell className="">
+                                {exp.user?.email || "-"}
+                            </TableCell>*/}
+                            <TableCell className="">
+                                <X
+                                    onClick={() => onDelete(exp.uid)}
+                                    className="text-red-700 cursor-pointer"
+                                    title="Удалить"
+                                >
+                                </X>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+                <TableFooter>
+                    <TableRow>
+                        <TableCell colSpan={2} className="font-bold">Всего вложений:</TableCell>
+                        <TableCell colSpan={3} className="">{10000} ₽</TableCell>
+                    </TableRow>
+                </TableFooter>
+            </Table>
         </div>
     );
 }

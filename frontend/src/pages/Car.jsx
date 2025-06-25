@@ -7,14 +7,12 @@ import CarDetails from "../components/CarDetails";
 import ExpenseTable from "../components/ExpenseTable";
 import NewExpenseModal from "../components/NewExpenseModal";
 import {Button} from "@/components/ui/button.jsx";
-import {ChevronLeftIcon} from "lucide-react";
+import {ChevronLeftIcon, SquarePen, Plus} from "lucide-react";
 import CarInfo from "@/components/CarInfo.jsx";
 import CarStats from "@/components/CarStats.jsx";
 import CarAds from "@/components/CarAds.jsx";
 import CarNotes from "@/components/CarNotes.jsx";
-import {SquarePen} from "lucide-react"
 import EditCarModal from "@/components/EditCarModal.jsx";
-
 
 const statuses = ["FRESH", "REPAIRING", "DETAILING", "LISTED", "SOLD"];
 
@@ -166,12 +164,12 @@ export default function Car() {
                     <div className="w-full bg-white shadow-md rounded-lg p-4">
                         <div className="flex flex-row justify-between items-center mb-2">
                             <h2 className="text-xl font-bold">Расходы</h2>
-                            <button
+                            <Button
                                 onClick={() => setShowExpenseModal(true)}
-                                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                className="px-4 py-2 bg-green-600 text-white rounded:md hover:bg-green-700"
                             >
-                                + Добавить расход
-                            </button>
+                                <Plus/>
+                            </Button>
                         </div>
                         <ExpenseTable
                             expenses={expenses}
