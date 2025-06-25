@@ -1,51 +1,67 @@
-export default function NewExpenseModal({newExpense, setNewExpense, onClose, onSubmit}) {
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button.jsx";
+
+export default function NewExpenseModal({newExpense, setNewExpense, onClose, onSubmit, open, setOpen}) {
     const handleChange = (e) => {
         const {name, value} = e.target;
         setNewExpense(prev => ({...prev, [name]: value}));
     };
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full">
-                <h2 className="text-lg font-bold mb-4">Добавить расход</h2>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Добавить расход</DialogTitle>
+                    <DialogDescription>
+                        Заполните поля ниже для добавления нового расхода.
+                    </DialogDescription>
+                </DialogHeader>
 
-                <div className="mb-4">
-                    <label className="block mb-1 font-semibold">Название:</label>
-                    <input
-                        type="text"
-                        name="name"
-                        value={newExpense.name}
-                        onChange={handleChange}
-                        className="w-full border px-3 py-2 rounded"
-                    />
+                <div className="grid gap-4 py-4">
+                    <div className="flex flex-col space-y-1">
+                        <label htmlFor="name" className="font-semibold">Название:</label>
+                        <input
+                            id="name"
+                            type="text"
+                            name="name"
+                            value={newExpense.name}
+                            onChange={handleChange}
+                            className="w-full rounded border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                            autoComplete="off"
+                        />
+                    </div>
+
+                    <div className="flex flex-col space-y-1">
+                        <label htmlFor="exp_summ" className="font-semibold">Сумма (₽):</label>
+                        <input
+                            id="exp_summ"
+                            type="number"
+                            name="exp_summ"
+                            value={newExpense.exp_summ}
+                            onChange={handleChange}
+                            className="w-full rounded border border-input px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                            autoComplete="off"
+                        />
+                    </div>
                 </div>
 
-                <div className="mb-4">
-                    <label className="block mb-1 font-semibold">Сумма (₽):</label>
-                    <input
-                        type="number"
-                        name="exp_summ"
-                        value={newExpense.exp_summ}
-                        onChange={handleChange}
-                        className="w-full border px-3 py-2 rounded"
-                    />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                    <button
-                        onClick={onSubmit}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                    >
-                        Добавить
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-                    >
+                <DialogFooter className="flex justify-end gap-2">
+                    <Button variant="secondary" onClick={() => setOpen(false)}>
                         Отмена
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                    <Button onClick={onSubmit}>
+                        Добавить
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -8,13 +8,13 @@ export default function CarAds({car, className}) {
     return (
         <div className={className}>
             <div className="flex justify-between">
-                <Button>
+                <Button variant="secondary">
                     <a href={car.avito_link} target="_blank" rel="noopener noreferrer">Avito</a>
                 </Button>
-                <Button>
+                <Button variant="secondary">
                     <a href={car.autoru_link} target="_blank" rel="noopener noreferrer">Auto.ru</a>
                 </Button>
-                <Button>
+                <Button variant="secondary">
                     <a href={car.drom_link} target="_blank" rel="noopener noreferrer">Drom</a>
                 </Button>
             </div>

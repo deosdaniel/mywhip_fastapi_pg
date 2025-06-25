@@ -18,9 +18,8 @@ export default function NavBar() {
       py-2 px-12 bg-white shadow
       md:px-36"
         >
-            <a>
-                <MyWhipLogo className="scale-80 "></MyWhipLogo>
-            </a>
+            <MyWhipLogo className="scale-80 "></MyWhipLogo>
+
             <ul className="hidden md:flex items-center gap-2">
                 <li>
                     <NavLink to="cars">
