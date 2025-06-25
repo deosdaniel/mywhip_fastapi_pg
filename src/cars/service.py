@@ -11,6 +11,8 @@ from .schemas import (
     CarUpdateSchema,
     ExpensesCreateSchema,
     GetAllFilter,
+    CarSchema,
+    CarStats,
 )
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
@@ -18,6 +20,26 @@ from src.directories.service import DirectoryService
 from ..users.schemas import UserSchema, UserRole
 from ..utils.base_service_repo import BaseService
 from ..utils.normalize_make_model import normalize_make_model
+
+
+def calculate_stats(car: CarSchema) -> CarStats:
+    total_expenses = sum(exp.exp_summ for exp in car.expenses or [])
+    total_cost = car.price_purchased + total_expenses
+
+    potential_profit = (car.price_listed - total_cost) if car.price_listed else 0
+    potential_margin = potential_profit / total_cost if total_cost else 0
+
+    profit = (car.price_sold - total_cost) if car.price_sold else 0
+    margin = profit / total_cost if total_cost else 0
+
+    return CarStats(
+        total_expenses=total_expenses,
+        total_cost=total_cost,
+        potential_profit=potential_profit,
+        potential_margin=round(potential_margin * 100, 2),
+        profit=profit,
+        margin=round(margin * 100, 2),
+    )
 
 
 # Cars
@@ -79,6 +101,7 @@ class CarService(BaseService[CarsRepository]):
 
     async def get_car_with_owner_check(self, car_uid: str, current_user: UserSchema):
         car = await self.get_by_uid(Cars, car_uid)
+        stats = calculate_stats(car)
         if not car:
             raise EntityNotFoundException("car_uid")
         if current_user.role != UserRole.ADMIN and str(car.owner_uid) != str(
@@ -87,7 +110,9 @@ class CarService(BaseService[CarsRepository]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
-        return car
+        return CarSchema.model_validate(car, from_attributes=True).model_copy(
+            update={"stats": stats}
+        )
 
     async def update_car(
         self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema

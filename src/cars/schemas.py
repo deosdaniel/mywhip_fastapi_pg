@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from datetime import datetime, date
 import uuid
 from enum import Enum
@@ -10,7 +10,7 @@ from src.utils.db_types import UUIDString
 """Status choice"""
 
 
-class CarStatusChoices(Enum):
+class CarStatusChoices(str, Enum):
     FRESH = "FRESH"
     REPAIRING = "REPAIRING"
     DETAILING = "DETAILING"
@@ -63,6 +63,17 @@ class CarUpdateSchema(BaseModel):
     status: Optional[CarStatusChoices] = None
 
 
+class CarStats(BaseModel):
+    total_expenses: int = None
+    total_cost: int = None
+    potential_profit: int = None
+    potential_margin: float = None
+    profit: int = None
+    margin: float = None
+    # days_from_purchased: int
+    # days_from_listed: int
+
+
 class CarSchema(BaseModel):
     uid: uuid.UUID
     owner_uid: uuid.UUID
@@ -86,6 +97,7 @@ class CarSchema(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = created_at
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
+    stats: CarStats | None = None
     expenses: List["ExpensesSchema"] | None = None
 
 
