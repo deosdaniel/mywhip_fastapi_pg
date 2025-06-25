@@ -21,7 +21,7 @@ export default function NewExpenseModal({newExpense, setNewExpense, onClose, onS
                 <DialogHeader>
                     <DialogTitle>Добавить расход</DialogTitle>
                     <DialogDescription>
-                        Заполните поля ниже для добавления нового расхода.
+                        Заполните поля ниже для добавления нового вложения.
                     </DialogDescription>
                 </DialogHeader>
 

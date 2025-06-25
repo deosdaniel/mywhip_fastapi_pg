@@ -20,7 +20,7 @@ export default function ExpenseTable({car_uid, className}) {
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [newExpense, setNewExpense] = useState({name: "", exp_summ: ""});
 
-    // Загрузка расходов
+    // Загрузка вложений
     useEffect(() => {
         const fetchExpenses = async () => {
             setLoading(true);
@@ -31,7 +31,7 @@ export default function ExpenseTable({car_uid, className}) {
                 });
                 setExpenses(res.data.result.content || []);
             } catch (err) {
-                setError("Не удалось загрузить расходы.");
+                setError("Не удалось загрузить вложения.");
             } finally {
                 setLoading(false);
             }
@@ -40,12 +40,12 @@ export default function ExpenseTable({car_uid, className}) {
     }, [car_uid]);
 
     const handleDelete = async (expense_uid) => {
-        if (!window.confirm("Вы уверены, что хотите удалить этот расход?")) return;
+        if (!window.confirm("Вы уверены, что хотите удалить это вложение?")) return;
         try {
             await api.delete(`/cars/${car_uid}/expenses/${expense_uid}`);
             setExpenses((prev) => prev.filter((exp) => exp.uid !== expense_uid));
         } catch (err) {
-            alert("Не удалось удалить расход.");
+            alert("Не удалось удалить вложение.");
         }
     };
 
@@ -55,7 +55,7 @@ export default function ExpenseTable({car_uid, className}) {
             return;
         }
         try {
-            await api.post(`/cars/${car_uid}/expenses`, {
+            await api.post(`/cars/${car_uid}`, {
                 name: newExpense.name,
                 exp_summ: Number(newExpense.exp_summ),
             });
@@ -83,7 +83,7 @@ export default function ExpenseTable({car_uid, className}) {
     return (
         <div className={className}>
             <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-bold">Расходы</h2>
+                <h2 className="text-xl font-bold">Вложения</h2>
                 <Button onClick={() => setShowExpenseModal(true)} variant="secondary"
                         className="flex items-center gap-1">
                     <Plus/> Добавить
