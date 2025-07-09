@@ -47,7 +47,9 @@ class CarsRepository(BaseRepository):
     ):
         statement = (
             select(Cars)
-            .outerjoin(CarUserLink, Cars.uid == CarUserLink.car_uid)
+            .outerjoin(  # technically a LEFT JOIN
+                CarUserLink, Cars.uid == CarUserLink.car_uid
+            )
             .where(
                 or_(
                     Cars.primary_owner_uid == owner_uid,
