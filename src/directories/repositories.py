@@ -1,13 +1,21 @@
+from typing import Optional
+from uuid import UUID
+
 from src.utils.base_service_repo import BaseRepository
 from sqlmodel import select
-from sqlalchemy import func
+from sqlalchemy import func, desc, asc
 from src.directories.models import MakesDirectory, ModelsDirectory
+from src.utils.exceptions import EntityNotFoundException
 
 
 class DirectoryRepository(BaseRepository):
 
     async def get_models_by_make(
-        self, offset_page: int, limit: int, make_uid: str
+        self,
+        make_uid: UUID,
+        offset_page: int,
+        limit: int,
+        order: str = "desc",
     ) -> list[ModelsDirectory]:
         statement = (
             select(ModelsDirectory)
@@ -15,8 +23,15 @@ class DirectoryRepository(BaseRepository):
             .offset(offset_page)
             .limit(limit)
         )
+        if order == "desc":
+            statement = statement.order_by(desc(ModelsDirectory.model))
+        else:
+            statement = statement.order_by(asc(ModelsDirectory.model))
         models = await self.session.exec(statement)
-        return models
+        result = list(models)
+        if not result:
+            raise EntityNotFoundException("Make")
+        return result
 
     async def count_models_by_make(self, make_uid: str):
         result = await self.session.exec(

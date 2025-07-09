@@ -8,7 +8,7 @@ from src.cars.routes import car_router, expenses_router
 from src.users.routes import user_router
 from src.directories.routes import directory_router
 
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
 from src.utils.exceptions import (
@@ -33,9 +33,19 @@ app = FastAPI(
 )
 
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3001", "http://192.168.0.4:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.exception_handler(VinBusyException)
 def vin_exception_handler(request: Request, exc: VinBusyException):
     return JSONResponse(
+        status_code=409,
         content={
             "status": "Failed",
             "message": f"Sorry, a vehicle with this VIN-number is currently possessed by someone else.",
@@ -46,20 +56,22 @@ def vin_exception_handler(request: Request, exc: VinBusyException):
 @app.exception_handler(EntityNotFoundException)
 def entity_not_found(request: Request, exc: EntityNotFoundException):
     return JSONResponse(
+        status_code=404,
         content={
             "status": "Failed",
-            "message": f"Sorry, requested {exc.entity} does not exist.",
-        }
+            "detail": f"Sorry, requested {exc.entity} does not exist.",
+        },
     )
 
 
 @app.exception_handler(MakeModelException)
 def entity_not_found(request: Request, exc: MakeModelException):
     return JSONResponse(
+        status_code=404,
         content={
             "status": "Failed",
-            "message": f"Sorry mate, selected Make has no model called {exc.model}.",
-        }
+            "detail": f"Sorry mate, selected Make has no model called {exc.model}.",
+        },
     )
 
 

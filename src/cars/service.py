@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -10,12 +11,35 @@ from .schemas import (
     CarUpdateSchema,
     ExpensesCreateSchema,
     GetAllFilter,
+    CarSchema,
+    CarStats,
 )
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
 from src.directories.service import DirectoryService
 from ..users.schemas import UserSchema, UserRole
 from ..utils.base_service_repo import BaseService
+from ..utils.normalize_make_model import normalize_make_model
+
+
+def calculate_stats(car: CarSchema) -> CarStats:
+    total_expenses = sum(exp.exp_summ for exp in car.expenses or [])
+    total_cost = car.price_purchased + total_expenses
+
+    potential_profit = (car.price_listed - total_cost) if car.price_listed else 0
+    potential_margin = potential_profit / total_cost if total_cost else 0
+
+    profit = (car.price_sold - total_cost) if car.price_sold else 0
+    margin = profit / total_cost if total_cost else 0
+
+    return CarStats(
+        total_expenses=total_expenses,
+        total_cost=total_cost,
+        potential_profit=potential_profit,
+        potential_margin=round(potential_margin * 100, 2),
+        profit=profit,
+        margin=round(margin * 100, 2),
+    )
 
 
 # Cars
@@ -37,14 +61,33 @@ class CarService(BaseService[CarsRepository]):
         await self.dir_service.validate_make_model(car_data.make, car_data.model)
 
         new_car_dict = car_data.model_dump()
-        new_car_dict["make"] = car_data.make.lower().capitalize()
-        new_car_dict["model"] = car_data.model.lower().capitalize()
+        new_car_dict["make"] = normalize_make_model(car_data.make)
+        new_car_dict["model"] = normalize_make_model(car_data.model)
         new_car_dict["owner_uid"] = owner_uid
         return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
-    async def get_my_cars(self, page: int, limit: int, owner_uid: UUID):
+    async def get_my_cars(
+        self,
+        page: int,
+        limit: int,
+        owner_uid: UUID,
+        sort_by: str = "created_at",
+        allowed_sort_fields: Optional[list[str]] = None,
+        order: str = "desc",
+    ):
         offset_page = (page - 1) * limit
-        cars = await self.repository.get_my_cars(offset_page, limit, owner_uid)
+
+        if allowed_sort_fields and sort_by not in allowed_sort_fields:
+            raise HTTPException(
+                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+            )
+        cars = await self.repository.get_my_cars(
+            offset_page=offset_page,
+            limit=limit,
+            sort_by=sort_by,
+            order=order,
+            owner_uid=owner_uid,
+        )
 
         total_records = await self.repository.count_my_cars(owner_uid)
         total_pages = math.ceil(total_records / limit)
@@ -58,6 +101,7 @@ class CarService(BaseService[CarsRepository]):
 
     async def get_car_with_owner_check(self, car_uid: str, current_user: UserSchema):
         car = await self.get_by_uid(Cars, car_uid)
+        stats = calculate_stats(car)
         if not car:
             raise EntityNotFoundException("car_uid")
         if current_user.role != UserRole.ADMIN and str(car.owner_uid) != str(
@@ -66,15 +110,17 @@ class CarService(BaseService[CarsRepository]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
-        return car
+        return CarSchema.model_validate(car, from_attributes=True).model_copy(
+            update={"stats": stats}
+        )
 
     async def update_car(
-        self, car_uid: str, car_data: CarUpdateSchema, current_user: UserSchema
+        self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema
     ) -> Cars:
         await self.get_car_with_owner_check(car_uid, current_user)
         return await self.update_by_uid(Cars, car_uid, car_data)
 
-    async def delete_car(self, car_uid: str, current_user: UserSchema) -> None:
+    async def delete_car(self, car_uid: UUID, current_user: UserSchema) -> None:
         await self.get_car_with_owner_check(car_uid, current_user)
         return await self.delete_by_uid(Cars, car_uid)
 
@@ -108,16 +154,17 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Create an expense
     async def create_expense(
-        self, car_uid: str, exp_data: ExpensesCreateSchema, current_user: UserSchema
+        self, car_uid: UUID, exp_data: ExpensesCreateSchema, current_user: UserSchema
     ) -> Expenses:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp_data_dict = exp_data.model_dump()
+        exp_data_dict["user_uid"] = current_user.uid
         new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
         return new_exp
 
     # Get single expense
     async def get_single_expense(
-        self, car_uid: str, exp_uid: str, current_user: UserSchema
+        self, car_uid: UUID, exp_uid: str, current_user: UserSchema
     ) -> Expenses:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
@@ -128,8 +175,8 @@ class ExpensesService(BaseService[ExpensesRepository]):
     # Update single expense
     async def update_single_expense(
         self,
-        car_uid: str,
-        exp_uid: str,
+        car_uid: UUID,
+        exp_uid: UUID,
         exp_update_data: ExpensesCreateSchema,
         current_user: UserSchema,
     ) -> Expenses:
@@ -143,8 +190,8 @@ class ExpensesService(BaseService[ExpensesRepository]):
     # Delete single expense
     async def delete_single_expense(
         self,
-        car_uid: str,
-        exp_uid: str,
+        car_uid: UUID,
+        exp_uid: UUID,
         current_user: UserSchema,
     ):
         await self.get_single_expense(car_uid, exp_uid, current_user)
@@ -157,16 +204,29 @@ class ExpensesService(BaseService[ExpensesRepository]):
     # Get all expenses for a single car
     async def get_expenses_by_car_uid(
         self,
-        car_uid: str,
+        car_uid: UUID,
         current_user: UserSchema,
         page: int = 1,
         limit: int = 10,
+        sort_by: str = "created_at",
+        allowed_sort_fields: Optional[list[str]] = None,
+        order: str = "desc",
     ) -> list[Expenses]:
         await self.car_service.get_car_with_owner_check(car_uid, current_user)
 
         offset_page = (page - 1) * limit
 
-        expenses = await self.repository.get_exp_by_car_uid(car_uid, offset_page, limit)
+        if allowed_sort_fields and sort_by not in allowed_sort_fields:
+            raise HTTPException(
+                status_code=400, detail=f"Sorting by '{sort_by}' is not allowed."
+            )
+        expenses = await self.repository.get_exp_by_car_uid(
+            car_uid=car_uid,
+            offset_page=offset_page,
+            limit=limit,
+            sort_by=sort_by,
+            order=order,
+        )
 
         total_records = await self.repository.count_exp_by_car_uid(car_uid)
         total_pages = math.ceil(total_records / limit)
@@ -181,7 +241,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
 
     # Delete all expenses for a single car
     async def delete_all_expenses_by_car_uid(
-        self, car_uid: str, current_user: UserSchema
+        self, car_uid: UUID, current_user: UserSchema
     ) -> None:
         await self.get_expenses_by_car_uid(car_uid, current_user)
         await self.repository.delete_exp_by_car_uid(car_uid)

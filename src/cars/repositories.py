@@ -1,4 +1,9 @@
+from typing import Optional
+from uuid import UUID
+
+from fastapi import HTTPException
 from sqlalchemy import func, desc, asc
+from sqlalchemy.orm import selectinload
 from sqlmodel import select, update
 from src.cars.models import Cars, Expenses
 from src.cars.schemas import GetAllFilter
@@ -18,17 +23,34 @@ class CarsRepository(BaseRepository):
         await self.session.commit()
         return car
 
-    async def get_my_cars(self, offset_page: int, limit: int, owner_uid: str):
+    async def get_my_cars(
+        self,
+        offset_page: int,
+        limit: int,
+        owner_uid: UUID,
+        sort_by: Optional[str] = None,
+        order: str = "desc",
+    ):
         statement = (
             select(Cars)
             .where(Cars.owner_uid == owner_uid)
             .offset(offset_page)
             .limit(limit)
-            .order_by(desc(Cars.created_at))
         )
+        if sort_by:
+            sort_column = getattr(Cars, sort_by, None)
+            if sort_column is None:
+                raise HTTPException(
+                    status_code=422, detail=f"Invalid sort field: {sort_by}"
+                )
+            if order == "desc":
+                statement = statement.order_by(desc(sort_column))
+            else:
+                statement = statement.order_by(asc(sort_column))
+
         return await self.session.exec(statement)
 
-    async def count_my_cars(self, owner_uid: str):
+    async def count_my_cars(self, owner_uid: UUID):
         result = await self.session.exec(
             select(func.count(Cars.uid)).where(Cars.owner_uid == owner_uid)
         )
@@ -54,15 +76,13 @@ class CarsRepository(BaseRepository):
         if filter_schema.status:
             statement = statement.filter_by(status=filter_schema.status)
         # Sorting
-        direction = desc if filter_schema.order_desc else asc
+        direction = desc if (filter_schema.order_desc == "desc") else asc
         if filter_schema.sort_by:
             statement = statement.order_by(
                 direction(getattr(Cars, filter_schema.sort_by))
             )
 
-        statement = statement.offset(offset_page * filter_schema.limit).limit(
-            filter_schema.limit
-        )
+        statement = statement.offset(offset_page).limit(filter_schema.limit)
         cars = await self.session.exec(statement)
         return cars
 
@@ -77,10 +97,10 @@ class CarsRepository(BaseRepository):
                 statement = statement.filter(
                     Cars.year >= filter_schema.prod_year.year_from
                 )
-                if filter_schema.prod_year.year_to:
-                    statement = statement.filter(
-                        Cars.year <= filter_schema.prod_year.year_to
-                    )
+            if filter_schema.prod_year.year_to:
+                statement = statement.filter(
+                    Cars.year <= filter_schema.prod_year.year_to
+                )
         if filter_schema.status:
             statement = statement.filter_by(status=filter_schema.status)
 
@@ -89,16 +109,19 @@ class CarsRepository(BaseRepository):
 
 
 class ExpensesRepository(BaseRepository):
-    async def create_expense(self, car_uid: str, exp_data_dict: dict) -> Expenses:
+    async def create_expense(self, car_uid: UUID, exp_data_dict: dict) -> Expenses:
+
         new_exp = Expenses(**exp_data_dict)
         new_exp.car_uid = car_uid
         self.session.add(new_exp)
         await self.session.commit()
+        await self.session.refresh(new_exp, attribute_names=["user"])
         return new_exp
 
-    async def get_single_exp(self, car_uid: str, expense_uid: str) -> Expenses:
+    async def get_single_exp(self, car_uid: UUID, expense_uid: str) -> Expenses:
         statement = (
             select(Expenses)
+            .options(selectinload(Expenses.user))
             .where(Expenses.car_uid == car_uid)
             .where(Expenses.uid == expense_uid)
         )
@@ -106,18 +129,33 @@ class ExpensesRepository(BaseRepository):
         return result.one_or_none()
 
     async def get_exp_by_car_uid(
-        self, car_uid: str, offset_page: int, limit: int
+        self,
+        car_uid: UUID,
+        offset_page: int,
+        limit: int,
+        sort_by: Optional[str] = None,
+        order: str = "desc",
     ) -> list[Expenses]:
         statement = (
             select(Expenses)
+            .options(selectinload(Expenses.user))
             .where(Expenses.car_uid == car_uid)
             .offset(offset_page)
             .limit(limit)
-            .order_by(desc(Expenses.created_at))
         )
+        if sort_by:
+            sort_column = getattr(Expenses, sort_by, None)
+            if sort_column is None:
+                raise HTTPException(
+                    status_code=422, detail=f"Invalid sort field: {sort_by}"
+                )
+            if order == "desc":
+                statement = statement.order_by(desc(sort_column))
+            else:
+                statement = statement.order_by(asc(sort_column))
         return await self.session.exec(statement)
 
-    async def count_exp_by_car_uid(self, car_uid: str) -> int:
+    async def count_exp_by_car_uid(self, car_uid: UUID) -> int:
         count_statement = (
             select(func.count(1))
             .select_from(Expenses)
@@ -127,7 +165,7 @@ class ExpensesRepository(BaseRepository):
         return result.one()
 
     async def update_single_exp(
-        self, car_uid: str, expense_uid: str, update_data_dict: dict
+        self, car_uid: UUID, expense_uid: UUID, update_data_dict: dict
     ) -> Expenses:
         exp = await self.get_single_exp(car_uid, expense_uid)
         await self.session.exec(
@@ -140,7 +178,7 @@ class ExpensesRepository(BaseRepository):
         await self.session.refresh(exp)
         return exp
 
-    async def delete_single_exp(self, car_uid: str, expense_uid: str) -> bool:
+    async def delete_single_exp(self, car_uid: UUID, expense_uid: UUID) -> bool:
         exp_to_delete = await self.get_single_exp(car_uid, expense_uid)
         if exp_to_delete:
             await self.session.delete(exp_to_delete)
@@ -149,7 +187,7 @@ class ExpensesRepository(BaseRepository):
         else:
             return False
 
-    async def delete_exp_by_car_uid(self, car_uid: str) -> bool:
+    async def delete_exp_by_car_uid(self, car_uid: UUID) -> bool:
         result = await self.session.exec(
             select(Expenses).where(Expenses.car_uid == car_uid)
         )

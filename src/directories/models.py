@@ -2,13 +2,17 @@ from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
 from uuid import UUID
 from sqlalchemy import text
+from ..config import IS_TEST_ENV
+from src.utils.db_types import UUIDString
+
+UUIDColumn = UUIDString if IS_TEST_ENV else pg.UUID
 
 
 class MakesDirectory(SQLModel, table=True):
     __tablename__ = "makesdir"
     uid: UUID = Field(
         sa_column=Column(
-            pg.UUID,
+            UUIDColumn,
             nullable=False,
             primary_key=True,
             server_default=text("gen_random_uuid()"),
@@ -30,7 +34,7 @@ class ModelsDirectory(SQLModel, table=True):
     __tablename__ = "modelsdir"
     uid: UUID = Field(
         sa_column=Column(
-            pg.UUID,
+            UUIDColumn,
             nullable=False,
             primary_key=True,
             server_default=text("gen_random_uuid()"),

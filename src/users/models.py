@@ -9,14 +9,21 @@ import uuid
 from src.users.schemas import UserRole
 
 if TYPE_CHECKING:
-    from src.cars.models import Cars
+    from src.cars.models import Cars, Expenses
+
+from ..config import IS_TEST_ENV
+from src.utils.db_types import UUIDString
+
+UUIDColumn = UUIDString if IS_TEST_ENV else pg.UUID
 
 
 class Users(SQLModel, table=True):
     __tablename__ = "users"
 
     uid: uuid.UUID = Field(
-        sa_column=Column(pg.UUID, nullable=False, primary_key=True, default=uuid.uuid4)
+        sa_column=Column(
+            UUIDColumn, nullable=False, primary_key=True, default=uuid.uuid4
+        )
     )
     role: UserRole = Field(nullable=True, default=UserRole.USER)
     username: str = Field(unique=True, nullable=False)
@@ -34,6 +41,11 @@ class Users(SQLModel, table=True):
 
     cars: list["Cars"] = Relationship(
         back_populates="owner",
+        sa_relationship_kwargs={"lazy": "selectin"},
+        cascade_delete=True,
+    )
+    expenses: list["Expenses"] = Relationship(
+        back_populates="user",
         sa_relationship_kwargs={"lazy": "selectin"},
         cascade_delete=True,
     )

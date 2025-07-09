@@ -1,12 +1,17 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials
 from starlette.responses import JSONResponse
 from src.auth.utils import create_access_token
 from src.auth.service import AuthService
+from src.users.dependencies import get_user_service
 from src.users.schemas import UserSchema
 from src.auth.schemas import AuthSchema
 from src.auth.dependencies import get_auth_service, get_current_user
+from src.users.service import UserService
+from fastapi.security import HTTPBearer
+
+security = HTTPBearer()
 
 auth_router = APIRouter()
 
@@ -30,6 +35,15 @@ async def authenticate_user(
             },
         }
     )
+
+
+@auth_router.get("/validate")
+async def verify_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    user_service: UserService = Depends(get_user_service),
+):
+    await get_current_user(token=credentials.credentials, user_service=user_service)
+    return {"message": "Token verified"}
 
 
 @auth_router.get("/me")

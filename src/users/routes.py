@@ -28,16 +28,26 @@ async def create_user(
 
 @user_router.get(
     "/all",
-    dependencies=[Depends(require_admin)],
     response_model=ResponseSchema[PageResponse[UserSchema]],
 )
 async def get_all_users(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1),
-    sort: bool = Query(default=True, case_sensitive=False),
+    sort_by: str = Query(default="created_at", description="Поле сортировки"),
+    order: str = Query(
+        default="desc", pattern="^(asc|desc)$", description="Порядок сортировки"
+    ),
     user_service: UserService = Depends(get_user_service),
+    _: UserSchema = Depends(require_admin),
 ):
-    result = await user_service.get_all_records(Users, page, limit, sort)
+    result = await user_service.get_all_records(
+        Users,
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        order=order,
+        allowed_sort_fields=["created_at", "username", "email"],
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
