@@ -129,6 +129,25 @@ class CarService(BaseService[CarsRepository]):
         )
         return car
 
+    async def delete_owner(
+        self, car_uid: str, delete_owner_uid: str, current_user: UserSchema
+    ):
+        car = await self.get_car_with_owner_check(car_uid, current_user)
+        delete_owner_uuid = UUID(delete_owner_uid)
+        if car.primary_owner_uid == delete_owner_uuid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Primary owner cannot remove themselves from ownership",
+            )
+        else:
+            delete_owner = await self.repository.delete_owner_from_car(
+                car_uid, delete_owner_uid
+            )
+            if delete_owner:
+                return True
+            else:
+                raise EntityNotFoundException("owner")
+
     async def update_car(
         self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema
     ) -> Cars:

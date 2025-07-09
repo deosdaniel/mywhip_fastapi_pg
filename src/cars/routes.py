@@ -88,7 +88,7 @@ async def get_car_by_uid(
     return ResponseSchema(detail="Success", result=result)
 
 
-@car_router.post("/{car_uid}/add_owner", response_model=ResponseSchema[CarOwners])
+@car_router.post("/{car_uid}/owners", response_model=ResponseSchema[CarOwners])
 async def add_owner(
     new_owner_uid: str,
     car_uid: str = Path(min_length=32, max_length=36),
@@ -99,6 +99,21 @@ async def add_owner(
         car_uid=car_uid, new_owner_uid=new_owner_uid, current_user=current_user
     )
     return ResponseSchema(detail="Success", result=result)
+
+
+@car_router.delete(
+    "/{car_uid}/owners/{owner_uid}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_owner(
+    delete_owner_uid: str,
+    car_uid: str = Path(min_length=32, max_length=36),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+):
+    await car_service.delete_owner(
+        car_uid=car_uid, delete_owner_uid=delete_owner_uid, current_user=current_user
+    )
+    return {}
 
 
 # Update a Car data

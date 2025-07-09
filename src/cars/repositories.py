@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func, desc, asc
+from sqlalchemy import func, desc, asc, and_
 from sqlalchemy.orm import selectinload
 from sqlmodel import select, update
 from src.cars.models import Cars, Expenses
@@ -23,6 +23,19 @@ class CarsRepository(BaseRepository):
         self.session.add(link)
         await self.session.commit()
         self.session.expire_all()
+
+    async def delete_owner_from_car(self, car_uid: UUID, user_uid: UUID):
+        statement = select(CarUserLink).where(
+            and_(CarUserLink.car_uid == car_uid, CarUserLink.user_uid == user_uid)
+        )
+        result = await self.session.exec(statement)
+        link = result.one_or_none()
+        if link:
+            await self.session.delete(link)
+            await self.session.commit()
+            return True
+        else:
+            return False
 
     async def get_my_cars(
         self,
