@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
 from .schemas import CarStatusChoices
+from ..shared.car_user_link import CarUserLink
 
 if TYPE_CHECKING:
     from ..users.models import Users
@@ -50,7 +51,7 @@ class Cars(SQLModel, table=True):
     updated_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP, default=now(), onupdate=now(), nullable=True)
     )
-    owner_uid: UUID = Field(
+    primary_owner_uid: UUID = Field(
         sa_column=Column(
             UUIDColumn,
             ForeignKey("users.uid", ondelete="CASCADE"),
@@ -58,7 +59,11 @@ class Cars(SQLModel, table=True):
             index=True,
         )
     )
-    owner: "Users" = Relationship(back_populates="cars")
+    owners: list["Users"] = Relationship(
+        back_populates="cars",
+        link_model=CarUserLink,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
     expenses: list["Expenses"] = Relationship(
         back_populates="car",
         sa_relationship_kwargs={"lazy": "selectin"},

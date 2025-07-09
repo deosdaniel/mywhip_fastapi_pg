@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import select, update
 from src.cars.models import Cars, Expenses
 from src.cars.schemas import GetAllFilter
+from src.shared.car_user_link import CarUserLink
 from src.utils.base_service_repo import BaseRepository
 
 
@@ -17,11 +18,23 @@ class CarsRepository(BaseRepository):
         result = await self.session.exec(statement)
         return result.one_or_none()
 
-    async def create_car(self, new_car_dict: dict) -> Cars:
-        car = Cars(**new_car_dict)
-        self.session.add(car)
+    async def add_owner_to_car(self, car_uid: UUID, user_uid: UUID):
+        link = CarUserLink(car_uid=car_uid, user_uid=user_uid)
+        self.session.add(link)
         await self.session.commit()
-        return car
+
+    async def get_car_with_owners(self, car_uid: UUID) -> Cars:
+        statement = (
+            select(Cars).options(selectinload(Cars.owners)).where(Cars.uid == car_uid)
+        )
+        result = await self.session.exec(statement)
+        return result.one()
+
+    # async def create_car(self, new_car_dict: dict) -> Cars:
+    #    car = Cars(**new_car_dict)
+    #    self.session.add(car)
+    #    await self.session.commit()
+    #    return car
 
     async def get_my_cars(
         self,
@@ -33,7 +46,7 @@ class CarsRepository(BaseRepository):
     ):
         statement = (
             select(Cars)
-            .where(Cars.owner_uid == owner_uid)
+            .where(Cars.primary_owner_uid == owner_uid)
             .offset(offset_page)
             .limit(limit)
         )
@@ -52,7 +65,7 @@ class CarsRepository(BaseRepository):
 
     async def count_my_cars(self, owner_uid: UUID):
         result = await self.session.exec(
-            select(func.count(Cars.uid)).where(Cars.owner_uid == owner_uid)
+            select(func.count(Cars.uid)).where(Cars.primary_owner_uid == owner_uid)
         )
         return result.one()
 

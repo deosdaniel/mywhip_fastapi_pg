@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 
 from src.users.schemas import UserRole
+from ..shared.car_user_link import CarUserLink
 
 if TYPE_CHECKING:
     from src.cars.models import Cars, Expenses
@@ -40,9 +41,9 @@ class Users(SQLModel, table=True):
     )
 
     cars: list["Cars"] = Relationship(
-        back_populates="owner",
+        back_populates="owners",
+        link_model=CarUserLink,
         sa_relationship_kwargs={"lazy": "selectin"},
-        cascade_delete=True,
     )
     expenses: list["Expenses"] = Relationship(
         back_populates="user",

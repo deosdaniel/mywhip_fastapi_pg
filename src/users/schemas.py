@@ -37,3 +37,9 @@ class UserSchema(BaseModel):
     updated_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OwnerSchema(BaseModel):
+    uid: uuid.UUID
+    username: str
+    email: str

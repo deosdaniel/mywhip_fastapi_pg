@@ -53,7 +53,7 @@ class CarService(BaseService[CarsRepository]):
     async def create_car(
         self,
         car_data: CarCreateSchema,
-        owner_uid: UUID,
+        primary_owner_uid: UUID,
     ):
         vin_collision = await self.repository.check_vin_collision(car_data.vin)
         if vin_collision:
@@ -63,8 +63,13 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict = car_data.model_dump()
         new_car_dict["make"] = normalize_make_model(car_data.make)
         new_car_dict["model"] = normalize_make_model(car_data.model)
-        new_car_dict["owner_uid"] = owner_uid
-        return await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
+        new_car_dict["primary_owner_uid"] = primary_owner_uid
+        car = await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
+
+        await self.repository.add_owner_to_car(car.uid, primary_owner_uid)
+        car_with_owners = await self.repository.get_car_with_owners(car.uid)
+
+        return car_with_owners
 
     async def get_my_cars(
         self,

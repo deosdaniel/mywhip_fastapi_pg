@@ -32,7 +32,9 @@ async def create_car(
     car_service: CarService = Depends(get_car_service),
     current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.create_car(car_data=car_data, owner_uid=current_user.uid)
+    result = await car_service.create_car(
+        car_data=car_data, primary_owner_uid=current_user.uid
+    )
     return ResponseSchema(detail="Success", result=result)
 
 

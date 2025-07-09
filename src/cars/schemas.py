@@ -5,6 +5,7 @@ from enum import Enum
 
 from typing import List, Literal, Optional
 
+from src.users.schemas import OwnerSchema
 from src.utils.db_types import UUIDString
 
 """Status choice"""
@@ -37,7 +38,7 @@ class CarCreateSchema(BaseModel):
 
 class CarCreateResponse(BaseModel):
     uid: uuid.UUID
-    owner_uid: uuid.UUID
+    primary_owner_uid: uuid.UUID
     make: str
     model: str
     year: int
@@ -47,6 +48,7 @@ class CarCreateResponse(BaseModel):
     date_purchased: date | None = None
     price_purchased: int = None
     status: CarStatusChoices | None = None
+    owners: List["OwnerSchema"]
 
 
 class CarUpdateSchema(BaseModel):
@@ -76,7 +78,8 @@ class CarStats(BaseModel):
 
 class CarSchema(BaseModel):
     uid: uuid.UUID
-    owner_uid: uuid.UUID
+    primary_owner_uid: uuid.UUID
+    owners: List["OwnerSchema"]
     make: str
     model: str
     year: int

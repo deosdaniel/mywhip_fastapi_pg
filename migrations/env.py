@@ -9,6 +9,7 @@ from alembic import context
 from src.cars.models import Cars, Expenses
 from src.directories.models import MakesDirectory, ModelsDirectory
 from src.users.models import Users
+from src.shared.car_user_link import CarUserLink
 from sqlmodel import SQLModel
 from src.config import Config
 
