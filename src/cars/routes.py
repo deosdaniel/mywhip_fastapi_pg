@@ -82,7 +82,7 @@ async def get_car_by_uid(
     car_service: CarService = Depends(get_car_service),
     current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.get_car_with_owner_check(
+    result = await car_service.get_car_all_owners(
         car_uid=car_uid, current_user=current_user
     )
     return ResponseSchema(detail="Success", result=result)

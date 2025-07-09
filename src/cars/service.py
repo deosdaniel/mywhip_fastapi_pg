@@ -15,6 +15,7 @@ from .schemas import (
     GetAllFilter,
     CarSchema,
     CarStats,
+    CarCreateResponse,
 )
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
@@ -67,8 +68,6 @@ class CarService(BaseService[CarsRepository]):
         new_car_dict["model"] = normalize_make_model(car_data.model)
         new_car_dict["primary_owner_uid"] = primary_owner_uid
         car = await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
-
-        await self.repository.add_owner_to_car(car.uid, primary_owner_uid)
         return car
 
     async def get_my_cars(
@@ -104,9 +103,25 @@ class CarService(BaseService[CarsRepository]):
             content=cars,
         )
 
+    async def get_car_all_owners(self, car_uid: str, current_user: UserSchema):
+        car = await self.get_by_uid(Cars, car_uid, options=[selectinload(Cars.owners)])
+        if not car:
+            raise EntityNotFoundException("car_uid")
+        if current_user.role != UserRole.ADMIN:
+            is_primary = car.primary_owner_uid == current_user.uid
+            is_secondary = any(owner.uid == current_user.uid for owner in car.owners)
+            if not (is_primary or is_secondary):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+                )
+        stats = calculate_stats(car)
+        return CarSchema.model_validate(car, from_attributes=True).model_copy(
+            update={"stats": stats}
+        )
+
     async def get_car_with_owner_check(self, car_uid: str, current_user: UserSchema):
         car = await self.get_by_uid(Cars, car_uid)
-        stats = calculate_stats(car)
+
         if not car:
             raise EntityNotFoundException("car_uid")
         if current_user.role != UserRole.ADMIN and str(car.primary_owner_uid) != str(
@@ -115,6 +130,7 @@ class CarService(BaseService[CarsRepository]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
+        stats = calculate_stats(car)
         return CarSchema.model_validate(car, from_attributes=True).model_copy(
             update={"stats": stats}
         )

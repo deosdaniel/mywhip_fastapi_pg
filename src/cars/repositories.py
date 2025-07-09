@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func, desc, asc, and_
+from sqlalchemy import func, desc, asc, and_, or_
 from sqlalchemy.orm import selectinload
 from sqlmodel import select, update
 from src.cars.models import Cars, Expenses
@@ -47,8 +47,13 @@ class CarsRepository(BaseRepository):
     ):
         statement = (
             select(Cars)
-            .join(CarUserLink, Cars.uid == CarUserLink.car_uid)
-            .where(CarUserLink.user_uid == owner_uid)
+            .outerjoin(CarUserLink, Cars.uid == CarUserLink.car_uid)
+            .where(
+                or_(
+                    Cars.primary_owner_uid == owner_uid,
+                    CarUserLink.user_uid == owner_uid,
+                )
+            )
             .options(selectinload(Cars.owners))
             .offset(offset_page)
             .limit(limit)
