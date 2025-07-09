@@ -24,9 +24,14 @@ class BaseRepository:
         await self.session.commit()
         return entity
 
-    async def get_by_uid(self, table: SQLModel, uid: UUID) -> SQLModel:
+    async def get_by_uid(
+        self, table: SQLModel, uid: UUID, options: list = None
+    ) -> SQLModel:
         fixed_uid = UUID(uid)
-        result = await self.session.exec(select(table).where(table.uid == fixed_uid))
+        statement = select(table).where(table.uid == fixed_uid)
+        if options:
+            statement = statement.options(*options)
+        result = await self.session.exec(statement)
         return result.one_or_none()
 
     async def update_by_uid(

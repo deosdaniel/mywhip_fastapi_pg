@@ -22,12 +22,7 @@ class CarsRepository(BaseRepository):
         link = CarUserLink(car_uid=car_uid, user_uid=user_uid)
         self.session.add(link)
         await self.session.commit()
-
-    # async def create_car(self, new_car_dict: dict) -> Cars:
-    #    car = Cars(**new_car_dict)
-    #    self.session.add(car)
-    #    await self.session.commit()
-    #    return car
+        self.session.expire_all()
 
     async def get_my_cars(
         self,

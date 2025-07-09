@@ -75,6 +75,15 @@ class CarStats(BaseModel):
     # days_from_listed: int
 
 
+class CarOwners(BaseModel):
+    uid: uuid.UUID
+    make: str
+    model: str
+    vin: str
+    primary_owner_uid: uuid.UUID
+    owners: List["OwnerSchema"]
+
+
 class CarSchema(BaseModel):
     uid: uuid.UUID
     primary_owner_uid: uuid.UUID

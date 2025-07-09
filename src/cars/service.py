@@ -3,6 +3,8 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy.orm import selectinload
+
 from src.utils.schemas_common import PageResponse
 from .models import Cars, Expenses
 from .repositories import CarsRepository, ExpensesRepository
@@ -107,7 +109,7 @@ class CarService(BaseService[CarsRepository]):
         stats = calculate_stats(car)
         if not car:
             raise EntityNotFoundException("car_uid")
-        if current_user.role != UserRole.ADMIN and str(car.owner_uid) != str(
+        if current_user.role != UserRole.ADMIN and str(car.primary_owner_uid) != str(
             current_user.uid
         ):
             raise HTTPException(
@@ -116,6 +118,16 @@ class CarService(BaseService[CarsRepository]):
         return CarSchema.model_validate(car, from_attributes=True).model_copy(
             update={"stats": stats}
         )
+
+    async def add_owner(
+        self, car_uid: str, new_owner_uid: str, current_user: UserSchema
+    ):
+        await self.get_car_with_owner_check(car_uid, current_user)
+        await self.repository.add_owner_to_car(car_uid, new_owner_uid)
+        car = await self.repository.get_by_uid(
+            table=Cars, uid=car_uid, options=[selectinload(Cars.owners)]
+        )
+        return car
 
     async def update_car(
         self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema

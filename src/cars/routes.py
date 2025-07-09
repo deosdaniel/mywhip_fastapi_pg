@@ -15,6 +15,7 @@ from src.cars.schemas import (
     CarSchema,
     GetAllFilter,
     CarCreateResponse,
+    CarOwners,
 )
 
 car_router = APIRouter()
@@ -83,6 +84,19 @@ async def get_car_by_uid(
 ) -> dict:
     result = await car_service.get_car_with_owner_check(
         car_uid=car_uid, current_user=current_user
+    )
+    return ResponseSchema(detail="Success", result=result)
+
+
+@car_router.post("/{car_uid}/add_owner", response_model=ResponseSchema[CarOwners])
+async def add_owner(
+    new_owner_uid: str,
+    car_uid: str = Path(min_length=32, max_length=36),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+) -> dict:
+    result = await car_service.add_owner(
+        car_uid=car_uid, new_owner_uid=new_owner_uid, current_user=current_user
     )
     return ResponseSchema(detail="Success", result=result)
 
