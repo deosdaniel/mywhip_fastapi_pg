@@ -54,7 +54,7 @@ class CarsRepository(BaseRepository):
                     CarUserLink.user_uid == owner_uid,
                 )
             )
-            .options(selectinload(Cars.owners))
+            .options(selectinload(Cars.secondary_owners))
             .offset(offset_page)
             .limit(limit)
         )

@@ -81,13 +81,13 @@ class CarOwners(BaseModel):
     model: str
     vin: str
     primary_owner_uid: uuid.UUID
-    owners: List["OwnerSchema"]
+    secondary_owners: List["OwnerSchema"]
 
 
 class CarSchema(BaseModel):
     uid: uuid.UUID
     primary_owner_uid: uuid.UUID
-    owners: List["OwnerSchema"]
+    secondary_owners: List["OwnerSchema"]
     make: str
     model: str
     year: int

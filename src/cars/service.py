@@ -104,12 +104,16 @@ class CarService(BaseService[CarsRepository]):
         )
 
     async def get_car_all_owners(self, car_uid: str, current_user: UserSchema):
-        car = await self.get_by_uid(Cars, car_uid, options=[selectinload(Cars.owners)])
+        car = await self.get_by_uid(
+            Cars, car_uid, options=[selectinload(Cars.secondary_owners)]
+        )
         if not car:
             raise EntityNotFoundException("car_uid")
         if current_user.role != UserRole.ADMIN:
             is_primary = car.primary_owner_uid == current_user.uid
-            is_secondary = any(owner.uid == current_user.uid for owner in car.owners)
+            is_secondary = any(
+                owner.uid == current_user.uid for owner in car.secondary_owners
+            )
             if not (is_primary or is_secondary):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
@@ -141,7 +145,7 @@ class CarService(BaseService[CarsRepository]):
         await self.get_car_with_owner_check(car_uid, current_user)
         await self.repository.add_owner_to_car(car_uid, new_owner_uid)
         car = await self.repository.get_by_uid(
-            table=Cars, uid=car_uid, options=[selectinload(Cars.owners)]
+            table=Cars, uid=car_uid, options=[selectinload(Cars.secondary_owners)]
         )
         return car
 
