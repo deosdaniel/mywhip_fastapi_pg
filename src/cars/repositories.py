@@ -39,7 +39,9 @@ class CarsRepository(BaseRepository):
     ):
         statement = (
             select(Cars)
-            .where(Cars.primary_owner_uid == owner_uid)
+            .join(CarUserLink, Cars.uid == CarUserLink.car_uid)
+            .where(CarUserLink.user_uid == owner_uid)
+            .options(selectinload(Cars.owners))
             .offset(offset_page)
             .limit(limit)
         )
