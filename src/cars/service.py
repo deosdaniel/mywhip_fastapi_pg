@@ -67,9 +67,7 @@ class CarService(BaseService[CarsRepository]):
         car = await self.repository.create(table=Cars, new_entity_dict=new_car_dict)
 
         await self.repository.add_owner_to_car(car.uid, primary_owner_uid)
-        car_with_owners = await self.repository.get_car_with_owners(car.uid)
-
-        return car_with_owners
+        return car
 
     async def get_my_cars(
         self,

@@ -23,13 +23,6 @@ class CarsRepository(BaseRepository):
         self.session.add(link)
         await self.session.commit()
 
-    async def get_car_with_owners(self, car_uid: UUID) -> Cars:
-        statement = (
-            select(Cars).options(selectinload(Cars.owners)).where(Cars.uid == car_uid)
-        )
-        result = await self.session.exec(statement)
-        return result.one()
-
     # async def create_car(self, new_car_dict: dict) -> Cars:
     #    car = Cars(**new_car_dict)
     #    self.session.add(car)

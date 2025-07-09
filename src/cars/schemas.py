@@ -48,7 +48,6 @@ class CarCreateResponse(BaseModel):
     date_purchased: date | None = None
     price_purchased: int = None
     status: CarStatusChoices | None = None
-    owners: List["OwnerSchema"]
 
 
 class CarUpdateSchema(BaseModel):
