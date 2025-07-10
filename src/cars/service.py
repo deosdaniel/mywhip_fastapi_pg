@@ -25,7 +25,7 @@ from ..utils.base_service_repo import BaseService
 from ..utils.normalize_make_model import normalize_make_model
 
 
-def calculate_stats(car: CarSchema) -> CarStats:
+def calculate_stats(car: CarSchema, owners_count: int = None) -> CarStats:
     total_expenses = sum(exp.exp_summ for exp in car.expenses or [])
     total_cost = car.price_purchased + total_expenses
 
@@ -35,6 +35,7 @@ def calculate_stats(car: CarSchema) -> CarStats:
     profit = (car.price_sold - total_cost) if car.price_sold else 0
     margin = profit / total_cost if total_cost else 0
 
+    profit_per_owner = (profit / owners_count) if owners_count else profit
     return CarStats(
         total_expenses=total_expenses,
         total_cost=total_cost,
@@ -42,6 +43,8 @@ def calculate_stats(car: CarSchema) -> CarStats:
         potential_margin=round(potential_margin * 100, 2),
         profit=profit,
         margin=round(margin * 100, 2),
+        owners_count=owners_count,
+        profit_per_owner=profit_per_owner,
     )
 
 
@@ -105,7 +108,12 @@ class CarService(BaseService[CarsRepository]):
 
     async def get_car_all_owners(self, car_uid: str, current_user: UserSchema):
         car = await self.get_by_uid(
-            Cars, car_uid, options=[selectinload(Cars.secondary_owners)]
+            Cars,
+            car_uid,
+            options=[  # это ключевая строка
+                selectinload(Cars.expenses).joinedload(Expenses.user),
+                selectinload(Cars.secondary_owners),
+            ],
         )
         if not car:
             raise EntityNotFoundException("car_uid")
@@ -118,7 +126,8 @@ class CarService(BaseService[CarsRepository]):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
                 )
-        stats = calculate_stats(car)
+        owner_count = len(car.secondary_owners) + 1
+        stats = calculate_stats(car, owner_count)
         return CarSchema.model_validate(car, from_attributes=True).model_copy(
             update={"stats": stats}
         )
@@ -126,7 +135,14 @@ class CarService(BaseService[CarsRepository]):
     async def get_car_with_primary_owner_check(
         self, car_uid: str, current_user: UserSchema
     ):
-        car = await self.get_by_uid(Cars, car_uid)
+        car = await self.get_by_uid(
+            table=Cars,
+            uid=car_uid,
+            options=[
+                selectinload(Cars.secondary_owners),
+                selectinload(Cars.expenses).joinedload(Expenses.user),
+            ],
+        )
 
         if not car:
             raise EntityNotFoundException("car_uid")
@@ -136,31 +152,7 @@ class CarService(BaseService[CarsRepository]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
-        stats = calculate_stats(car)
-        return CarSchema.model_validate(car, from_attributes=True).model_copy(
-            update={"stats": stats}
-        )
-
-    async def get_car_with_access_check(self, car_uid: str, current_user: UserSchema):
-        car = await self.get_by_uid(
-            table=Cars, uid=car_uid, options=[selectinload(Cars.secondary_owners)]
-        )
-        if not car:
-            raise EntityNotFoundException("car_uid")
-
-        is_primary = car.primary_owner_uid == current_user.uid
-        is_secondary = any(
-            str(owner.uid) == str(current_user.uid) for owner in car.secondary_owners
-        )
-
-        if current_user.role != UserRole.ADMIN and not (is_primary or is_secondary):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-            )
-        stats = calculate_stats(car)
-        return CarSchema.model_validate(car, from_attributes=True).model_copy(
-            update={"stats": stats}
-        )
+        return car
 
     async def add_owner(
         self, car_uid: str, new_owner_uid: str, current_user: UserSchema
@@ -194,7 +186,7 @@ class CarService(BaseService[CarsRepository]):
     async def update_car(
         self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema
     ) -> Cars:
-        await self.get_car_with_access_check(car_uid=car_uid, current_user=current_user)
+        await self.get_car_all_owners(car_uid=car_uid, current_user=current_user)
         return await self.update_by_uid(Cars, car_uid, car_data)
 
     async def delete_car(self, car_uid: UUID, current_user: UserSchema) -> None:
@@ -233,7 +225,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def create_expense(
         self, car_uid: UUID, exp_data: ExpensesCreateSchema, current_user: UserSchema
     ) -> Expenses:
-        await self.car_service.get_car_with_access_check(
+        await self.car_service.get_car_all_owners(
             car_uid=car_uid, current_user=current_user
         )
         exp_data_dict = exp_data.model_dump()
@@ -245,7 +237,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def get_single_expense(
         self, car_uid: UUID, exp_uid: str, current_user: UserSchema
     ) -> Expenses:
-        await self.car_service.get_car_with_access_check(
+        await self.car_service.get_car_all_owners(
             car_uid=car_uid, current_user=current_user
         )
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
@@ -301,7 +293,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
         allowed_sort_fields: Optional[list[str]] = None,
         order: str = "desc",
     ) -> list[Expenses]:
-        await self.car_service.get_car_with_access_check(
+        await self.car_service.get_car_all_owners(
             car_uid=car_uid, current_user=current_user
         )
 

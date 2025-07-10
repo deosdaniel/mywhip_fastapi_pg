@@ -64,13 +64,24 @@ class CarUpdateSchema(BaseModel):
     status: Optional[CarStatusChoices] = None
 
 
+class OwnerProfitSchema(BaseModel):
+    user_uid: uuid.UUID
+    email: str
+    invested: int
+    share_percent: float
+    profit: int
+
+
 class CarStats(BaseModel):
     total_expenses: int = None
     total_cost: int = None
-    potential_profit: int = None
     potential_margin: float = None
-    profit: int = None
+    potential_profit: int = None
     margin: float = None
+    profit: int = None
+    owners_count: int = None
+    profit_per_owner: float = None
+
     # days_from_purchased: int
     # days_from_listed: int
 
