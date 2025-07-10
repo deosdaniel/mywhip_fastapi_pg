@@ -301,7 +301,9 @@ class ExpensesService(BaseService[ExpensesRepository]):
         allowed_sort_fields: Optional[list[str]] = None,
         order: str = "desc",
     ) -> list[Expenses]:
-        await self.car_service.get_car_with_primary_owner_check(car_uid, current_user)
+        await self.car_service.get_car_with_access_check(
+            car_uid=car_uid, current_user=current_user
+        )
 
         offset_page = (page - 1) * limit
 
