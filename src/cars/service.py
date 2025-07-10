@@ -110,7 +110,7 @@ class CarService(BaseService[CarsRepository]):
         car = await self.get_by_uid(
             Cars,
             car_uid,
-            options=[  # это ключевая строка
+            options=[
                 selectinload(Cars.expenses).joinedload(Expenses.user),
                 selectinload(Cars.secondary_owners),
             ],

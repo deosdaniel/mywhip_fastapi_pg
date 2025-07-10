@@ -47,16 +47,17 @@ class CarsRepository(BaseRepository):
     ):
         statement = (
             select(Cars)
-            .outerjoin(  # technically a LEFT JOIN
-                CarUserLink, Cars.uid == CarUserLink.car_uid
-            )
+            .outerjoin(CarUserLink, Cars.uid == CarUserLink.car_uid)
             .where(
                 or_(
                     Cars.primary_owner_uid == owner_uid,
                     CarUserLink.user_uid == owner_uid,
                 )
             )
-            .options(selectinload(Cars.secondary_owners))
+            .options(
+                selectinload(Cars.secondary_owners),
+                selectinload(Cars.expenses).joinedload(Expenses.user),
+            )
             .offset(offset_page)
             .limit(limit)
         )

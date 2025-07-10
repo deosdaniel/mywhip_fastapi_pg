@@ -59,6 +59,9 @@ class Cars(SQLModel, table=True):
             index=True,
         )
     )
+    primary_owner: Optional["Users"] = Relationship(
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
     secondary_owners: list["Users"] = Relationship(
         back_populates="cars",
         link_model=CarUserLink,

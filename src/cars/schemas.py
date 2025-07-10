@@ -68,8 +68,8 @@ class OwnerProfitSchema(BaseModel):
     user_uid: uuid.UUID
     email: str
     invested: int
-    share_percent: float
-    profit: int
+    profit_share: int
+    net_payout: int
 
 
 class CarStats(BaseModel):
