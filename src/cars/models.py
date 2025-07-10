@@ -7,7 +7,7 @@ import sqlalchemy.dialects.postgresql as pg
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
-from .schemas import CarStatusChoices
+from .schemas import CarStatusChoices, ExpenseType
 from ..shared.car_user_link import CarUserLink
 
 if TYPE_CHECKING:
@@ -81,6 +81,9 @@ class Expenses(SQLModel, table=True):
     __tablename__ = "expenses"
     uid: UUID = Field(
         sa_column=Column(UUIDColumn, nullable=False, primary_key=True, default=uuid4)
+    )
+    type: str = Field(
+        sa_column=Column(ENUM(ExpenseType), default="OTHER", nullable=False)
     )
     name: str
     exp_summ: int

@@ -18,6 +18,8 @@ from .schemas import (
     CarStats,
     CarCreateResponse,
     OwnerStats,
+    UserShortSchema,
+    ExpensesUpdateSchema,
 )
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
@@ -27,83 +29,94 @@ from ..utils.base_service_repo import BaseService
 from ..utils.normalize_make_model import normalize_make_model
 
 
-def calculate_stats(car: CarSchema) -> CarStats:
-    owners_count = 1 + len(car.secondary_owners)
+def calculate_car_metrics(car: CarSchema) -> dict:
+    total_cost = sum(exp.exp_summ for exp in car.expenses or [])
 
-    # Общие расходы на автомобиль (включая цену покупки)
-    total_expenses = sum(exp.exp_summ for exp in car.expenses or [])
-    total_cost = car.price_purchased + total_expenses
-
-    # Потенциальная прибыль и маржа (если ещё не продано)
     potential_profit = (car.price_listed - total_cost) if car.price_listed else 0
     potential_margin = (
         round(potential_profit / total_cost * 100, 2) if total_cost else 0
     )
 
-    # Фактическая прибыль и маржа (если продано)
     profit = (car.price_sold - total_cost) if car.price_sold else 0
     margin = round(profit / total_cost * 100, 2) if total_cost else 0
-    profit_per_owner = (profit / owners_count) if owners_count else profit
 
-    # Расчёт индивидуальных выплат
-    expenses_by_user: dict[UUID, int] = defaultdict(int)
+    return {
+        "total_cost": total_cost,
+        "profit": profit,
+        "margin": margin,
+        "potential_profit": potential_profit,
+        "potential_margin": potential_margin,
+    }
+
+
+def get_expenses_by_owner(car: CarSchema) -> dict[UUID, int]:
+    expenses_by_user = defaultdict(int)
+
     for exp in car.expenses or []:
-        if exp.user_uid:
-            expenses_by_user[exp.user_uid] += exp.exp_summ
+        if exp.user and exp.user.uid:
+            expenses_by_user[exp.user.uid] += exp.exp_summ
 
-    # Добавляем расходы на покупку к создателю карточки
-    if car.primary_owner_uid:
-        expenses_by_user[car.primary_owner_uid] += car.price_purchased or 0
+    return expenses_by_user
 
-    owner_infos = {}
 
-    if car.primary_owner_uid:
-        owner_infos[car.primary_owner_uid] = {
-            "uid": car.primary_owner_uid,
-            "username": (
-                getattr(car, "primary_owner", None).username
-                if hasattr(car, "primary_owner")
-                else "—"
-            ),
-            "email": (
-                getattr(car, "primary_owner", None).email
-                if hasattr(car, "primary_owner")
-                else "—"
-            ),
-        }
+def build_owners_stats(
+    car: CarSchema, expenses_by_user: dict[UUID, int], profit: int
+) -> list[OwnerStats]:
+    owners = [car.primary_owner_uid] + [owner.uid for owner in car.secondary_owners]
+    owners_count = len(owners)
+    profit_per_owner = profit / owners_count if owners_count else 0
 
-    for owner in car.secondary_owners or []:
-        owner_infos[owner.uid] = {
-            "uid": owner.uid,
-            "username": owner.username,
-            "email": owner.email,
-        }
+    # Сопоставляем UID → UserShortSchema из расходов
+    users_map = {
+        exp.user.uid: exp.user
+        for exp in car.expenses or []
+        if exp.user and exp.user.uid
+    }
 
-    # Формируем итоговую статистику по каждому владельцу
-    owners_stats = []
+    # Добавим primary_owner, если его нет
+    if car.primary_owner_uid not in users_map:
+        users_map[car.primary_owner_uid] = UserShortSchema(
+            uid=car.primary_owner_uid,
+            email="unknown@email.com",
+            username="Unknown",
+        )
 
-    for uid, personal_expenses in expenses_by_user.items():
-        info = owner_infos.get(uid)
-        if info:
-            owners_stats.append(
-                OwnerStats(
-                    owner_uid=uid,
-                    username=info["username"],
-                    email=info["email"],
-                    total_expenses=personal_expenses,
-                    net_payout=round(personal_expenses + profit_per_owner, 2),
-                )
+    # Добавим secondary_owners, если их нет
+    for owner in car.secondary_owners:
+        if owner.uid not in users_map:
+            users_map[owner.uid] = UserShortSchema(
+                uid=owner.uid,
+                email=owner.email or "unknown@email.com",
+                username=owner.username or "Unknown",
             )
 
+    return [
+        OwnerStats(
+            owner_uid=uid,
+            username=users_map[uid].username,
+            email=users_map[uid].email,
+            total_expenses=expenses_by_user.get(uid, 0),
+            net_payout=expenses_by_user.get(uid, 0) + profit_per_owner,
+        )
+        for uid in owners
+    ]
+
+
+def calculate_stats(car: CarSchema) -> CarStats:
+    metrics = calculate_car_metrics(car)
+    expenses_by_user = get_expenses_by_owner(car)
+    owners_stats = build_owners_stats(car, expenses_by_user, metrics["profit"])
+
     return CarStats(
-        total_expenses=total_expenses,
-        total_cost=total_cost,
-        potential_profit=potential_profit,
-        potential_margin=potential_margin,
-        profit=profit,
-        margin=margin,
-        owners_count=owners_count,
-        profit_per_owner=round(profit_per_owner, 2),
+        total_cost=metrics["total_cost"],
+        potential_profit=metrics["potential_profit"],
+        potential_margin=metrics["potential_margin"],
+        profit=metrics["profit"],
+        margin=metrics["margin"],
+        owners_count=len(expenses_by_user),
+        profit_per_owner=(
+            metrics["profit"] / len(expenses_by_user) if expenses_by_user else 0
+        ),
         owners_stats=owners_stats,
     )
 
@@ -309,7 +322,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
         self,
         car_uid: UUID,
         exp_uid: UUID,
-        exp_update_data: ExpensesCreateSchema,
+        exp_update_data: ExpensesUpdateSchema,
         current_user: UserSchema,
     ) -> Expenses:
         exp = await self.get_single_expense(car_uid, exp_uid, current_user)

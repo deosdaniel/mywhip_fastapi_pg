@@ -73,7 +73,6 @@ class OwnerStats(BaseModel):
 
 
 class CarStats(BaseModel):
-    total_expenses: int = None
     total_cost: int = None
     potential_margin: float = None
     potential_profit: int = None
@@ -127,7 +126,26 @@ class CarSchema(BaseModel):
 """Expenses"""
 
 
+class ExpenseType(str, Enum):
+    PURCHASE = "PURCHASE"
+    PARTS = "PARTS"
+    WHEELS = "WHEELS"
+    REPAIR = "REPAIR"
+    PAINT = "PAINT"
+    FUEL = "FUEL"
+    DETAILING = "DETAILING"
+    ADS = "ADS"
+    OTHER = "OTHER"
+
+
 class ExpensesCreateSchema(BaseModel):
+    type: ExpenseType = ExpenseType.OTHER
+    name: str = Field(min_length=1, max_length=50)
+    exp_summ: int = Field(gt=0)
+
+
+class ExpensesUpdateSchema(BaseModel):
+    type: ExpenseType = ExpenseType.OTHER
     name: str = Field(min_length=1, max_length=50)
     exp_summ: int = Field(gt=0)
 
@@ -141,6 +159,7 @@ class UserShortSchema(BaseModel):
 class ExpensesSchema(BaseModel):
     uid: uuid.UUID
     created_at: datetime | None = None
+    type: ExpenseType = Field(default=ExpenseType.OTHER)
     name: str
     exp_summ: int
     car_uid: uuid.UUID

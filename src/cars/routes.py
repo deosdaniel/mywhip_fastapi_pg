@@ -16,6 +16,7 @@ from src.cars.schemas import (
     GetAllFilter,
     CarCreateResponse,
     CarOwners,
+    ExpensesUpdateSchema,
 )
 
 car_router = APIRouter()
@@ -196,7 +197,7 @@ async def get_single_expense(
     "/{car_uid}/expenses/{exp_uid}", response_model=ResponseSchema[ExpensesSchema]
 )
 async def update_single_expense(
-    exp_update_data: ExpensesCreateSchema,
+    exp_update_data: ExpensesUpdateSchema,
     car_uid: str = Path(min_length=32, max_length=36),
     exp_uid: str = Path(min_length=32, max_length=36),
     expenses_service: ExpensesService = Depends(get_exp_service),
