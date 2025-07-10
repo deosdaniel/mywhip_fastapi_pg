@@ -1,4 +1,5 @@
 import math
+from collections import defaultdict
 from typing import Optional
 from uuid import UUID
 
@@ -25,26 +26,50 @@ from ..utils.base_service_repo import BaseService
 from ..utils.normalize_make_model import normalize_make_model
 
 
-def calculate_stats(car: CarSchema, owners_count: int = None) -> CarStats:
+def calculate_stats(car: CarSchema) -> CarStats:
+    owners_count = 1 + len(car.secondary_owners)
+
+    # Общие расходы на автомобиль (включая цену покупки)
     total_expenses = sum(exp.exp_summ for exp in car.expenses or [])
     total_cost = car.price_purchased + total_expenses
 
+    # Потенциальная прибыль и маржа (если ещё не продано)
     potential_profit = (car.price_listed - total_cost) if car.price_listed else 0
-    potential_margin = potential_profit / total_cost if total_cost else 0
+    potential_margin = (
+        round(potential_profit / total_cost * 100, 2) if total_cost else 0
+    )
 
+    # Фактическая прибыль и маржа (если продано)
     profit = (car.price_sold - total_cost) if car.price_sold else 0
-    margin = profit / total_cost if total_cost else 0
-
+    margin = round(profit / total_cost * 100, 2) if total_cost else 0
     profit_per_owner = (profit / owners_count) if owners_count else profit
+
+    # Расчёт индивидуальных выплат
+    expenses_by_user: dict[UUID, int] = defaultdict(int)
+    for exp in car.expenses or []:
+        if exp.user_uid:
+            expenses_by_user[exp.user_uid] += exp.exp_summ
+
+    # Добавляем расходы на покупку к создателю карточки
+    if car.primary_owner_uid:
+        expenses_by_user[car.primary_owner_uid] += car.price_purchased
+
+    # Финальные выплаты каждому владельцу
+    net_payouts = {
+        user_uid: personal_expenses + profit_per_owner
+        for user_uid, personal_expenses in expenses_by_user.items()
+    }
+
     return CarStats(
         total_expenses=total_expenses,
         total_cost=total_cost,
         potential_profit=potential_profit,
-        potential_margin=round(potential_margin * 100, 2),
+        potential_margin=potential_margin,
         profit=profit,
-        margin=round(margin * 100, 2),
+        margin=margin,
         owners_count=owners_count,
         profit_per_owner=profit_per_owner,
+        net_payouts=net_payouts,
     )
 
 
@@ -126,8 +151,7 @@ class CarService(BaseService[CarsRepository]):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
                 )
-        owner_count = len(car.secondary_owners) + 1
-        stats = calculate_stats(car, owner_count)
+        stats = calculate_stats(car)
         return CarSchema.model_validate(car, from_attributes=True).model_copy(
             update={"stats": stats}
         )
