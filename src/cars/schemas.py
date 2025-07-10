@@ -64,15 +64,12 @@ class CarUpdateSchema(BaseModel):
     status: Optional[CarStatusChoices] = None
 
 
-class CarOwnerStats(BaseModel):
-    user_uid: uuid.UUID
+class OwnerStats(BaseModel):
+    owner_uid: uuid.UUID
     username: str
     email: str
-    personal_expenses: int  # Сколько потратил этот владелец (включая расходы и, возможно, покупку авто)
-    profit_share: float  # Доля прибыли (поровну)
-    net_payout: (
-        float  # Сколько нужно выплатить владельцу: personal_expenses + profit_share
-    )
+    total_expenses: int
+    net_payout: float
 
 
 class CarStats(BaseModel):
@@ -84,7 +81,7 @@ class CarStats(BaseModel):
     profit: int = None
     owners_count: int = None
     profit_per_owner: float = None
-    net_payouts: dict[uuid.UUID, float]
+    owners_stats: list[OwnerStats] = []
 
     # days_from_purchased: int
     # days_from_listed: int

@@ -17,6 +17,7 @@ from .schemas import (
     CarSchema,
     CarStats,
     CarCreateResponse,
+    OwnerStats,
 )
 from src.utils.exceptions import VinBusyException, EntityNotFoundException
 
@@ -52,13 +53,47 @@ def calculate_stats(car: CarSchema) -> CarStats:
 
     # Добавляем расходы на покупку к создателю карточки
     if car.primary_owner_uid:
-        expenses_by_user[car.primary_owner_uid] += car.price_purchased
+        expenses_by_user[car.primary_owner_uid] += car.price_purchased or 0
 
-    # Финальные выплаты каждому владельцу
-    net_payouts = {
-        user_uid: personal_expenses + profit_per_owner
-        for user_uid, personal_expenses in expenses_by_user.items()
-    }
+    owner_infos = {}
+
+    if car.primary_owner_uid:
+        owner_infos[car.primary_owner_uid] = {
+            "uid": car.primary_owner_uid,
+            "username": (
+                getattr(car, "primary_owner", None).username
+                if hasattr(car, "primary_owner")
+                else "—"
+            ),
+            "email": (
+                getattr(car, "primary_owner", None).email
+                if hasattr(car, "primary_owner")
+                else "—"
+            ),
+        }
+
+    for owner in car.secondary_owners or []:
+        owner_infos[owner.uid] = {
+            "uid": owner.uid,
+            "username": owner.username,
+            "email": owner.email,
+        }
+
+    # Формируем итоговую статистику по каждому владельцу
+    owners_stats = []
+
+    for uid, personal_expenses in expenses_by_user.items():
+        info = owner_infos.get(uid)
+        if info:
+            owners_stats.append(
+                OwnerStats(
+                    owner_uid=uid,
+                    username=info["username"],
+                    email=info["email"],
+                    total_expenses=personal_expenses,
+                    net_payout=round(personal_expenses + profit_per_owner, 2),
+                )
+            )
 
     return CarStats(
         total_expenses=total_expenses,
@@ -68,8 +103,8 @@ def calculate_stats(car: CarSchema) -> CarStats:
         profit=profit,
         margin=margin,
         owners_count=owners_count,
-        profit_per_owner=profit_per_owner,
-        net_payouts=net_payouts,
+        profit_per_owner=round(profit_per_owner, 2),
+        owners_stats=owners_stats,
     )
 
 
