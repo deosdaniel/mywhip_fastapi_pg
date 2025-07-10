@@ -233,7 +233,9 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def create_expense(
         self, car_uid: UUID, exp_data: ExpensesCreateSchema, current_user: UserSchema
     ) -> Expenses:
-        await self.car_service.get_car_with_primary_owner_check(car_uid, current_user)
+        await self.car_service.get_car_with_access_check(
+            car_uid=car_uid, current_user=current_user
+        )
         exp_data_dict = exp_data.model_dump()
         exp_data_dict["user_uid"] = current_user.uid
         new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
@@ -243,7 +245,9 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def get_single_expense(
         self, car_uid: UUID, exp_uid: str, current_user: UserSchema
     ) -> Expenses:
-        await self.car_service.get_car_with_primary_owner_check(car_uid, current_user)
+        await self.car_service.get_car_with_access_check(
+            car_uid=car_uid, current_user=current_user
+        )
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
         if not exp:
             raise EntityNotFoundException("exp_uid")
@@ -257,7 +261,11 @@ class ExpensesService(BaseService[ExpensesRepository]):
         exp_update_data: ExpensesCreateSchema,
         current_user: UserSchema,
     ) -> Expenses:
-        await self.get_single_expense(car_uid, exp_uid, current_user)
+        exp = await self.get_single_expense(car_uid, exp_uid, current_user)
+        if (exp.user.uid != current_user.uid) and (current_user.role != UserRole.ADMIN):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
         update_data_dict = exp_update_data.model_dump(exclude_unset=True)
         updated_exp = await self.repository.update_single_exp(
             car_uid, exp_uid, update_data_dict
@@ -271,7 +279,11 @@ class ExpensesService(BaseService[ExpensesRepository]):
         exp_uid: UUID,
         current_user: UserSchema,
     ):
-        await self.get_single_expense(car_uid, exp_uid, current_user)
+        exp = await self.get_single_expense(car_uid, exp_uid, current_user)
+        if (exp.user.uid != current_user.uid) and (current_user.role != UserRole.ADMIN):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
         delete_exp = await self.repository.delete_single_exp(car_uid, exp_uid)
         if delete_exp:
             return True
