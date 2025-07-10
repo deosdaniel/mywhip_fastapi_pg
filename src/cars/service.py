@@ -123,7 +123,9 @@ class CarService(BaseService[CarsRepository]):
             update={"stats": stats}
         )
 
-    async def get_car_with_owner_check(self, car_uid: str, current_user: UserSchema):
+    async def get_car_with_primary_owner_check(
+        self, car_uid: str, current_user: UserSchema
+    ):
         car = await self.get_by_uid(Cars, car_uid)
 
         if not car:
@@ -139,10 +141,31 @@ class CarService(BaseService[CarsRepository]):
             update={"stats": stats}
         )
 
+    async def get_car_with_access_check(self, car_uid: str, current_user: UserSchema):
+        car = await self.get_by_uid(
+            table=Cars, uid=car_uid, options=[selectinload(Cars.secondary_owners)]
+        )
+        if not car:
+            raise EntityNotFoundException("car_uid")
+
+        is_primary = car.primary_owner_uid == current_user.uid
+        is_secondary = any(
+            str(owner.uid) == str(current_user.uid) for owner in car.secondary_owners
+        )
+
+        if current_user.role != UserRole.ADMIN and not (is_primary or is_secondary):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
+        stats = calculate_stats(car)
+        return CarSchema.model_validate(car, from_attributes=True).model_copy(
+            update={"stats": stats}
+        )
+
     async def add_owner(
         self, car_uid: str, new_owner_uid: str, current_user: UserSchema
     ):
-        await self.get_car_with_owner_check(car_uid, current_user)
+        await self.get_car_with_primary_owner_check(car_uid, current_user)
         await self.repository.add_owner_to_car(car_uid, new_owner_uid)
         car = await self.repository.get_by_uid(
             table=Cars, uid=car_uid, options=[selectinload(Cars.secondary_owners)]
@@ -152,7 +175,7 @@ class CarService(BaseService[CarsRepository]):
     async def delete_owner(
         self, car_uid: str, delete_owner_uid: str, current_user: UserSchema
     ):
-        car = await self.get_car_with_owner_check(car_uid, current_user)
+        car = await self.get_car_with_primary_owner_check(car_uid, current_user)
         delete_owner_uuid = UUID(delete_owner_uid)
         if car.primary_owner_uid == delete_owner_uuid:
             raise HTTPException(
@@ -171,11 +194,11 @@ class CarService(BaseService[CarsRepository]):
     async def update_car(
         self, car_uid: UUID, car_data: CarUpdateSchema, current_user: UserSchema
     ) -> Cars:
-        await self.get_car_with_owner_check(car_uid, current_user)
+        await self.get_car_with_access_check(car_uid=car_uid, current_user=current_user)
         return await self.update_by_uid(Cars, car_uid, car_data)
 
     async def delete_car(self, car_uid: UUID, current_user: UserSchema) -> None:
-        await self.get_car_with_owner_check(car_uid, current_user)
+        await self.get_car_with_primary_owner_check(car_uid, current_user)
         return await self.delete_by_uid(Cars, car_uid)
 
     # Get Cars filtered list
@@ -210,7 +233,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def create_expense(
         self, car_uid: UUID, exp_data: ExpensesCreateSchema, current_user: UserSchema
     ) -> Expenses:
-        await self.car_service.get_car_with_owner_check(car_uid, current_user)
+        await self.car_service.get_car_with_primary_owner_check(car_uid, current_user)
         exp_data_dict = exp_data.model_dump()
         exp_data_dict["user_uid"] = current_user.uid
         new_exp = await self.repository.create_expense(car_uid, exp_data_dict)
@@ -220,7 +243,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
     async def get_single_expense(
         self, car_uid: UUID, exp_uid: str, current_user: UserSchema
     ) -> Expenses:
-        await self.car_service.get_car_with_owner_check(car_uid, current_user)
+        await self.car_service.get_car_with_primary_owner_check(car_uid, current_user)
         exp = await self.repository.get_single_exp(car_uid, exp_uid)
         if not exp:
             raise EntityNotFoundException("exp_uid")
@@ -266,7 +289,7 @@ class ExpensesService(BaseService[ExpensesRepository]):
         allowed_sort_fields: Optional[list[str]] = None,
         order: str = "desc",
     ) -> list[Expenses]:
-        await self.car_service.get_car_with_owner_check(car_uid, current_user)
+        await self.car_service.get_car_with_primary_owner_check(car_uid, current_user)
 
         offset_page = (page - 1) * limit
 
