@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
@@ -35,7 +35,6 @@ class Cars(SQLModel, table=True):
     pts_num: str
     sts_num: str
     date_purchased: date
-    price_purchased: int
     date_listed: date = Field(default=None, nullable=True)
     price_listed: int = Field(default=None, nullable=True)
     date_sold: date = Field(default=None, nullable=True)

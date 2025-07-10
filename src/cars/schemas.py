@@ -6,7 +6,6 @@ from enum import Enum
 from typing import List, Literal, Optional
 
 from src.users.schemas import OwnerSchema
-from src.utils.db_types import UUIDString
 
 """Status choice"""
 
@@ -32,7 +31,6 @@ class CarCreateSchema(BaseModel):
     )
     sts_num: str = Field(pattern=r"^[0-9]{4}\s?[0-9]{6}$", default="9955 123456")
     date_purchased: date = Field(default=date.today, le=date.today())
-    price_purchased: int = Field(gt=50000)
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
 
 
@@ -46,12 +44,10 @@ class CarCreateResponse(BaseModel):
     pts_num: str
     sts_num: str
     date_purchased: date | None = None
-    price_purchased: int = None
     status: CarStatusChoices | None = None
 
 
 class CarUpdateSchema(BaseModel):
-    price_purchased: Optional[int] = Field(default=None, gt=50000)
     date_listed: Optional[date] = Field(default=None, le=date.today())
     price_listed: Optional[int] = Field(default=None, gt=50000)
     date_sold: Optional[date] = Field(default=None, le=date.today())
