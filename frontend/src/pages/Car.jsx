@@ -44,7 +44,10 @@ export default function Car() {
 
     const handleUpdate = async (payload) => {
         try {
-            const res = await api.patch(`/cars/${car_uid}`, payload);
+            await api.patch(`/cars/${car_uid}`, payload);
+
+            const res = await api.get(`/cars/${car_uid}`);
+            
             setCar(res.data.result);
             setEditMode(false);
             alert("Данные успешно обновлены!");
