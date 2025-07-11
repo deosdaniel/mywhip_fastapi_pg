@@ -119,6 +119,20 @@ class CarSchema(BaseModel):
     expenses: List["ExpensesSchema"] | None = None
 
 
+class CarListSchema(BaseModel):
+    uid: uuid.UUID
+    primary_owner_uid: uuid.UUID
+    secondary_owners: List["OwnerSchema"]
+    make: str
+    model: str
+    year: int
+    vin: str
+    date_sold: date | None = None
+    price_sold: int | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = created_at
+
+
 """Expenses"""
 
 

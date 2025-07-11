@@ -17,6 +17,7 @@ from src.cars.schemas import (
     CarCreateResponse,
     CarOwners,
     ExpensesUpdateSchema,
+    CarListSchema,
 )
 
 car_router = APIRouter()
@@ -42,7 +43,7 @@ async def create_car(
 
 @car_router.get(
     "/my_cars",
-    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model=ResponseSchema[PageResponse[CarListSchema]],
     response_model_exclude_none=True,
 )
 async def get_my_cars(
@@ -63,6 +64,7 @@ async def get_my_cars(
         allowed_sort_fields=[
             "created_at",
             "updated_at",
+            "date_sold",
             "year",
             "make",
             "model",

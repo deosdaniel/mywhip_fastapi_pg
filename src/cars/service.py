@@ -75,10 +75,11 @@ def build_owners_stats(
 
     # Добавим primary_owner, если его нет
     if car.primary_owner_uid not in users_map:
+        po = getattr(car, "primary_owner", None)
         users_map[car.primary_owner_uid] = UserShortSchema(
             uid=car.primary_owner_uid,
-            email="unknown@email.com",
-            username="Unknown",
+            email=getattr(po, "email", "unknown@email.com"),
+            username=getattr(po, "username", "Unknown"),
         )
 
     # Добавим secondary_owners, если их нет
@@ -186,6 +187,7 @@ class CarService(BaseService[CarsRepository]):
             options=[
                 selectinload(Cars.expenses).joinedload(Expenses.user),
                 selectinload(Cars.secondary_owners),
+                selectinload(Cars.primary_owner),
             ],
         )
         if not car:
