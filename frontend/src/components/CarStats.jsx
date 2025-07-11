@@ -10,18 +10,21 @@ export default function CarStats({car, className}) {
     return (
         <div className={className}>
             <p className="text-gray-600 mb-1"><strong>Дата покупки:</strong> {car.date_purchased}</p>
-            <p className="text-gray-600 mb-1"><strong>Сумма
-                вложений:</strong> {car.stats.total_expenses.toLocaleString()} ₽
+            <p className="text-gray-600 mb-1"><strong>Цена покупки:
+            </strong> {formatPrice(car.stats.price_purchased)}
+            </p>
+            <p className="text-gray-600 mb-1"><strong>
+                Сумма вложений:</strong> {formatPrice(car.stats.total_expenses)}
             </p>
             <p className="text-gray-600 mb-1">
-                <strong>Себестоимость:</strong> {car.stats?.total_cost.toLocaleString()} ₽
+                <strong>Себестоимость:</strong> {formatPrice(car.stats.total_cost)}
             </p>
 
             <p className="text-gray-600 mb-1"><strong>Дата выставления:</strong> {car.date_listed ?? '–'}</p>
             <p className="text-gray-600 mb-1"><strong>Цена выставления:</strong> {formatPrice(car.price_listed)}
             </p>
             <p className="text-gray-600 mb-1"><strong>Потен.
-                прибыль:</strong> {car.stats.potential_profit.toLocaleString()} ₽
+                прибыль:</strong> {formatPrice(car.stats.potential_profit)}
             </p>
             <p className="text-gray-600 mb-1"><strong>Потенц.
                 маржинальность:</strong> {formatPercent(car.stats.potential_margin)}
