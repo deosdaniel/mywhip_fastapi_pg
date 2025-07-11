@@ -69,8 +69,9 @@ class OwnerStats(BaseModel):
 
 
 class CarStats(BaseModel):
-    total_cost: int = None
+    price_purchased: int = None
     total_expenses: int = None
+    total_cost: int = None
     potential_margin: float = None
     potential_profit: int = None
     margin: float = None
