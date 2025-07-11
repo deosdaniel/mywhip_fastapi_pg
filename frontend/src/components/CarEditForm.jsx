@@ -23,13 +23,9 @@ export default function CarEditForm({formData, setFormData, onSave, onCancel, st
     };
 
     const handleSubmit = () => {
-        if (!formData.price_purchased) {
-            alert("Укажите цену покупки");
-            return;
-        }
+        
 
         const payload = {
-            price_purchased: formData.price_purchased,
             date_listed: formData.date_listed || null,
             price_listed: formData.price_listed || null,
             date_sold: formData.date_sold || null,
@@ -63,15 +59,6 @@ export default function CarEditForm({formData, setFormData, onSave, onCancel, st
                 </Select>
             </div>
 
-            <div>
-                <Label>Цена покупки</Label>
-                <Input
-                    type="number"
-                    name="price_purchased"
-                    value={formData.price_purchased || ""}
-                    onChange={handleChange}
-                />
-            </div>
 
             {["date_listed", "price_listed", "date_sold", "price_sold"].map((field) => (
                 <div key={field}>

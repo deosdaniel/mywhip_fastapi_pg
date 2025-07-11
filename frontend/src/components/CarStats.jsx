@@ -7,11 +7,12 @@ function formatPercent(price) {
 }
 
 export default function CarStats({car, className}) {
+    if (!car?.stats) return <p className={className}>Загрузка...</p>;
     return (
         <div className={className}>
             <p className="text-gray-600 mb-1"><strong>Дата покупки:</strong> {car.date_purchased}</p>
             <p className="text-gray-600 mb-1"><strong>Цена покупки:
-            </strong> {formatPrice(car.stats.price_purchased)}
+            </strong> {formatPrice(car.stats.pri1ce_purchased)}
             </p>
             <p className="text-gray-600 mb-1"><strong>
                 Сумма вложений:</strong> {formatPrice(car.stats.total_expenses)}
