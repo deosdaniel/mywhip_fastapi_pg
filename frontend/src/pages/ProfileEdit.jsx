@@ -64,7 +64,7 @@ export default function ProfileEdit() {
             console.log('Update successful:', response.data);
 
             // Перенаправляем с небольшим таймаутом для UX
-            setTimeout(() => navigate('/me'), 1000);
+            setTimeout(() => navigate('/app/profile'), 1000);
         } catch (err) {
             console.error('Update failed:', err);
             // Подробный анализ ошибки
@@ -147,7 +147,7 @@ export default function ProfileEdit() {
                 <div className='flex justify-between'>
                     <button
                         type='button'
-                        onClick={() => navigate('/me')}
+                        onClick={() => navigate('/app/profile')}
                         className='bg-gray-500 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition duration-200'
                         disabled={isSubmitting}
                     >

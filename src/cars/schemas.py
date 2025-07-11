@@ -131,6 +131,7 @@ class CarListSchema(BaseModel):
     price_sold: int | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = created_at
+    status: CarStatusChoices
 
 
 """Expenses"""
