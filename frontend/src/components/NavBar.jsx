@@ -32,6 +32,11 @@ export default function NavBar() {
         };
     }, []);
 
+    const closeMenu = (cb) => () => {
+        setIsMenuOpen(false);
+        cb?.();
+    };
+
     return (
         <div
             className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center
@@ -74,20 +79,20 @@ export default function NavBar() {
     ${isMenuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 translate-y-[-10px] invisible"}`}  // ← visible/invisible
             >
                 <li className="list-none text-center">
-                    <NavLink to="cars">
+                    <NavLink to="cars" onClick={closeMenu()}>
                         <Button variant="ghost">My Cars</Button>
                     </NavLink>
                 </li>
                 <li className="list-none text-center">
-                    <NavLink to="profile">
+                    <NavLink to="profile" onClick={closeMenu()}>
                         <Button variant="ghost">My Profile</Button>
                     </NavLink>
                 </li>
-                <NavLink to="">
+                <NavLink to="" onClick={closeMenu()}>
                     <Button variant="ghost">About</Button>
                 </NavLink>
                 <li className="list-none text-center">
-                    <Button variant="ghost" onClick={logout}>
+                    <Button variant="ghost" onClick={closeMenu(logout)}>
                         Exit
                     </Button>
                 </li>
