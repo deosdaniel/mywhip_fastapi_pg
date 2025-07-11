@@ -152,7 +152,7 @@ class ExpenseType(str, Enum):
 
 class ExpensesCreateSchema(BaseModel):
     type: ExpenseType = ExpenseType.OTHER
-    name: str = Field(min_length=1, max_length=50)
+    name: str = Field(min_length=1, max_length=50, default="default")
     exp_summ: int = Field(gt=0)
 
 
