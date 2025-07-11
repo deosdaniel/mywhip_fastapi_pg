@@ -31,7 +31,9 @@ from ..utils.normalize_make_model import normalize_make_model
 
 def calculate_car_metrics(car: CarSchema) -> dict:
     total_cost = sum(exp.exp_summ for exp in car.expenses or [])
-
+    total_expenses = sum(
+        (exp.exp_summ for exp in car.expenses if exp.type == "PURCHASE") or []
+    )
     potential_profit = (car.price_listed - total_cost) if car.price_listed else 0
     potential_margin = (
         round(potential_profit / total_cost * 100, 2) if total_cost else 0
@@ -42,6 +44,7 @@ def calculate_car_metrics(car: CarSchema) -> dict:
 
     return {
         "total_cost": total_cost,
+        "total_expenses": total_expenses,
         "profit": profit,
         "margin": margin,
         "potential_profit": potential_profit,
@@ -96,7 +99,7 @@ def build_owners_stats(
             owner_uid=uid,
             username=users_map[uid].username,
             email=users_map[uid].email,
-            total_expenses=expenses_by_user.get(uid, 0),
+            owner_total_expenses=expenses_by_user.get(uid, 0),
             net_payout=expenses_by_user.get(uid, 0) + profit_per_owner,
         )
         for uid in owners
@@ -110,6 +113,7 @@ def calculate_stats(car: CarSchema) -> CarStats:
 
     return CarStats(
         total_cost=metrics["total_cost"],
+        total_expenses=metrics["total_expenses"],
         potential_profit=metrics["potential_profit"],
         potential_margin=metrics["potential_margin"],
         profit=metrics["profit"],

@@ -64,12 +64,13 @@ class OwnerStats(BaseModel):
     owner_uid: uuid.UUID
     username: str
     email: str
-    total_expenses: int
+    owner_total_expenses: int
     net_payout: float
 
 
 class CarStats(BaseModel):
     total_cost: int = None
+    total_expenses: int = None
     potential_margin: float = None
     potential_profit: int = None
     margin: float = None
@@ -102,7 +103,6 @@ class CarSchema(BaseModel):
     pts_num: str
     sts_num: str
     date_purchased: date | None = None
-    price_purchased: int = None
     date_listed: date | None = None
     price_listed: int | None = None
     date_sold: date | None = None
