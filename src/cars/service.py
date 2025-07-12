@@ -115,6 +115,11 @@ def calculate_stats(car: CarSchema) -> CarStats:
     expenses_by_user = get_expenses_by_owner(car)
     owners_stats = build_owners_stats(car, expenses_by_user, metrics["profit"])
 
+    owners_uids = [car.primary_owner_uid] + [
+        owner.uid for owner in car.secondary_owners
+    ]
+    owners_count = len(owners_uids)
+
     return CarStats(
         price_purchased=metrics["price_purchased"],
         total_expenses=metrics["total_expenses"],
@@ -123,10 +128,8 @@ def calculate_stats(car: CarSchema) -> CarStats:
         potential_margin=metrics["potential_margin"],
         profit=metrics["profit"],
         margin=metrics["margin"],
-        owners_count=len(expenses_by_user),
-        profit_per_owner=(
-            metrics["profit"] / len(expenses_by_user) if expenses_by_user else 0
-        ),
+        owners_count=owners_count,
+        profit_per_owner=(metrics["profit"] / owners_count),
         owners_stats=owners_stats,
     )
 

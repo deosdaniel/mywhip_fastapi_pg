@@ -37,6 +37,12 @@ export default function CarStats({car, className}) {
             </p>
             <p className="text-gray-600 mb-1"><strong>Маржинальность:</strong> {formatPercent(car.stats.margin)}
             </p>
+            <p className="text-gray-600 mb-1"><strong>Партнеров:</strong> {car.stats.owners_count} чел.
+
+            </p>
+            <p className="text-gray-600 mb-1"><strong>Прибыль на чел:</strong> {formatPrice(car.stats.profit_per_owner)}
+
+            </p>
 
 
         </div>
