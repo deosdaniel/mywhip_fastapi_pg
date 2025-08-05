@@ -13,7 +13,6 @@ export default function NewCarForm() {
         pts_num: "",
         sts_num: "",
         date_purchased: new Date().toISOString().split("T")[0],
-        price_purchased: "",
         status: "FRESH"
     });
     const handleChange = (e) => {
@@ -59,18 +58,9 @@ export default function NewCarForm() {
                        className='w-full p-2 border rounded' required/>
                 <input name="sts_num" value={form.sts_num} onChange={handleChange} placeholder="Серия и номер СТС"
                        className='w-full p-2 border rounded' required/>
+                <p>Дата покупки</p>
                 <input name="date_purchased" value={form.date_purchased} onChange={handleChange} type="date"
                        className='w-full p-2 border rounded' required/>
-                <input name="price_purchased" value={form.price_purchased} onChange={handleChange} type="number"
-                       placeholder="Цена покупки" className='w-full p-2 border rounded' required/>
-                <select name='status' value={form.status} onChange={handleChange}
-                        className="w-full p-2 border rounded">
-                    <option value="FRESH">Свежий сток</option>
-                    <option value="REPAIRING">Ремонт</option>
-                    <option value="DETAILING">Подготовка</option>
-                    <option value="LISTED">Выставлен</option>
-                    <option value="SOLD">Продан</option>
-                </select>
                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Сохранить</button>
             </form>
         </div>

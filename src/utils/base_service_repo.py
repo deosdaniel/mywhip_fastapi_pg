@@ -22,11 +22,17 @@ class BaseRepository:
         entity = table(**new_entity_dict)
         self.session.add(entity)
         await self.session.commit()
+        await self.session.refresh(entity)
         return entity
 
-    async def get_by_uid(self, table: SQLModel, uid: UUID) -> SQLModel:
+    async def get_by_uid(
+        self, table: SQLModel, uid: UUID, options: list = None
+    ) -> SQLModel:
         fixed_uid = UUID(uid)
-        result = await self.session.exec(select(table).where(table.uid == fixed_uid))
+        statement = select(table).where(table.uid == fixed_uid)
+        if options:
+            statement = statement.options(*options)
+        result = await self.session.exec(statement)
         return result.one_or_none()
 
     async def update_by_uid(
@@ -87,8 +93,10 @@ class BaseService(Generic[R]):
     def __init__(self, repository: R):
         self.repository: R = repository
 
-    async def get_by_uid(self, table: SQLModel, uid: UUID) -> SQLModel:
-        result = await self.repository.get_by_uid(table, uid)
+    async def get_by_uid(
+        self, table: SQLModel, uid: UUID, options: list = None
+    ) -> SQLModel:
+        result = await self.repository.get_by_uid(table, uid, options)
         if result:
             return result
         else:

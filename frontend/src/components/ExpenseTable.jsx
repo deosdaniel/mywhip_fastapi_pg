@@ -50,17 +50,18 @@ export default function ExpenseTable({car_uid, className}) {
     };
 
     const handleAddExpense = async () => {
-        if (!newExpense.name || !newExpense.exp_summ) {
+        if (!newExpense.type || !newExpense.exp_summ) {
             alert("Заполните все поля!");
             return;
         }
         try {
             await api.post(`/cars/${car_uid}`, {
+                type: newExpense.type,
                 name: newExpense.name,
                 exp_summ: Number(newExpense.exp_summ),
             });
             setShowExpenseModal(false);
-            setNewExpense({name: "", exp_summ: ""});
+            setNewExpense({type: "", name: "", exp_summ: ""});
             // Перезагрузка списка
             const res = await api.get(`/cars/${car_uid}/expenses`, {
                 params: {page: 1, limit: 100, sort_by: "created_at", order: "desc"},
@@ -93,9 +94,10 @@ export default function ExpenseTable({car_uid, className}) {
                 <TableHeader className="bg-accent">
                     <TableRow>
                         <TableHead className="font-bold">№</TableHead>
-                        <TableHead className="font-bold">Название</TableHead>
+                        <TableHead className="font-bold">Категория</TableHead>
                         <TableHead className="font-bold">Сумма</TableHead>
                         <TableHead className="font-bold">Дата</TableHead>
+                        <TableHead className="font-bold">Автор</TableHead>
                         <TableHead></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -106,9 +108,10 @@ export default function ExpenseTable({car_uid, className}) {
                         {expenses.map((exp, idx) => (
                             <TableRow key={exp.uid}>
                                 <TableCell>{idx + 1}</TableCell>
-                                <TableCell>{exp.name}</TableCell>
+                                <TableCell>{exp.type}</TableCell>
                                 <TableCell>{exp.exp_summ.toLocaleString()} ₽</TableCell>
                                 <TableCell>{new Date(exp.created_at).toLocaleDateString()}</TableCell>
+                                <TableCell>{exp.user.email.toLocaleString()}</TableCell>
                                 <TableCell>
                                     <X
                                         onClick={() => handleDelete(exp.uid)}

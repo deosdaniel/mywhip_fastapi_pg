@@ -5,7 +5,7 @@ from enum import Enum
 
 from typing import List, Literal, Optional
 
-from src.utils.db_types import UUIDString
+from src.users.schemas import OwnerSchema
 
 """Status choice"""
 
@@ -31,13 +31,12 @@ class CarCreateSchema(BaseModel):
     )
     sts_num: str = Field(pattern=r"^[0-9]{4}\s?[0-9]{6}$", default="9955 123456")
     date_purchased: date = Field(default=date.today, le=date.today())
-    price_purchased: int = Field(gt=50000)
     status: CarStatusChoices | None = Field(default=CarStatusChoices.FRESH)
 
 
 class CarCreateResponse(BaseModel):
     uid: uuid.UUID
-    owner_uid: uuid.UUID
+    primary_owner_uid: uuid.UUID
     make: str
     model: str
     year: int
@@ -45,12 +44,10 @@ class CarCreateResponse(BaseModel):
     pts_num: str
     sts_num: str
     date_purchased: date | None = None
-    price_purchased: int = None
     status: CarStatusChoices | None = None
 
 
 class CarUpdateSchema(BaseModel):
-    price_purchased: Optional[int] = Field(default=None, gt=50000)
     date_listed: Optional[date] = Field(default=None, le=date.today())
     price_listed: Optional[int] = Field(default=None, gt=50000)
     date_sold: Optional[date] = Field(default=None, le=date.today())
@@ -63,20 +60,43 @@ class CarUpdateSchema(BaseModel):
     status: Optional[CarStatusChoices] = None
 
 
+class OwnerStats(BaseModel):
+    owner_uid: uuid.UUID
+    username: str
+    email: str
+    owner_total_expenses: int
+    net_payout: float
+
+
 class CarStats(BaseModel):
+    price_purchased: int = None
     total_expenses: int = None
     total_cost: int = None
-    potential_profit: int = None
     potential_margin: float = None
-    profit: int = None
+    potential_profit: int = None
     margin: float = None
+    profit: int = None
+    owners_count: int = None
+    profit_per_owner: float = None
+    owners_stats: list[OwnerStats] = []
+
     # days_from_purchased: int
     # days_from_listed: int
 
 
+class CarOwners(BaseModel):
+    uid: uuid.UUID
+    make: str
+    model: str
+    vin: str
+    primary_owner_uid: uuid.UUID
+    secondary_owners: List["OwnerSchema"]
+
+
 class CarSchema(BaseModel):
     uid: uuid.UUID
-    owner_uid: uuid.UUID
+    primary_owner_uid: uuid.UUID
+    secondary_owners: List["OwnerSchema"]
     make: str
     model: str
     year: int
@@ -84,7 +104,6 @@ class CarSchema(BaseModel):
     pts_num: str
     sts_num: str
     date_purchased: date | None = None
-    price_purchased: int = None
     date_listed: date | None = None
     price_listed: int | None = None
     date_sold: date | None = None
@@ -101,10 +120,44 @@ class CarSchema(BaseModel):
     expenses: List["ExpensesSchema"] | None = None
 
 
+class CarListSchema(BaseModel):
+    uid: uuid.UUID
+    primary_owner_uid: uuid.UUID
+    secondary_owners: List["OwnerSchema"]
+    make: str
+    model: str
+    year: int
+    vin: str
+    date_sold: date | None = None
+    price_sold: int | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = created_at
+    status: CarStatusChoices
+
+
 """Expenses"""
 
 
+class ExpenseType(str, Enum):
+    PURCHASE = "PURCHASE"
+    PARTS = "PARTS"
+    WHEELS = "WHEELS"
+    REPAIR = "REPAIR"
+    PAINT = "PAINT"
+    FUEL = "FUEL"
+    DETAILING = "DETAILING"
+    ADS = "ADS"
+    OTHER = "OTHER"
+
+
 class ExpensesCreateSchema(BaseModel):
+    type: ExpenseType = ExpenseType.OTHER
+    name: str = Field(min_length=1, max_length=50, default="default")
+    exp_summ: int = Field(gt=0)
+
+
+class ExpensesUpdateSchema(BaseModel):
+    type: ExpenseType = ExpenseType.OTHER
     name: str = Field(min_length=1, max_length=50)
     exp_summ: int = Field(gt=0)
 
@@ -118,6 +171,7 @@ class UserShortSchema(BaseModel):
 class ExpensesSchema(BaseModel):
     uid: uuid.UUID
     created_at: datetime | None = None
+    type: ExpenseType = Field(default=ExpenseType.OTHER)
     name: str
     exp_summ: int
     car_uid: uuid.UUID

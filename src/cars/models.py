@@ -1,13 +1,14 @@
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlmodel import Field, Column, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from sqlalchemy.sql.functions import now
-from .schemas import CarStatusChoices
+from .schemas import CarStatusChoices, ExpenseType
+from ..shared.car_user_link import CarUserLink
 
 if TYPE_CHECKING:
     from ..users.models import Users
@@ -34,7 +35,6 @@ class Cars(SQLModel, table=True):
     pts_num: str
     sts_num: str
     date_purchased: date
-    price_purchased: int
     date_listed: date = Field(default=None, nullable=True)
     price_listed: int = Field(default=None, nullable=True)
     date_sold: date = Field(default=None, nullable=True)
@@ -50,7 +50,7 @@ class Cars(SQLModel, table=True):
     updated_at: datetime = Field(
         sa_column=Column(pg.TIMESTAMP, default=now(), onupdate=now(), nullable=True)
     )
-    owner_uid: UUID = Field(
+    primary_owner_uid: UUID = Field(
         sa_column=Column(
             UUIDColumn,
             ForeignKey("users.uid", ondelete="CASCADE"),
@@ -58,7 +58,17 @@ class Cars(SQLModel, table=True):
             index=True,
         )
     )
-    owner: "Users" = Relationship(back_populates="cars")
+    primary_owner: Optional["Users"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "primaryjoin": "Cars.primary_owner_uid==Users.uid",
+        }
+    )
+    secondary_owners: list["Users"] = Relationship(
+        back_populates="cars",
+        link_model=CarUserLink,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
     expenses: list["Expenses"] = Relationship(
         back_populates="car",
         sa_relationship_kwargs={"lazy": "selectin"},
@@ -73,6 +83,9 @@ class Expenses(SQLModel, table=True):
     __tablename__ = "expenses"
     uid: UUID = Field(
         sa_column=Column(UUIDColumn, nullable=False, primary_key=True, default=uuid4)
+    )
+    type: str = Field(
+        sa_column=Column(ENUM(ExpenseType), default="OTHER", nullable=False)
     )
     name: str
     exp_summ: int

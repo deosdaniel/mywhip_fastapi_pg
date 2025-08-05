@@ -15,6 +15,9 @@ from src.cars.schemas import (
     CarSchema,
     GetAllFilter,
     CarCreateResponse,
+    CarOwners,
+    ExpensesUpdateSchema,
+    CarListSchema,
 )
 
 car_router = APIRouter()
@@ -32,13 +35,15 @@ async def create_car(
     car_service: CarService = Depends(get_car_service),
     current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.create_car(car_data=car_data, owner_uid=current_user.uid)
+    result = await car_service.create_car(
+        car_data=car_data, primary_owner_uid=current_user.uid
+    )
     return ResponseSchema(detail="Success", result=result)
 
 
 @car_router.get(
     "/my_cars",
-    response_model=ResponseSchema[PageResponse[CarSchema]],
+    response_model=ResponseSchema[PageResponse[CarListSchema]],
     response_model_exclude_none=True,
 )
 async def get_my_cars(
@@ -59,6 +64,7 @@ async def get_my_cars(
         allowed_sort_fields=[
             "created_at",
             "updated_at",
+            "date_sold",
             "year",
             "make",
             "model",
@@ -79,10 +85,38 @@ async def get_car_by_uid(
     car_service: CarService = Depends(get_car_service),
     current_user: UserSchema = Depends(get_current_user),
 ) -> dict:
-    result = await car_service.get_car_with_owner_check(
+    result = await car_service.get_car_all_owners(
         car_uid=car_uid, current_user=current_user
     )
     return ResponseSchema(detail="Success", result=result)
+
+
+@car_router.post("/{car_uid}/owners", response_model=ResponseSchema[CarOwners])
+async def add_owner(
+    new_owner_uid: str,
+    car_uid: str = Path(min_length=32, max_length=36),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+) -> dict:
+    result = await car_service.add_owner(
+        car_uid=car_uid, new_owner_uid=new_owner_uid, current_user=current_user
+    )
+    return ResponseSchema(detail="Success", result=result)
+
+
+@car_router.delete(
+    "/{car_uid}/owners/{owner_uid}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_owner(
+    delete_owner_uid: str,
+    car_uid: str = Path(min_length=32, max_length=36),
+    car_service: CarService = Depends(get_car_service),
+    current_user: UserSchema = Depends(get_current_user),
+):
+    await car_service.delete_owner(
+        car_uid=car_uid, delete_owner_uid=delete_owner_uid, current_user=current_user
+    )
+    return {}
 
 
 # Update a Car data
@@ -165,7 +199,7 @@ async def get_single_expense(
     "/{car_uid}/expenses/{exp_uid}", response_model=ResponseSchema[ExpensesSchema]
 )
 async def update_single_expense(
-    exp_update_data: ExpensesCreateSchema,
+    exp_update_data: ExpensesUpdateSchema,
     car_uid: str = Path(min_length=32, max_length=36),
     exp_uid: str = Path(min_length=32, max_length=36),
     expenses_service: ExpensesService = Depends(get_exp_service),

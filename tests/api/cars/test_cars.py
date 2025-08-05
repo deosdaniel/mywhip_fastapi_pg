@@ -358,7 +358,7 @@ async def test_cars_get_my_cars_paginated(
     get_me = await client.get(
         "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
     )
-    assert get_me.json()["uid"] == data["result"]["content"][0]["owner_uid"]
+    assert get_me.json()["uid"] == data["result"]["content"][0]["primary_owner_uid"]
 
 
 @pytest.mark.parametrize(
@@ -386,7 +386,7 @@ async def test_cars_get_my_cars_sorted(
     get_me = await client.get(
         "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
     )
-    assert get_me.json()["uid"] == data["result"]["content"][0]["owner_uid"]
+    assert get_me.json()["uid"] == data["result"]["content"][0]["primary_owner_uid"]
 
 
 @pytest.mark.asyncio

@@ -8,6 +8,7 @@ import {Button} from "@/components/ui/button.jsx";
 import {ChevronLeftIcon, SquarePen, Plus} from "lucide-react";
 import CarInfo from "@/components/CarInfo.jsx";
 import CarStats from "@/components/CarStats.jsx";
+import CarOwnerStats from "@/components/CarOwnersStats.jsx"
 import CarAds from "@/components/CarAds.jsx";
 import CarNotes from "@/components/CarNotes.jsx";
 import EditCarModal from "@/components/EditCarModal.jsx";
@@ -44,7 +45,10 @@ export default function Car() {
 
     const handleUpdate = async (payload) => {
         try {
-            const res = await api.patch(`/cars/${car_uid}`, payload);
+            await api.patch(`/cars/${car_uid}`, payload);
+
+            const res = await api.get(`/cars/${car_uid}`);
+
             setCar(res.data.result);
             setEditMode(false);
             alert("Данные успешно обновлены!");
@@ -96,6 +100,7 @@ export default function Car() {
                     <CarStats car={car} className="w-full grid md:grid-cols-2 bg-white shadow-md rounded-lg p-4"/>
                     <CarAds car={car} className="w-full bg-white shadow-md rounded-lg p-4"/>
                     <CarNotes car={car} className="w-full bg-white shadow-md rounded-lg p-4"/>
+                    <CarOwnerStats car={car} className="w-full bg-white shadow-md rounded-lg p-4"/>
                     <ExpenseTable car_uid={car_uid} className="w-full bg-white shadow-md rounded-lg p-4"/>
                 </div>
 
